@@ -1,13 +1,16 @@
 //! Talks to a Yarrow-firmware radiation detector over its USB serial port and decodes the log it stores.
 //!
 //! * [`ylc`] and [`ylog`] decode the compressed log exactly as the firmware does.
+//! * [`detector`] is the interface any Geiger counter driver implements; [`YarrowDetector`] is the first one.
 //! * [`client`] speaks the text protocol over any [`transport::Transport`]: the real serial port or the
 //!   in-memory [`fake::FakeDevice`] used by tests and the demo mode.
-//! * [`bins`] cuts decoded samples into fixed-length count bins for sharing.
+//! * [`bins`] cuts decoded samples into fixed-length count bins.
 
 pub mod bins;
 pub mod client;
+pub mod detector;
 pub mod fake;
+pub mod id;
 pub mod transport;
 pub mod ylc;
 pub mod ylog;
@@ -32,3 +35,6 @@ pub enum Error {
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+pub use detector::{Detector, DetectorInfo, LocalValue, Reading, Tools, YarrowDetector};
+pub use id::{device_hash, fallback_id};

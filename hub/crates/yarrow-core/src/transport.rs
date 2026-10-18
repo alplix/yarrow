@@ -100,3 +100,13 @@ impl Transport for SerialTransport {
         }
     }
 }
+
+impl<T: Transport + ?Sized> Transport for Box<T> {
+    fn send_line(&mut self, line: &str) -> Result<()> {
+        (**self).send_line(line)
+    }
+
+    fn recv_line(&mut self, timeout: Duration) -> Result<Option<String>> {
+        (**self).recv_line(timeout)
+    }
+}

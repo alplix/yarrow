@@ -25,6 +25,7 @@ pub struct FakeDevice {
     live: bool,
     /// Wait a second between live lines, as the real device does.
     pub realtime: bool,
+    last_live: Option<std::time::Instant>,
     rng: u64,
     out: VecDeque<String>,
     /// Lines received, for tests.
@@ -46,6 +47,7 @@ impl FakeDevice {
             events: vec![[1_791_980_000, 95, 640, 1], [1_792_050_000, 12, 1210, 2]],
             live: false,
             realtime: false,
+            last_live: None,
             rng: 0x9E37_79B9_7F4A_7C15,
             out: VecDeque::new(),
             log: Vec::new(),
@@ -187,7 +189,13 @@ impl Transport for FakeDevice {
         }
         if self.live {
             if self.realtime {
-                std::thread::sleep(timeout.min(Duration::from_secs(1)));
+                let due = self.last_live.map_or(Duration::ZERO, |t| Duration::from_secs(1).saturating_sub(t.elapsed()));
+                if due > timeout {
+                    std::thread::sleep(timeout);
+                    return Ok(None);
+                }
+                std::thread::sleep(due);
+                self.last_live = Some(std::time::Instant::now());
             }
             return Ok(Some(self.live_line()));
         }

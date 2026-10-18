@@ -2,7 +2,7 @@
 //!
 //! Samples with an unset device clock are not stored: their times mean nothing.
 
-use rusqlite::{params, Connection, OptionalExtension};
+use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use std::io::Write;
 use std::path::Path;
@@ -41,23 +41,6 @@ pub struct SeriesPoint {
     pub max: f64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct UploadRecord {
-    pub id: i64,
-    pub device: String,
-    /// Unix time the upload was made.
-    pub at: u32,
-    pub server: String,
-    pub interval_s: u32,
-    pub start: u32,
-    pub bins: u32,
-    pub accepted: u32,
-    pub rejected: u32,
-    pub credit: f64,
-    pub ok: bool,
-    pub message: String,
-}
-
 pub struct Store {
     conn: Connection,
 }
@@ -80,15 +63,7 @@ impl Store {
                  last_seen INTEGER NOT NULL, sens_x100 INTEGER NOT NULL, dead_us INTEGER NOT NULL);
              CREATE TABLE IF NOT EXISTS sample (
                  device TEXT NOT NULL, t INTEGER NOT NULL, iv INTEGER NOT NULL, value INTEGER NOT NULL,
-                 PRIMARY KEY (device, t, iv)) WITHOUT ROWID;
-             CREATE TABLE IF NOT EXISTS upload (
-                 id INTEGER PRIMARY KEY, device TEXT NOT NULL, at INTEGER NOT NULL, server TEXT NOT NULL,
-                 interval_s INTEGER NOT NULL, start INTEGER NOT NULL, bins INTEGER NOT NULL,
-                 accepted INTEGER NOT NULL, rejected INTEGER NOT NULL, credit REAL NOT NULL,
-                 ok INTEGER NOT NULL, message TEXT NOT NULL);
-             CREATE TABLE IF NOT EXISTS cursor (
-                 device TEXT NOT NULL, server TEXT NOT NULL, interval_s INTEGER NOT NULL, next_after INTEGER NOT NULL,
-                 PRIMARY KEY (device, server, interval_s));",
+                 PRIMARY KEY (device, t, iv)) WITHOUT ROWID;",
         )?;
         Ok(Store { conn })
     }
@@ -194,62 +169,6 @@ impl Store {
         }
         Ok(n)
     }
-
-    // ---- sharing ----
-
-    /// Where the last accepted upload for this device, server and bin length ended.
-    pub fn next_after(&self, device: &str, server: &str, interval_s: u32) -> Result<Option<u32>> {
-        Ok(self
-            .conn
-            .query_row(
-                "SELECT next_after FROM cursor WHERE device=?1 AND server=?2 AND interval_s=?3",
-                params![device, server, interval_s],
-                |r| r.get(0),
-            )
-            .optional()?)
-    }
-
-    pub fn set_next_after(&self, device: &str, server: &str, interval_s: u32, next_after: u32) -> Result<()> {
-        self.conn.execute(
-            "INSERT INTO cursor (device, server, interval_s, next_after) VALUES (?1,?2,?3,?4)
-             ON CONFLICT(device, server, interval_s) DO UPDATE SET next_after=MAX(next_after, ?4)",
-            params![device, server, interval_s, next_after],
-        )?;
-        Ok(())
-    }
-
-    pub fn record_upload(&self, u: &UploadRecord) -> Result<i64> {
-        self.conn.execute(
-            "INSERT INTO upload (device, at, server, interval_s, start, bins, accepted, rejected, credit, ok, message)
-             VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)",
-            params![u.device, u.at, u.server, u.interval_s, u.start, u.bins, u.accepted, u.rejected, u.credit, u.ok, u.message],
-        )?;
-        Ok(self.conn.last_insert_rowid())
-    }
-
-    pub fn uploads(&self, device: &str, limit: u32) -> Result<Vec<UploadRecord>> {
-        let mut st = self.conn.prepare(
-            "SELECT id, device, at, server, interval_s, start, bins, accepted, rejected, credit, ok, message
-             FROM upload WHERE device=?1 ORDER BY id DESC LIMIT ?2",
-        )?;
-        let rows = st.query_map(params![device, limit], |r| {
-            Ok(UploadRecord {
-                id: r.get(0)?,
-                device: r.get(1)?,
-                at: r.get(2)?,
-                server: r.get(3)?,
-                interval_s: r.get(4)?,
-                start: r.get(5)?,
-                bins: r.get(6)?,
-                accepted: r.get(7)?,
-                rejected: r.get(8)?,
-                credit: r.get(9)?,
-                ok: r.get(10)?,
-                message: r.get(11)?,
-            })
-        })?;
-        Ok(rows.collect::<std::result::Result<_, _>>()?)
-    }
 }
 
 #[cfg(test)]
@@ -290,30 +209,13 @@ mod tests {
     }
 
     #[test]
-    fn device_name_survives_updates_and_cursor_only_moves_forward() {
+    fn device_name_survives_updates() {
         let s = Store::open_memory().unwrap();
         s.upsert_device(&dev()).unwrap();
         s.rename_device("abc", "Garage").unwrap();
         s.upsert_device(&Device { last_seen: 9, ..dev() }).unwrap();
         let d = s.device("abc").unwrap().unwrap();
         assert_eq!((d.name.as_str(), d.last_seen), ("Garage", 9));
-        assert_eq!(s.next_after("abc", "x", 600).unwrap(), None);
-        s.set_next_after("abc", "x", 600, 1000).unwrap();
-        s.set_next_after("abc", "x", 600, 500).unwrap();
-        assert_eq!(s.next_after("abc", "x", 600).unwrap(), Some(1000));
-        assert_eq!(s.next_after("abc", "x", 1800).unwrap(), None);
-    }
-
-    #[test]
-    fn upload_history_newest_first() {
-        let s = Store::open_memory().unwrap();
-        for i in 0..3 {
-            let u = UploadRecord { id: 0, device: "abc".into(), at: i, server: "x".into(), interval_s: 600, start: 0, bins: 10, accepted: 9, rejected: 1, credit: 2.5, ok: true, message: String::new() };
-            s.record_upload(&u).unwrap();
-        }
-        let l = s.uploads("abc", 2).unwrap();
-        assert_eq!(l.len(), 2);
-        assert_eq!(l[0].at, 2);
     }
 
     #[test]
