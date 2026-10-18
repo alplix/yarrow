@@ -42,6 +42,20 @@ def main():
                     s.strip() == "" for s in STRING.findall(tr[name])):
                 print("%s: %s contains an empty string" % (code, name))
                 bad += 1
+        # numbers are safety information (the dose table, the thresholds): they must survive a translation unchanged
+        en = load("en")
+        for name in sorted(tr):
+            if name in other and name in en and name != "GUIDE_DATA_EMERGENCY":
+                a, b = STRING.findall(en[name]), STRING.findall(other[name])
+                if len(a) != len(b):
+                    continue
+                for x, y in zip(a, b):
+                    if "112" in x and "911" in x:
+                        continue  # the emergency number is local
+                    nums = re.findall(r"\d+(?:[.,]\d+)?", x)
+                    if any(n.replace(",", ".") not in y.replace(",", ".") for n in nums):
+                        print("%s: %s: numbers of '%s' are not all in '%s'" % (code, name, x[:40], y[:50]))
+                        bad += 1
         for name in sorted(other):
             if name not in tr:
                 print("%s: %s does not exist in the source" % (code, name))

@@ -56,13 +56,19 @@ static void blit(const font_t *f, const glyph_t *g, int x, int y, uint16_t fg, u
 
 void font_draw(const font_t *f, int x, int y, const char *text, uint16_t fg, uint16_t bg, int spacing)
 {
+    const char *whole = text;
     int tw = font_width(f, text, spacing);
+    if (x + tw > DISPLAY_W - 2)
+        layout_warn("text past the edge", text, x + tw, DISPLAY_W - 2);
     display_group_begin(x - 4, y - 4, tw + 12, f->height + 8); /* generous box: glyphs may overhang the advance */
     int baseline = y + f->ascent;
     while (*text) {
-        const glyph_t *g = find(f, next_cp(&text));
-        if (!g)
+        uint32_t cp = next_cp(&text);
+        const glyph_t *g = find(f, cp);
+        if (!g) {
+            layout_warn("missing glyph", whole, (int)cp, f->height);
             continue;
+        }
         if (g->w && g->h)
             blit(f, g, x + g->xoff, baseline - g->yoff, fg, bg);
         x += g->adv + spacing;

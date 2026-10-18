@@ -45,7 +45,17 @@ Details in [docs/building.md](docs/building.md).
 
 ## Languages
 
-Every language is its own firmware file, because the fonts take most of the room. Turkish and English are done. Adding one means copying `src/lang/en.h`, translating it and running `tools/langcheck.py`: [docs/translating.md](docs/translating.md).
+Every language is its own firmware file, because the fonts take most of the room.
+
+| | | | |
+|---|---|---|---|
+| `tr` Türkçe | `en` English | `de` Deutsch | `fr` Français |
+| `es` Español | `pt` Português (Brasil) | `it` Italiano | `nl` Nederlands |
+| `pl` Polski | `ru` Русский | `uk` Українська | `vi` Tiếng Việt |
+| `id` Bahasa Indonesia | `zh` 简体中文 | `ja` 日本語 | `ko` 한국어 |
+
+Adding one means copying `src/lang/en.h`, translating it and running `tools/langcheck.py`; a local model can do the first
+pass: [docs/translating.md](docs/translating.md).
 
 ## Documentation
 

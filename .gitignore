@@ -7,3 +7,4 @@ ref/
 *.d
 __pycache__/
 *.pyc
+third_party/noto-cjk/*.otf

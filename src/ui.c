@@ -147,16 +147,37 @@ void ui_label(const font_t *f, int x, int y, int w, const char *s, uint16_t fg, 
     font_label(f, x, y, w, s, fg, bg, align);
 }
 
+/* A UTF-8 character that is written without spaces between words (Chinese, Japanese, Korean): the line may break
+ * after any of them. */
+static bool cjk_lead(unsigned char c) { return c >= 0xE3 && c <= 0xEF; }
+
+/* closing punctuation that must not start a line (full stop, comma, colon, question mark, closing brackets) */
+static bool no_line_start(const char *w)
+{
+    unsigned char a = (unsigned char)w[0], b = (unsigned char)w[1], c = (unsigned char)w[2];
+    if (a == 0xE3 && b == 0x80)
+        return c == 0x81 || c == 0x82 || c == 0x8D || c == 0x8F || c == 0x89 || c == 0x8B; /* 、。」』〉》 */
+    if (a == 0xEF && b == 0xBC)
+        return c == 0x8C || c == 0x8E || c == 0x9A || c == 0x9B || c == 0x81 || c == 0x9F || c == 0x89; /* ，．：；！？） */
+    return false;
+}
+
 int ui_text_wrap(const font_t *f, int x, int y, int w, const char *s, uint16_t fg, uint16_t bg, int line_gap)
 {
-    char line[96];
+    char line[160];
     int n = 0;
+    bool line_cjk_end = false; /* the line so far ends with such a character */
     const char *p = s;
     while (*p) {
-        /* take the next word */
+        /* take the next word: a run of letters, or one character of a script without spaces */
         const char *q = p;
-        while (*q && *q != ' ')
-            q++;
+        bool cjk = cjk_lead((unsigned char)*p);
+        if (cjk) {
+            q += 3; /* one three-byte character */
+        } else {
+            while (*q && *q != ' ' && !cjk_lead((unsigned char)*q))
+                q++;
+        }
         int wl = (int)(q - p);
         char word[48];
         if (wl > 47)
@@ -165,32 +186,36 @@ int ui_text_wrap(const font_t *f, int x, int y, int w, const char *s, uint16_t f
             word[i] = p[i];
         word[wl] = 0;
 
-        char trial[96];
+        /* a space was there between the last word and this one, unless a script without spaces is involved */
+        bool space = n && (p > s && p[-1] == ' ');
+        char trial[160];
         int tn = 0;
         for (int i = 0; i < n; i++)
             trial[tn++] = line[i];
-        if (n)
+        if (space && tn < 158)
             trial[tn++] = ' ';
-        for (int i = 0; i < wl && tn < 94; i++)
+        for (int i = 0; i < wl && tn < 158; i++)
             trial[tn++] = word[i];
         trial[tn] = 0;
 
-        if (n && font_width(f, trial, 0) > w) {
+        if (n && font_width(f, trial, 0) > w && !no_line_start(word)) {
             line[n] = 0;
             font_draw(f, x, y, line, fg, bg, 0);
             y += f->height + line_gap;
             n = 0;
-            for (int i = 0; i < wl && n < 94; i++)
+            for (int i = 0; i < wl && n < 158; i++)
                 line[n++] = word[i];
         } else {
             n = tn;
             for (int i = 0; i < tn; i++)
                 line[i] = trial[i];
         }
+        line_cjk_end = cjk;
         p = q;
         while (*p == ' ')
             p++;
     }
+    (void)line_cjk_end;
     if (n) {
         line[n] = 0;
         font_draw(f, x, y, line, fg, bg, 0);
@@ -423,8 +448,19 @@ void ui_footer(const char *left, const char *right)
     int y0 = UI_H - UI_FOOTER_H;
     display_fill_rect(0, y0 + 4, UI_W, UI_FOOTER_H - 4, ui_theme->bg);
     ui_divider(y0);
-    if (left && right && rich_width(left) + rich_width(right) + 16 > UI_W - 2 * UI_MARGIN)
-        layout_warn("footer", left, rich_width(left) + rich_width(right), UI_W - 2 * UI_MARGIN - 16);
+    if (left && right && rich_width(left) + rich_width(right) + 16 > UI_W - 2 * UI_MARGIN) {
+        char both[96]; /* "left | right", so that the report names both texts */
+        int n = 0;
+        for (const char *p = left; *p && n < 44; p++)
+            both[n++] = *p;
+        both[n++] = ' ';
+        both[n++] = '|';
+        both[n++] = ' ';
+        for (const char *p = right; *p && n < 94; p++)
+            both[n++] = *p;
+        both[n] = 0;
+        layout_warn("footer", both, rich_width(left) + rich_width(right), UI_W - 2 * UI_MARGIN - 16);
+    }
     if (left)
         rich(UI_MARGIN, y0 + 10, left, ui_theme->dim);
     if (right)

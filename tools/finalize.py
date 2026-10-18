@@ -9,6 +9,8 @@ MAGIC = 0x57524159
 MAX_SIZE = 0x18000
 
 path = sys.argv[1]
+if len(sys.argv) > 2:
+    MAX_SIZE = int(sys.argv[2], 0)
 image = bytearray(open(path, "rb").read())
 
 while len(image) % 4:

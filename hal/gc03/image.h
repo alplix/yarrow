@@ -11,15 +11,27 @@
 #include <stdint.h>
 
 #define IMAGE_BASE          0x08006000u
+#ifdef YARROW_BIG_IMAGE /* Chinese, Japanese, Korean: their fonts need more room, the log window starts later */
+#define IMAGE_MAX_SIZE      0x20000u    /* 128 KB: up to KV_BASE */
+#else
 #define IMAGE_MAX_SIZE      0x18000u    /* 96 KB: up to KV_BASE */
+#endif
 #define IMAGE_MAGIC         0x57524159u /* "YARW" little endian */
 #define IMAGE_HEADER_OFFSET 0x200u
 
 #define FLASH_SECTOR        0x1000u
+#ifdef YARROW_BIG_IMAGE
+#define KV_BASE             0x08026000u
+#else
 #define KV_BASE             0x0801E000u
+#endif
 #define KV_SECTORS          2u
 #define KV_PAGE             0x800u      /* logical page used inside each sector (2 KB: more room means fewer sector erases) */
+#ifdef YARROW_BIG_IMAGE
+#define LOG_BASE            0x08028000u
+#else
 #define LOG_BASE            0x08020000u
+#endif
 #define LOG_END             0x0803F000u
 #define FACTORY_PAGE        0x0803F000u
 #define FACTORY_SIGNATURE   0x0803FC00u

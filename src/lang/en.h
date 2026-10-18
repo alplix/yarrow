@@ -166,7 +166,7 @@
 #define S_RESULT     "Result"
 #define S_HIGHER     "Clearly above background"
 #define S_SAME       "Same as background"
-#define S_MEASURE_TIME "measuring time"
+#define S_MEASURE_TIME "time"
 #define S_GOAL       "goal"
 #define S_MISSION    "Budget"
 #define S_START      "Started"

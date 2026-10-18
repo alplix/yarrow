@@ -9,14 +9,25 @@ SIZE    = arm-none-eabi-size
 # Language of the device text: make YLANG=en (lang/<code>.h). Every language gets its own firmware file, because the
 # fonts differ and take most of the space.
 YLANG ?= tr
+# Chinese, Japanese and Korean carry big fonts: a 128 KB application and a log window that starts later
+ifneq ($(filter $(YLANG),zh ja ko),)
+LAYOUT_CFLAGS = -DYARROW_BIG_IMAGE
+FLASH_LEN = 128K
+IMAGE_MAX = 0x20000
+export YBIG = 1
+else
+LAYOUT_CFLAGS =
+FLASH_LEN = 96K
+IMAGE_MAX = 0x18000
+endif
 BUILD = $(if $(filter tr,$(YLANG)),build,build/$(YLANG))
 TARGET = $(BUILD)/yarrow-gc03
 
 CFLAGS = -mcpu=cortex-m3 -mthumb -Os -g \
          -std=c11 -Wall -Wextra -ffunction-sections -fdata-sections \
-         -ffreestanding -fno-common -MMD -MP -DYLOG_MAX_PAGE=4096 -DYARROW_LANG_HEADER='"lang/$(YLANG).h"' -Ihal/gc03 -Isrc
+         -ffreestanding -fno-common -MMD -MP -DYLOG_MAX_PAGE=4096 -DYARROW_LANG_HEADER='"lang/$(YLANG).h"' $(LAYOUT_CFLAGS) -Ihal/gc03 -Isrc
 LDFLAGS = -mcpu=cortex-m3 -mthumb -nostartfiles -nostdlib \
-          -Thal/gc03/gc03.ld -Wl,--gc-sections -Wl,-Map=$(TARGET).map
+          -T$(BUILD)/gc03.ld -Wl,--gc-sections -Wl,-Map=$(TARGET).map
 
 SRCS = hal/gc03/startup.c hal/gc03/support.c hal/gc03/board.c hal/gc03/display.c hal/gc03/hal_gc03.c hal/gc03/usb_gc03.c        src/main.c src/font.c src/ui.c src/render.c src/ui_boot.c src/screens.c src/screens2.c src/fmt.c        src/ylc.c src/ylog.c src/kv.c src/meas.c src/alarm.c src/bat.c src/cal.c src/app.c src/proto.c
 OBJS = $(SRCS:%.c=$(BUILD)/%.o) $(BUILD)/font_data.o
@@ -46,12 +57,16 @@ $(BUILD)/%.o: %.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(TARGET).elf: $(OBJS)
+$(BUILD)/gc03.ld: hal/gc03/gc03.ld
+	@mkdir -p $(BUILD)
+	sed 's/LENGTH = 96K/LENGTH = $(FLASH_LEN)/' $< > $@
+
+$(TARGET).elf: $(OBJS) $(BUILD)/gc03.ld
 	$(CC) $(LDFLAGS) $(OBJS) -lgcc -o $@
 
 $(TARGET).bin: $(TARGET).elf
 	$(OBJCOPY) -O binary $< $@
-	python tools/finalize.py $@
+	python tools/finalize.py $@ $(IMAGE_MAX)
 
 # Runs the image in an ARM emulator: normal run, truncated and damaged images (needs: pip install unicorn)
 test: $(TARGET).bin

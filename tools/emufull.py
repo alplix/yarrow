@@ -12,7 +12,12 @@ from unicorn import UC_HOOK_MEM_READ, UC_HOOK_MEM_WRITE, UC_ARCH_ARM, UC_MODE_MC
 from unicorn.arm_const import UC_ARM_REG_PC, UC_ARM_REG_SP
 
 BASE = 0x08006000
-KV_BASE, LOG_BASE, LOG_END = 0x0801E000, 0x08020000, 0x0803F000
+import os
+
+if os.environ.get("YBIG"):  # the Chinese, Japanese and Korean layout
+    KV_BASE, LOG_BASE, LOG_END = 0x08026000, 0x08028000, 0x0803F000
+else:
+    KV_BASE, LOG_BASE, LOG_END = 0x0801E000, 0x08020000, 0x0803F000
 FLASH_END = 0x08040000
 ERASED = b"\x39\xe3"  # raw erased pattern of the CH32F2 flash
 

@@ -320,13 +320,9 @@ static void scr_sample(const ui_data_t *d, const ui_state_t *s, bool full)
     int lit = d->sample_goal_s ? (int)((uint64_t)d->sample_elapsed_s * 20u / d->sample_goal_s) : 0;
     ui_meter(UI_MARGIN, 204, 216, lit > 20 ? 20 : lit, false, t->warn);
     char tm[40];
-    int n = add(tm, 0, S_MEASURE_TIME);
-    n = add(tm, n, " ");
-    fmt_duration(v, d->sample_elapsed_s);
-    n = add(tm, n, v);
-    n = add(tm, n, " · ");
-    n = add(tm, n, S_GOAL);
-    n = add(tm, n, " ");
+    /* "elapsed / goal": two durations, no words, so that no language runs out of room */
+    int n = fmt_duration(tm, d->sample_elapsed_s);
+    n = add(tm, n, " / ");
     fmt_duration(v, d->sample_goal_s);
     add(tm, n, v);
     ui_label(&font_12_regular, UI_MARGIN, 222, 216, tm, t->dim, t->bg, 0);
@@ -538,7 +534,7 @@ static void scr_usb(const ui_data_t *d, const ui_state_t *s, bool full)
     }
     status(d);
     ui_text(&font_14_medium, UI_MARGIN, 70, "Yarrow Hub", t->ink, t->bg);
-    display_fill_rect(UI_W - UI_MARGIN - 80, 66, 80, 22, t->bg);
+    display_fill_rect(UI_W - UI_MARGIN - 128, 66, 128, 22, t->bg);
     if (d->usb_connected)
         ui_chip(UI_W - UI_MARGIN - font_width(&font_12_medium, S_USB_STATE, 1) - 18, 68, S_USB_STATE, t->ok);
 

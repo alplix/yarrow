@@ -248,6 +248,16 @@ int main(int argc, char **argv)
                     if (warn_on)
                         printf("-- %s\n", shots[i].name);
                     display_render(1, true, sim_draw, &c);
+                    if (warn_on) { /* the same screen with the widest numbers it can show */
+                        ui_data_t w = d;
+                        w.days_stored = 3999; w.cpm = 99999; w.rate_nsvh = 888000; w.bat_minutes = 99999; w.dose_today_nsv = 98700000;
+                        w.dose_week_nsv = 98700000; w.dose_total_nsv = 98700000; w.on_hours = 99999; w.total_pulses = 99999999;
+                        w.e_vm_x10 = 19990; w.h_ut_x100 = 9999; w.sample_elapsed_s = 5999; w.cw_counts = 99999; w.cw_seconds = 99999;
+                        w.sess_seconds = 99999 * 3; w.sess_dose_nsv = 98700000; w.scan_value_x10 = 19990;
+                        for (int k = 0; k < SESS_SLOTS; k++) w.sess_list[k].dose_nsv = 98700000;
+                        sim_ctx_t cw = {shots[i].id, &w, &shots[i].st};
+                        display_render(1, true, sim_draw, &cw);
+                    }
                     warn_on = false;
                     if (d.theme == 0) { /* what the change-only redraw leaves must equal a full draw of the same data */
                         ui_data_t m = d;

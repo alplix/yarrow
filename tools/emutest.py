@@ -73,15 +73,16 @@ def main():
     bad_magic = bytearray(good)
     bad_magic[0x200] ^= 0xFF
 
+    crc = max(5_000_000, len(good) * 90)  # the integrity check runs a bit-by-bit CRC over the whole image
     # name, image, budget, csr, expect_backlight, expect_power_off
     cases = [
         ("intact image starts and lights the backlight" + (" then switches off" if len(sys.argv) > 2 and sys.argv[2] == "off" else ""), good, 80_000_000, 0, True, len(sys.argv) > 2 and sys.argv[2] == "off"),
-        ("tail erased after 2048 bytes", erased(2048), 5_000_000, 0, False, True),
-        ("tail erased after 4096 bytes", erased(4096), 5_000_000, 0, False, True),
-        ("only first 0x300 bytes written", erased(0x300), 5_000_000, 0, False, True),
-        ("one flipped bit in the middle", flipped, 5_000_000, 0, False, True),
-        ("header magic damaged", bad_magic, 5_000_000, 0, False, True),
-        ("previous run ended in a watchdog reset", good, 5_000_000, 1 << 29, False, True),
+        ("tail erased after 2048 bytes", erased(2048), crc, 0, False, True),
+        ("tail erased after 4096 bytes", erased(4096), crc, 0, False, True),
+        ("only first 0x300 bytes written", erased(0x300), crc, 0, False, True),
+        ("one flipped bit in the middle", flipped, crc, 0, False, True),
+        ("header magic damaged", bad_magic, crc, 0, False, True),
+        ("previous run ended in a watchdog reset", good, crc, 1 << 29, False, True),
     ]
 
     failed = 0
