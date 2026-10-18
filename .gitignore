@@ -1,0 +1,9 @@
+build/
+dist/
+ref/
+*.elf
+*.map
+*.o
+*.d
+__pycache__/
+*.pyc
