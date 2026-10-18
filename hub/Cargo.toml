@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/yarrow-core"]
+members = ["crates/yarrow-core", "crates/yarrow-store"]
 
 [workspace.package]
 version = "0.1.0"

@@ -1,0 +1,18 @@
+[package]
+name = "yarrow-store"
+description = "Local SQLite store for Yarrow Hub: decoded samples per device and the upload history"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+yarrow-core = { path = "../yarrow-core" }
+rusqlite = { version = "0.40", features = ["bundled"] }
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+
+[dev-dependencies]
+tempfile = "3"
+
+[lints]
+workspace = true
