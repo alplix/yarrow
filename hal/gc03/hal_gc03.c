@@ -16,8 +16,33 @@ static volatile uint32_t pulses;
 static volatile uint8_t tick8;
 static volatile uint32_t buzz_inc, buzz_phase;
 static volatile uint8_t bl_duty = 16, bl_phase; /* full brightness until the app sets a level: the screen must not go dark when the tick starts */
-static volatile uint8_t pulse_led_ms;
-static volatile bool pulse_led_en = true;
+/* The LED has three channels, all active low. Which pin has which colour is set here and nowhere else. */
+#define LED_RED   1u
+#define LED_GREEN 2u
+#define LED_BLUE  4u
+#define LED_R_PORT GPIOB
+#define LED_R_PIN  15
+#define LED_G_PORT GPIOB
+#define LED_G_PIN  14
+#define LED_B_PORT GPIOC
+#define LED_B_PIN  8
+
+static volatile uint8_t led_mask = LED_GREEN; /* colour of the count flash and of the charge light */
+static volatile bool led_flash_en = true, led_charge_lit, led_alert_lit;
+static volatile uint8_t led_flash_ms;
+static bool boot_by_usb;
+
+static void led_apply(void)
+{
+    uint8_t on = 0;
+    if (led_alert_lit)
+        on |= LED_RED; /* an alarm is red */
+    if (led_charge_lit || led_flash_ms)
+        on |= led_mask;
+    GPIO_BSRR(LED_R_PORT) = (on & LED_RED) ? (1u << (LED_R_PIN + 16)) : (1u << LED_R_PIN);
+    GPIO_BSRR(LED_G_PORT) = (on & LED_GREEN) ? (1u << (LED_G_PIN + 16)) : (1u << LED_G_PIN);
+    GPIO_BSRR(LED_B_PORT) = (on & LED_BLUE) ? (1u << (LED_B_PIN + 16)) : (1u << LED_B_PIN);
+}
 static volatile bool click_en, vibe_en;
 static volatile uint8_t click_left, vibe_ms;
 static volatile bool alert_on;
@@ -132,8 +157,8 @@ static void scan_inputs(void)
 
     scan_charger();
 
-    if (pulse_led_ms && --pulse_led_ms == 0)
-        GPIO_BSRR(GPIOB) = 1u << 14; /* pulse LED off (active low) */
+    if (led_flash_ms && --led_flash_ms == 0)
+        led_apply();
     if (vibe_ms && --vibe_ms == 0)
         GPIO_BSRR(GPIOB) = 1u << (1 + 16);
 }
@@ -180,9 +205,9 @@ void exti3_handler(void)
         vibe_ms = 25;
         GPIO_BSRR(GPIOB) = 1u << 1;
     }
-    if (pulse_led_en) {
-        pulse_led_ms = 3;
-        GPIO_BSRR(GPIOB) = 1u << (14 + 16); /* pulse LED on */
+    if (led_flash_en) {
+        led_flash_ms = 3;
+        led_apply();
     }
 }
 
@@ -198,8 +223,26 @@ static void h_beep(uint32_t hz)
 }
 
 static void h_vibrate(bool on) { GPIO_BSRR(GPIOB) = on ? (1u << 1) : (1u << (1 + 16)); }
-static void h_alert_led(bool on) { GPIO_BSRR(GPIOB) = on ? (1u << (15 + 16)) : (1u << 15); }
-static void h_status_led(bool on) { GPIO_BSRR(GPIOC) = on ? (1u << (8 + 16)) : (1u << 8); }
+static void h_alert_led(bool on)
+{
+    led_alert_lit = on;
+    led_apply();
+}
+
+static bool h_power_key_down(void) { return !(GPIO_IDR(GPIOA) & (1u << 9)); }
+static bool h_started_by_usb(void) { return boot_by_usb; }
+
+static void h_status_led(bool on)
+{
+    led_charge_lit = on;
+    led_apply();
+}
+
+static void h_led_color(uint8_t mask)
+{
+    led_mask = (mask & 7u) ? (uint8_t)(mask & 7u) : LED_GREEN;
+    led_apply();
+}
 static void h_count_click_enable(bool on)
 {
     click_en = on;
@@ -214,9 +257,11 @@ static void h_count_vibe_enable(bool on)
 
 static void h_pulse_led_enable(bool on)
 {
-    pulse_led_en = on;
-    if (!on)
-        GPIO_BSRR(GPIOB) = 1u << 14; /* off (active low) */
+    led_flash_en = on;
+    if (!on) {
+        led_flash_ms = 0;
+        led_apply();
+    }
 }
 
 static void h_backlight(uint8_t level)
@@ -606,7 +651,7 @@ static const hal_t gc03 = {
     h_rtc_now, h_rtc_set, h_poll_event, h_tube_pulses, h_battery_mv, h_usb_present, h_charging, h_efield_vm_x10,
     h_hfield_ut_x100, h_hv_factory_valid, h_hv_start, h_hv_stop, h_beep, h_vibrate, h_alert_led, h_backlight,
     h_display_enable, h_power_off, h_watchdog_kick, &log_window, &kv_window, h_usb_connected, h_serial_read, h_serial_write, usb_gc03_init,
-    h_status_led, h_pulse_led_enable, h_count_click_enable, h_count_vibe_enable,
+    h_status_led, h_pulse_led_enable, h_count_click_enable, h_count_vibe_enable, h_started_by_usb, h_power_key_down, h_led_color,
 };
 
 /* bring-up marker: empty in the firmware, a test image can override it to show how far start-up got */
@@ -630,6 +675,13 @@ const hal_t *hal_gc03_init(void)
         gpio_write(ins[i].port, ins[i].pin, true);
     }
     knob_prev = (int8_t)((((GPIO_IDR(GPIOB) >> 5) & 1u) << 1) | ((GPIO_IDR(GPIOB) >> 7) & 1u));
+
+    /* who switched the device on? Cable power does not hold the power key down */
+    {
+        uint32_t idr = GPIO_IDR(GPIOC);
+        bool cable = (!(idr & (1u << 6))) != (!(idr & (1u << 7))); /* exactly one charger pin low */
+        boot_by_usb = cable && !h_power_key_down();
+    }
 
     dbg_mark(1);
     rtc_init();

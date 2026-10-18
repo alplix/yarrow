@@ -24,6 +24,8 @@ typedef struct {
     bool sound, vibration;
     bool led_pulse, led_charge; /* the count LED flashes on every pulse; the charge LED lights while charging */
     bool click, count_vibe;     /* a click from the buzzer and a buzz of the motor on every pulse */
+    uint8_t led_color;          /* 0 follows the theme, 1 red, 2 green, 3 blue, 4 yellow, 5 cyan, 6 magenta, 7 white */
+    bool usb_start;             /* a cable alone switches the device on */
     int8_t tz_hours;
     uint8_t profile;    /* log profile 0..4 */
 } app_settings_t;
@@ -37,6 +39,7 @@ typedef struct {
     uint8_t suspect_mask;     /* bit n: stage n failed to run stably last time */
     uint32_t stage_since_ms;
     bool kv_ok;
+    bool prepared;            /* app_prepare has run */
 
     meas_t meas;
     alarm_t alarm;
@@ -68,6 +71,8 @@ typedef struct {
     uint32_t drawn_sig;      /* fingerprint of what the screen showed at the last redraw */
     bool usb_was_present;
     bool status_led_on;
+    uint8_t led_preview_s;    /* seconds the charge light stays on to show a newly chosen colour */
+    uint8_t led_mask;
     uint32_t anim_ms;
     app_settings_t settings;
     int theme_before;         /* theme to return to when the picker is cancelled */
@@ -109,6 +114,13 @@ typedef struct {
     bool shutting_down;
     uint32_t last_save_s, last_slow_save_s;
 } app_t;
+
+/* First part of start-up: opens the settings store and loads the settings, without touching the display. */
+void app_prepare(app_t *a, const hal_t *hal);
+
+/* False when the device was switched on by the USB cable alone and the user has turned that off: the caller then
+ * switches it off again before anything is drawn. Needs app_prepare first. */
+bool app_boot_allowed(const app_t *a);
 
 void app_init(app_t *a, const hal_t *hal, uint32_t now_ms);
 

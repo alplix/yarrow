@@ -120,6 +120,9 @@
 #define S_ATT_TH     "Caution level"
 #define S_CLICK      "Count click"
 #define S_COUNT_VIBE "Count vibration"
+#define S_USB_START  "Start on USB power"
+#define S_LED_COLOR  "LED colour"
+#define LED_COLOR_NAMES {"Theme", "Red", "Green", "Blue", "Yellow", "Cyan", "Magenta", "White"}
 #define S_LED_PULSE  "Count LED"
 #define S_LED_CHARGE "Charge LED"
 #define S_TIME_ZONE  "Time zone"
@@ -222,6 +225,8 @@
     "Should alarms and warnings make a sound.", "Should the device vibrate on an alarm.", \
     "A click on every tube count, like the classic Geiger counters.", "The motor gives a short buzz on every count.", \
     "The LED flashes on every count. Switching it off saves a little power.", "The LED lights while the battery charges.", \
+    "Colour of the count and charge LED. Theme follows the accent colour of the screen.", \
+    "Should the device switch itself on when USB power arrives. If not, hold the power key to start it.", \
     "Which time zone the clock shows.", "Set the time and date by hand."}
 /* sessions */
 #define S_T_SESSIONS   "Sessions"

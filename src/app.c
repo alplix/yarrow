@@ -14,7 +14,7 @@ enum {
     K_SESSACT = 0x71
 };
 #define EVT_SLOTS 16
-#define SETTINGS_ROWS 10
+#define SETTINGS_ROWS 12
 
 /* Flash sectors wear out with every erase. The settings store fills up and is compacted into the other sector every
  * few kilobytes written, so the counters are saved rarely: a clean power-off saves everything anyway, only a pulled
@@ -116,6 +116,32 @@ static void set_home(app_t *a, int idx)
 
 /* ---- settings and persistence ---- */
 
+/* LED colour masks: 1 red, 2 green, 4 blue. The numbers 1..7 of the setting are red, green, blue, yellow, cyan, magenta, white. */
+static const uint8_t led_masks[8] = {0, 1, 2, 4, 3, 6, 5, 7};
+
+/* the colour of a theme's accent: the channels that are strong enough, or white when it is grey */
+static uint8_t led_mask_of_rgb565(uint16_t c)
+{
+    int r = ((c >> 11) & 31) * 255 / 31, g = ((c >> 5) & 63) * 255 / 63, b = (c & 31) * 255 / 31;
+    int mx = r > g ? (r > b ? r : b) : (g > b ? g : b);
+    int mn = r < g ? (r < b ? r : b) : (g < b ? g : b);
+    if (mx - mn < 40)
+        return 7;
+    uint8_t m = 0;
+    if (r * 10 >= mx * 6) m |= 1;
+    if (g * 10 >= mx * 6) m |= 2;
+    if (b * 10 >= mx * 6) m |= 4;
+    return m;
+}
+
+static void apply_led_color(app_t *a)
+{
+    uint8_t m = a->settings.led_color ? led_masks[a->settings.led_color & 7] : led_mask_of_rgb565(themes[a->settings.theme % THEME_COUNT].acc);
+    a->led_mask = m;
+    a->ui.led_mask = m;
+    H(a)->led_color(m);
+}
+
 static void load_settings(app_t *a)
 {
     app_settings_t *s = &a->settings;
@@ -127,6 +153,8 @@ static void load_settings(app_t *a)
     s->led_charge = true;
     s->click = false;
     s->count_vibe = false;
+    s->led_color = 0;
+    s->usb_start = true;
     s->tz_hours = 3;
     s->profile = 2;
     a->th[0] = 500; a->th[1] = 10000; a->th[2] = 100000;
@@ -144,6 +172,8 @@ static void load_settings(app_t *a)
         s->led_charge = (b[2] & 8) == 0;
         s->click = (b[2] & 16) != 0;
         s->count_vibe = (b[2] & 32) != 0;
+        s->led_color = b[5] <= 7 ? b[5] : 0;
+        s->usb_start = b[6] == 0; /* stored as 'off' so older records start on USB power */
         s->tz_hours = (int8_t)b[3];
         s->profile = b[4] < 5 ? b[4] : 2;
     }
@@ -206,7 +236,7 @@ static void save_settings(app_t *a)
     uint8_t b[8] = {a->settings.theme, a->settings.brightness,
                     (uint8_t)((a->settings.sound ? 1 : 0) | (a->settings.vibration ? 2 : 0) | (a->settings.led_pulse ? 0 : 4) |
                               (a->settings.led_charge ? 0 : 8) | (a->settings.click ? 16 : 0) | (a->settings.count_vibe ? 32 : 0)),
-                    (uint8_t)a->settings.tz_hours, a->settings.profile, 0, 0, 0};
+                    (uint8_t)a->settings.tz_hours, a->settings.profile, a->settings.led_color, (uint8_t)(a->settings.usb_start ? 0 : 1), 0};
     kv_set(&a->kv, K_SETTINGS, b, 8);
 }
 
@@ -716,7 +746,9 @@ static void run_second(app_t *a, uint32_t now_ms)
         pop(a);
     a->usb_was_present = usb;
     {
-        bool lit = feat_sensors(a) && a->settings.led_charge && usb && H(a)->charging();
+        bool lit = feat_sensors(a) && ((a->settings.led_charge && usb && H(a)->charging()) || a->led_preview_s > 0);
+        if (a->led_preview_s)
+            a->led_preview_s--;
         if (lit != a->status_led_on) {
             a->status_led_on = lit;
             H(a)->status_led(lit);
@@ -842,6 +874,8 @@ static void run_second(app_t *a, uint32_t now_ms)
     u->led_charge = a->settings.led_charge;
     u->click = a->settings.click;
     u->count_vibe = a->settings.count_vibe;
+    u->led_color = a->settings.led_color;
+    u->usb_start = a->settings.usb_start;
     u->profile = a->settings.profile;
     u->stage = a->stage;
     u->budget_active = a->alarm.budget_active;
@@ -870,7 +904,14 @@ static void run_second(app_t *a, uint32_t now_ms)
 
 static int wrap(int v, int n) { return (v % n + n) % n; }
 
-static void apply_theme(app_t *a) { ui_theme = &themes[a->settings.theme % THEME_COUNT]; }
+static void apply_led_color(app_t *a);
+
+/* the theme also decides the LED colour, unless a colour was chosen */
+static void apply_theme(app_t *a)
+{
+    ui_theme = &themes[a->settings.theme % THEME_COUNT];
+    apply_led_color(a);
+}
 
 static void backlight_apply(app_t *a)
 {
@@ -1121,8 +1162,14 @@ static void on_event(app_t *a, input_event_t ev)
                 H(a)->pulse_led_enable(a->settings.led_pulse);
                 break;
             case 7: a->settings.led_charge = !a->settings.led_charge; break;
-            case 8: a->settings.tz_hours = (int8_t)(a->settings.tz_hours >= 14 ? -12 : a->settings.tz_hours + 1); break;
-            case 9: open_clock_editor(a); break;
+            case 8:
+                a->settings.led_color = (uint8_t)((a->settings.led_color + 1) % 8);
+                apply_led_color(a);
+                a->led_preview_s = 3; /* show it */
+                break;
+            case 9: a->settings.usb_start = !a->settings.usb_start; break;
+            case 10: a->settings.tz_hours = (int8_t)(a->settings.tz_hours >= 14 ? -12 : a->settings.tz_hours + 1); break;
+            case 11: open_clock_editor(a); break;
             default: break;
             }
             save_settings(a);
@@ -1451,9 +1498,25 @@ static void on_event(app_t *a, input_event_t ev)
 
 /* ---- init and poll ---- */
 
-void app_init(app_t *a, const hal_t *hal, uint32_t now_ms)
+void app_prepare(app_t *a, const hal_t *hal)
 {
     memset(a, 0, sizeof *a);
+    a->hal = hal;
+    a->kv_ok = hal->kv_flash && kv_open(&a->kv, hal->kv_flash) == 0;
+    load_settings(a);
+    a->prepared = true;
+}
+
+bool app_boot_allowed(const app_t *a)
+{
+    return a->settings.usb_start || !a->hal->started_by_usb();
+}
+
+void app_init(app_t *a, const hal_t *hal, uint32_t now_ms)
+{
+    if (!a->prepared)
+        app_prepare(a, hal);
+    a->prepared = false;
     a->hal = hal;
     a->display_on = true;
     a->last_input_ms = now_ms;
@@ -1465,8 +1528,6 @@ void app_init(app_t *a, const hal_t *hal, uint32_t now_ms)
     alarm_init(&a->alarm, &ac);
     bat_init(&a->bat, 0);
 
-    a->kv_ok = hal->kv_flash && kv_open(&a->kv, hal->kv_flash) == 0;
-    load_settings(a);
     a->alarm.cfg.th_nsvh[0] = a->th[0];
     a->alarm.cfg.th_nsvh[1] = a->th[1];
     a->alarm.cfg.th_nsvh[2] = a->th[2];
@@ -1475,6 +1536,7 @@ void app_init(app_t *a, const hal_t *hal, uint32_t now_ms)
     hal->pulse_led_enable(a->settings.led_pulse);
     hal->count_click_enable(a->settings.click);
     hal->count_vibe_enable(a->settings.count_vibe);
+    apply_led_color(a);
 
     sess_load(a);
     a->sess_prev_total = total_dose(a);

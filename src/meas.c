@@ -46,7 +46,7 @@ static uint32_t sum_range(const meas_t *m, uint32_t from, uint32_t to)
 void meas_tick(meas_t *m, uint32_t pulses)
 {
     bool sat = false;
-    m->hist[m->pos] = pulses;
+    m->hist[m->pos] = pulses > 0xFFFFu ? 0xFFFFu : (uint16_t)pulses;
     m->pos = (m->pos + 1) % MEAS_HISTORY;
     if (m->seconds < 0xFFFFFFFFu)
         m->seconds++;

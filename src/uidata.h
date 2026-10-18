@@ -93,6 +93,9 @@ typedef struct {
     bool sound, vibration;
     bool led_pulse, led_charge;
     bool click, count_vibe;
+    uint8_t led_color;      /* 0 follows the theme, 1..7 a fixed colour */
+    bool usb_start;         /* a cable alone switches the device on */
+    uint8_t led_mask;       /* the colour the LED has now: 1 red, 2 green, 4 blue, mixed */
 
     /* self test */
     uint8_t selftest_done, selftest_total;

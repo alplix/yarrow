@@ -60,6 +60,9 @@ typedef struct {
     void (*pulse_led_enable)(bool on);  /* whether the LED flashes on every tube pulse */
     void (*count_click_enable)(bool on); /* a short click from the buzzer on every tube pulse */
     void (*count_vibe_enable)(bool on);  /* a short buzz of the motor on every tube pulse */
+    bool (*started_by_usb)(void);        /* power came from the cable, not from the power key (valid right after start-up) */
+    bool (*power_key_down)(void);        /* the power key is held now (raw, no debounce) */
+    void (*led_color)(uint8_t mask);     /* colour of the count flash and the charge light: 1 red, 2 green, 4 blue, mixed by adding */
 } hal_t;
 
 #endif

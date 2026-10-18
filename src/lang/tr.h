@@ -121,6 +121,9 @@
 #define S_ATT_TH     "Dikkat eşiği"
 #define S_CLICK      "Sayım tıkı"
 #define S_COUNT_VIBE "Sayım titreşimi"
+#define S_USB_START  "USB güçle aç"
+#define S_LED_COLOR  "LED rengi"
+#define LED_COLOR_NAMES {"Tema", "Kırmızı", "Yeşil", "Mavi", "Sarı", "Camgöbeği", "Eflatun", "Beyaz"}
 #define S_LED_PULSE  "Sayım LED'i"
 #define S_LED_CHARGE "Şarj LED'i"
 #define S_TIME_ZONE  "Saat dilimi"
@@ -224,6 +227,8 @@
     "Alarm ve uyarılarda ses çalsın mı.", "Alarmda cihaz titresin mi.", \
     "Tüpten gelen her sayımda eski Geiger sayaçları gibi tık sesi çıkar.", "Her sayımda motor kısa bir titreşim verir.", \
     "Her sayımda LED yanıp söner. Kapatmak biraz pil kazandırır.", "Kablo takılıyken şarj olurken LED yanar.", \
+    "Sayım ve şarj LED'inin rengi. Tema seçiliyse ekranın vurgu rengini izler.", \
+    "Kapalıyken USB güç gelince cihaz kendiliğinden açılsın mı. Kapalıysa açmak için güç tuşunu basılı tut.", \
     "Saat hangi bölgeye göre gösterilsin (Türkiye UTC+3).", "Saati ve tarihi elle ayarla."}
 /* oturumlar */
 #define S_T_SESSIONS   "Oturumlar"

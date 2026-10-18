@@ -14,8 +14,8 @@
 
 #include "display.h"
 
-#define OPS_MAX 128
-#define DIRTY_MAX 96
+#define OPS_MAX 104
+#define DIRTY_MAX 40
 
 typedef struct {
     uint16_t x, y, w, h;

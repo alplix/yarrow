@@ -118,7 +118,13 @@ def main():
     mu.hook_add(UC_HOOK_MEM_WRITE, wr, begin=0x40000000, end=0x40030000)
     mu.hook_add(UC_HOOK_MEM_WRITE, wr, begin=0x08000000, end=FLASH_END)
 
-    sp, reset = struct.unpack("<2L", image[:8])
+    sp_device, reset = struct.unpack("<2L", image[:8])
+    # Measure how deep the stack really goes: start it high in a bigger RAM than the device has, fill the free area with
+    # a pattern and see afterwards how far down the pattern was destroyed. The device has sp_device - _ebss bytes.
+    sp = 0x2000FF00
+    ebss = sym["_ebss"]
+    PATTERN = bytes([0xA5]) * 4
+    mu.mem_write(ebss, PATTERN * ((sp - 64 - ebss) // 4))
     mu.reg_write(UC_ARM_REG_SP, sp)
     pc = reset & ~1
     g_ms = sym.get("g_ms")
@@ -156,6 +162,15 @@ def main():
           f"flash programs {st['writes']}, sector erases {st['erases']}")
     print(f"TIM5 ARR {r.get(TIM5_ARR)}, CCR3 {r.get(TIM5_CCR3)}, CR1 {r.get(TIM5_CR1)}, EXTI IMR {r.get(EXTI_IMR)}")
 
+    # lowest address the stack has reached
+    area = bytes(mu.mem_read(ebss, sp - 64 - ebss))
+    low = 0
+    while low + 4 <= len(area) and area[low:low + 4] == PATTERN:
+        low += 4
+    depth = (sp - 64) - (ebss + low) + 64
+    room = sp_device - ebss
+    print(f"stack: deepest use {depth} bytes, room on the device {room} bytes")
+
     fails = 0
 
     def check(ok, msg):
@@ -172,6 +187,7 @@ def main():
     check(r.get(TIM5_ARR) == 23999, "tube high voltage period from the factory page (4 kHz -> ARR 23999)")
     check(r.get(TIM5_CCR3, 0) > 0 and r.get(TIM5_CCR3, 0) * 2 < 23999, "tube high voltage duty is set and below 50 percent")
     check(bool(r.get(EXTI_IMR, 0) & 8), "tube pulse interrupt is enabled")
+    check(depth + 1024 <= room, f"the stack keeps 1 KB of room on the device ({depth} of {room} bytes used)")
     sys.exit(1 if fails else 0)
 
 

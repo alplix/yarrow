@@ -123,9 +123,14 @@ static void h_pulseled(bool on) { led_pulse = on; }
 static bool count_click, count_vibe;
 static void h_cclick(bool on) { count_click = on; }
 static void h_cvibe(bool on) { count_vibe = on; }
+static bool boot_usb, key_down;
+static bool h_bootusb(void) { return boot_usb; }
+static bool h_keydown(void) { return key_down; }
+static uint8_t led_mask_now = 2;
+static void h_ledcolor(uint8_t m) { led_mask_now = m; }
 
 static hal_t hal = {h_rtc, h_rtc_set, pop_ev, h_pulses, h_mv, h_usb, h_chg, h_e, h_h, h_hvv, h_hvs, h_hvx, h_beep, h_vib, h_led,
-                    h_bl, h_disp, h_off, h_wd, &log_dev, &kv_dev, h_usbc, h_sr, h_sw, h_usbstart, h_statusled, h_pulseled, h_cclick, h_cvibe};
+                    h_bl, h_disp, h_off, h_wd, &log_dev, &kv_dev, h_usbc, h_sr, h_sw, h_usbstart, h_statusled, h_pulseled, h_cclick, h_cvibe, h_bootusb, h_keydown, h_ledcolor};
 
 static app_t app;
 static uint32_t now_ms;
@@ -520,8 +525,60 @@ static void test_leds(void)
     CHECK(app.settings.click && count_click && app.settings.count_vibe && count_vibe, "click and count vibration switched on");
     reboot();
     CHECK(app.settings.click && app.settings.count_vibe && count_click && count_vibe, "click settings lost after restart");
+    /* the LED colour: the theme decides unless a colour is chosen */
+    fresh();
+    to_stage5();
+    CHECK(app.settings.led_color == 0, "LED colour starts on the theme");
+    int before_mask = led_mask_now;
+    app_set_theme(&app, THEME_AMBER);
+    CHECK(led_mask_now == 3, "amber theme gives a yellow LED, got %d", led_mask_now);
+    app_set_theme(&app, THEME_DARK);
+    CHECK(led_mask_now == 6 || led_mask_now == 4, "the dark theme (sky blue) gives a blue or cyan LED, got %d (was %d)", led_mask_now, before_mask);
+    while (app_screen(&app) != SCR_MAIN)
+        send(EV_BACK);
+    send(EV_OK);
+    for (int i = 0; i < 12; i++)
+        send(EV_RIGHT);
+    send(EV_OK); /* settings */
+    for (int i = 0; i < 8; i++)
+        send(EV_RIGHT);
+    send(EV_OK); /* colour: red */
+    CHECK(app.settings.led_color == 1 && led_mask_now == 1, "chosen colour red, got mask %d", led_mask_now);
+    send(EV_OK); /* green */
+    CHECK(led_mask_now == 2, "next colour green");
+    app_set_theme(&app, THEME_AMBER);
+    CHECK(led_mask_now == 2, "a chosen colour ignores the theme");
+    reboot();
+    CHECK(app.settings.led_color == 2 && led_mask_now == 2, "LED colour lost after restart");
     printf("leds: ok\n");
     t_usb = false; t_charging = false;
+}
+
+/* Start on USB power: the setting decides whether a cable alone switches Yarrow on. */
+static void test_usb_start(void)
+{
+    fresh();
+    CHECK(app.settings.usb_start, "starting on USB power is on by default");
+    CHECK(app_boot_allowed(&app), "a normal start is allowed");
+    boot_usb = true;
+    CHECK(app_boot_allowed(&app), "started by the cable with the setting on: allowed");
+    while (app_screen(&app) != SCR_MAIN)
+        send(EV_BACK);
+    to_stage5();
+    send(EV_OK);
+    for (int i = 0; i < 12; i++)
+        send(EV_RIGHT);
+    send(EV_OK); /* settings */
+    for (int i = 0; i < 9; i++)
+        send(EV_RIGHT);
+    send(EV_OK); /* start on USB power: off */
+    CHECK(!app.settings.usb_start, "setting switched off");
+    reboot();
+    CHECK(!app.settings.usb_start, "the setting is kept");
+    CHECK(!app_boot_allowed(&app), "started by the cable with the setting off: not allowed");
+    boot_usb = false;
+    CHECK(app_boot_allowed(&app), "started by the power key: always allowed");
+    printf("usb start: ok\n");
 }
 
 static void test_navigation_and_settings(void)
@@ -621,7 +678,7 @@ static void test_clock_and_calibration(void)
     for (int i = 0; i < 12; i++)
         send(EV_RIGHT);
     send(EV_OK); /* settings */
-    for (int i = 0; i < 9; i++)
+    for (int i = 0; i < 11; i++)
         send(EV_RIGHT);
     send(EV_OK); /* clock row */
     CHECK(app_screen(&app) == SCR_CLOCK, "clock editor screen (%d)", app_screen(&app));
@@ -768,6 +825,7 @@ int main(void)
     test_stillness();
     test_navigation_and_settings();
     test_leds();
+    test_usb_start();
     test_calibration_wizard();
     test_sessions();
     test_flash_wear();

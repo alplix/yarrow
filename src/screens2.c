@@ -103,12 +103,12 @@ static void scr_settings(const ui_data_t *d, const ui_state_t *s, bool full)
     }
     status(d);
     static const char *const themes_n[THEME_COUNT] = THEME_NAMES;
-    const char *labels[10] = {S_THEME, S_BRIGHTNESS, S_SOUND, S_VIBRATION, S_CLICK, S_COUNT_VIBE, S_LED_PULSE, S_LED_CHARGE, S_TIME_ZONE, S_CLOCK_DATE};
-    static const char *const desc[10] = SETTINGS_DESC;
+    const char *labels[12] = {S_THEME, S_BRIGHTNESS, S_SOUND, S_VIBRATION, S_CLICK, S_COUNT_VIBE, S_LED_PULSE, S_LED_CHARGE, S_LED_COLOR, S_USB_START, S_TIME_ZONE, S_CLOCK_DATE};
+    static const char *const desc[12] = SETTINGS_DESC;
     for (int r = 0; r < 6; r++) {
         int i = s->scroll + r;
         int y = 60 + r * 30;
-        if (i >= 10) {
+        if (i >= 12) {
             display_fill_rect(0, y, UI_W, 28, t->bg);
             continue;
         }
@@ -140,6 +140,18 @@ static void scr_settings(const ui_data_t *d, const ui_state_t *s, bool full)
         } else if (i == 7) {
             toggle(right, y + 7, d->led_charge);
         } else if (i == 8) {
+            static const char *const color_names[8] = LED_COLOR_NAMES;
+            static const uint16_t swatch[8] = {0, 0xF800, 0x07E0, 0x001F, 0xFFE0, 0x07FF, 0xF81F, 0xFFFF};
+            static const uint8_t mask_to_swatch[8] = {0, 1, 2, 4, 3, 6, 5, 7};
+            uint16_t col = 0xFFFF;
+            for (int k = 1; k < 8; k++)
+                if (mask_to_swatch[k] == d->led_mask)
+                    col = swatch[k];
+            display_fill_rect(right - 14, y + 7, 14, 14, col);
+            ui_text_right(&font_14_medium, right - 22, y + 5, color_names[d->led_color & 7], sel ? t->bg : t->acc, bg);
+        } else if (i == 9) {
+            toggle(right, y + 7, d->usb_start);
+        } else if (i == 10) {
             int32_t h = d->tz_offset_s / 3600;
             char v[16];
             int n = add(v, 0, "UTC+");
@@ -152,7 +164,7 @@ static void scr_settings(const ui_data_t *d, const ui_state_t *s, bool full)
         }
     }
     display_fill_rect(UI_MARGIN, 244, UI_W - 2 * UI_MARGIN, 40, t->panel);
-    ui_text_wrap(&font_12_regular, UI_MARGIN + 8, 250, UI_W - 2 * UI_MARGIN - 16, desc[s->sel % 10], t->ink, t->panel, 3);
+    ui_text_wrap(&font_12_regular, UI_MARGIN + 8, 250, UI_W - 2 * UI_MARGIN - 16, desc[s->sel % 12], t->ink, t->panel, 3);
     ui_footer("[<] " S_BACK, "[OK] " S_CHANGE);
 }
 

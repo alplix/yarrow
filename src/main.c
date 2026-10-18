@@ -19,11 +19,23 @@ int main(void)
 
     board_init();
     watchdog_start();
+
+    /* The settings decide whether a cable alone may switch the device on, so they are read before the screen is touched. */
+    const hal_t *hal = hal_gc03_init();
+    app_prepare(&app, hal);
+    if (!app_boot_allowed(&app)) {
+        bool key = false; /* a power key press that comes a moment late still starts it */
+        for (int i = 0; i < 60 && !key; i++) {
+            key = hal->power_key_down();
+            delay_ms(10);
+        }
+        if (!key)
+            hal->power_off();
+    }
+
     display_init();
     ui_boot_draw(t);
     board_backlight(true);
-
-    const hal_t *hal = hal_gc03_init();
     ui_boot_progress(t, 3);
     hal_gc03_start_tick();
     ui_boot_progress(t, 6);

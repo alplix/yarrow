@@ -16,7 +16,7 @@ typedef struct {
 
 typedef struct {
     meas_cfg_t cfg;
-    uint32_t hist[MEAS_HISTORY]; /* measured pulses per second, ring */
+    uint16_t hist[MEAS_HISTORY]; /* measured pulses per second (saturating), ring */
     uint32_t pos;                /* next slot */
     uint32_t seconds;            /* seconds measured so far (saturates) */
     uint64_t counts_total;       /* dead-time corrected pulses since start */
