@@ -18,6 +18,8 @@ static volatile uint32_t buzz_inc, buzz_phase;
 static volatile uint8_t bl_duty = 16, bl_phase; /* full brightness until the app sets a level: the screen must not go dark when the tick starts */
 static volatile uint8_t pulse_led_ms;
 static volatile bool pulse_led_en = true;
+static volatile bool click_en, vibe_en;
+static volatile uint8_t click_left, vibe_ms;
 static volatile bool alert_on;
 
 static volatile input_event_t evq[8];
@@ -132,6 +134,8 @@ static void scan_inputs(void)
 
     if (pulse_led_ms && --pulse_led_ms == 0)
         GPIO_BSRR(GPIOB) = 1u << 14; /* pulse LED off (active low) */
+    if (vibe_ms && --vibe_ms == 0)
+        GPIO_BSRR(GPIOB) = 1u << (1 + 16);
 }
 
 /* ---- interrupts ---- */
@@ -139,7 +143,10 @@ void systick_handler(void)
 {
     tick8++;
 
-    if (buzz_inc) {
+    if (click_left) { /* a 4 kHz burst of three milliseconds: the classic counter click */
+        click_left--;
+        GPIO_BSRR(GPIOC) = (click_left & 1) ? (1u << 11) : (1u << (11 + 16));
+    } else if (buzz_inc) {
         buzz_phase += buzz_inc;
         GPIO_BSRR(GPIOC) = (buzz_phase & 0x80000000u) ? (1u << 11) : (1u << (11 + 16));
     }
@@ -167,6 +174,12 @@ void exti3_handler(void)
 {
     EXTI_PR = 1u << 3;
     pulses++;
+    if (click_en && !buzz_inc)
+        click_left = 24;
+    if (vibe_en) {
+        vibe_ms = 25;
+        GPIO_BSRR(GPIOB) = 1u << 1;
+    }
     if (pulse_led_en) {
         pulse_led_ms = 3;
         GPIO_BSRR(GPIOB) = 1u << (14 + 16); /* pulse LED on */
@@ -187,6 +200,18 @@ static void h_beep(uint32_t hz)
 static void h_vibrate(bool on) { GPIO_BSRR(GPIOB) = on ? (1u << 1) : (1u << (1 + 16)); }
 static void h_alert_led(bool on) { GPIO_BSRR(GPIOB) = on ? (1u << (15 + 16)) : (1u << 15); }
 static void h_status_led(bool on) { GPIO_BSRR(GPIOC) = on ? (1u << (8 + 16)) : (1u << 8); }
+static void h_count_click_enable(bool on)
+{
+    click_en = on;
+}
+
+static void h_count_vibe_enable(bool on)
+{
+    vibe_en = on;
+    if (!on)
+        GPIO_BSRR(GPIOB) = 1u << (1 + 16);
+}
+
 static void h_pulse_led_enable(bool on)
 {
     pulse_led_en = on;
@@ -581,7 +606,7 @@ static const hal_t gc03 = {
     h_rtc_now, h_rtc_set, h_poll_event, h_tube_pulses, h_battery_mv, h_usb_present, h_charging, h_efield_vm_x10,
     h_hfield_ut_x100, h_hv_factory_valid, h_hv_start, h_hv_stop, h_beep, h_vibrate, h_alert_led, h_backlight,
     h_display_enable, h_power_off, h_watchdog_kick, &log_window, &kv_window, h_usb_connected, h_serial_read, h_serial_write, usb_gc03_init,
-    h_status_led, h_pulse_led_enable,
+    h_status_led, h_pulse_led_enable, h_count_click_enable, h_count_vibe_enable,
 };
 
 /* bring-up marker: empty in the firmware, a test image can override it to show how far start-up got */

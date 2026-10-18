@@ -120,9 +120,12 @@ static void h_usbstart(void) {}
 static bool led_status, led_pulse = true;
 static void h_statusled(bool on) { led_status = on; }
 static void h_pulseled(bool on) { led_pulse = on; }
+static bool count_click, count_vibe;
+static void h_cclick(bool on) { count_click = on; }
+static void h_cvibe(bool on) { count_vibe = on; }
 
 static hal_t hal = {h_rtc, h_rtc_set, pop_ev, h_pulses, h_mv, h_usb, h_chg, h_e, h_h, h_hvv, h_hvs, h_hvx, h_beep, h_vib, h_led,
-                    h_bl, h_disp, h_off, h_wd, &log_dev, &kv_dev, h_usbc, h_sr, h_sw, h_usbstart, h_statusled, h_pulseled};
+                    h_bl, h_disp, h_off, h_wd, &log_dev, &kv_dev, h_usbc, h_sr, h_sw, h_usbstart, h_statusled, h_pulseled, h_cclick, h_cvibe};
 
 static app_t app;
 static uint32_t now_ms;
@@ -489,7 +492,7 @@ static void test_leds(void)
     for (int i = 0; i < 12; i++)
         send(EV_RIGHT);
     send(EV_OK); /* settings */
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 6; i++)
         send(EV_RIGHT);
     send(EV_OK); /* count LED off */
     CHECK(!app.settings.led_pulse && !led_pulse, "count LED switched off");
@@ -501,6 +504,22 @@ static void test_leds(void)
     CHECK(!led_status, "charging with the charge LED switched off");
     reboot();
     CHECK(!app.settings.led_pulse && !app.settings.led_charge && !led_pulse, "LED settings lost after restart");
+    /* click and count vibration, off by default */
+    CHECK(!count_click && !count_vibe, "click and count vibration start off");
+    while (app_screen(&app) != SCR_MAIN)
+        send(EV_BACK);
+    send(EV_OK);
+    for (int i = 0; i < 12; i++)
+        send(EV_RIGHT);
+    send(EV_OK); /* settings */
+    for (int i = 0; i < 4; i++)
+        send(EV_RIGHT);
+    send(EV_OK); /* count click on */
+    send(EV_RIGHT);
+    send(EV_OK); /* count vibration on */
+    CHECK(app.settings.click && count_click && app.settings.count_vibe && count_vibe, "click and count vibration switched on");
+    reboot();
+    CHECK(app.settings.click && app.settings.count_vibe && count_click && count_vibe, "click settings lost after restart");
     printf("leds: ok\n");
     t_usb = false; t_charging = false;
 }
@@ -602,7 +621,7 @@ static void test_clock_and_calibration(void)
     for (int i = 0; i < 12; i++)
         send(EV_RIGHT);
     send(EV_OK); /* settings */
-    for (int i = 0; i < 7; i++)
+    for (int i = 0; i < 9; i++)
         send(EV_RIGHT);
     send(EV_OK); /* clock row */
     CHECK(app_screen(&app) == SCR_CLOCK, "clock editor screen (%d)", app_screen(&app));

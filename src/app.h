@@ -23,6 +23,7 @@ typedef struct {
     uint8_t brightness; /* 1..5 */
     bool sound, vibration;
     bool led_pulse, led_charge; /* the count LED flashes on every pulse; the charge LED lights while charging */
+    bool click, count_vibe;     /* a click from the buzzer and a buzz of the motor on every pulse */
     int8_t tz_hours;
     uint8_t profile;    /* log profile 0..4 */
 } app_settings_t;

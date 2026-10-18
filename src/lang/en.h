@@ -115,9 +115,11 @@
 #define S_THEME      "Theme"
 #define S_BRIGHTNESS "Brightness"
 #define S_SOUND      "Alarm sound"
-#define S_VIBRATION  "Vibration"
+#define S_VIBRATION  "Alarm vibration"
 #define S_LANGUAGE   "Language"
 #define S_ATT_TH     "Caution level"
+#define S_CLICK      "Count click"
+#define S_COUNT_VIBE "Count vibration"
 #define S_LED_PULSE  "Count LED"
 #define S_LED_CHARGE "Charge LED"
 #define S_TIME_ZONE  "Time zone"
@@ -218,7 +220,8 @@
     "Sets the sensitivity with a known source.", "Version and project links."}
 #define SETTINGS_DESC {"Pick the colour theme of the screen.", "A dimmer screen makes the battery last longer.", \
     "Should alarms and warnings make a sound.", "Should the device vibrate on an alarm.", \
-    "The LED flashes on every tube count. Switching it off saves a little power.", "The LED lights while the battery charges.", \
+    "A click on every tube count, like the classic Geiger counters.", "The motor gives a short buzz on every count.", \
+    "The LED flashes on every count. Switching it off saves a little power.", "The LED lights while the battery charges.", \
     "Which time zone the clock shows.", "Set the time and date by hand."}
 /* sessions */
 #define S_T_SESSIONS   "Sessions"

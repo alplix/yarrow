@@ -116,9 +116,11 @@
 #define S_THEME      "Tema"
 #define S_BRIGHTNESS "Parlaklık"
 #define S_SOUND      "Alarm sesi"
-#define S_VIBRATION  "Titreşim"
+#define S_VIBRATION  "Alarm titreşimi"
 #define S_LANGUAGE   "Dil"
 #define S_ATT_TH     "Dikkat eşiği"
+#define S_CLICK      "Sayım tıkı"
+#define S_COUNT_VIBE "Sayım titreşimi"
 #define S_LED_PULSE  "Sayım LED'i"
 #define S_LED_CHARGE "Şarj LED'i"
 #define S_TIME_ZONE  "Saat dilimi"
@@ -220,7 +222,8 @@
     "Bilinen bir kaynakla duyarlılığı ayarlar.", "Sürüm ve proje bağlantıları."}
 #define SETTINGS_DESC {"Ekranın renk temasını seç.", "Parlaklığı azaltmak pil ömrünü uzatır.", \
     "Alarm ve uyarılarda ses çalsın mı.", "Alarmda cihaz titresin mi.", \
-    "Tüpten gelen her sayımda LED yanıp söner. Kapatmak biraz pil kazandırır.", "Kablo takılıyken şarj olurken LED yanar.", \
+    "Tüpten gelen her sayımda eski Geiger sayaçları gibi tık sesi çıkar.", "Her sayımda motor kısa bir titreşim verir.", \
+    "Her sayımda LED yanıp söner. Kapatmak biraz pil kazandırır.", "Kablo takılıyken şarj olurken LED yanar.", \
     "Saat hangi bölgeye göre gösterilsin (Türkiye UTC+3).", "Saati ve tarihi elle ayarla."}
 /* oturumlar */
 #define S_T_SESSIONS   "Oturumlar"

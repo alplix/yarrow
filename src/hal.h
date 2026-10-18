@@ -58,6 +58,8 @@ typedef struct {
     void (*usb_start)(void);      /* brings the USB port up (last start-up stage) */
     void (*status_led)(bool on);        /* the LED that shows charging */
     void (*pulse_led_enable)(bool on);  /* whether the LED flashes on every tube pulse */
+    void (*count_click_enable)(bool on); /* a short click from the buzzer on every tube pulse */
+    void (*count_vibe_enable)(bool on);  /* a short buzz of the motor on every tube pulse */
 } hal_t;
 
 #endif

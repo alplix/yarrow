@@ -14,7 +14,7 @@ enum {
     K_SESSACT = 0x71
 };
 #define EVT_SLOTS 16
-#define SETTINGS_ROWS 8
+#define SETTINGS_ROWS 10
 
 /* Flash sectors wear out with every erase. The settings store fills up and is compacted into the other sector every
  * few kilobytes written, so the counters are saved rarely: a clean power-off saves everything anyway, only a pulled
@@ -125,6 +125,8 @@ static void load_settings(app_t *a)
     s->vibration = true;
     s->led_pulse = true;
     s->led_charge = true;
+    s->click = false;
+    s->count_vibe = false;
     s->tz_hours = 3;
     s->profile = 2;
     a->th[0] = 500; a->th[1] = 10000; a->th[2] = 100000;
@@ -140,6 +142,8 @@ static void load_settings(app_t *a)
         s->vibration = (b[2] & 2) != 0;
         s->led_pulse = (b[2] & 4) == 0; /* stored as 'off' so older records keep the LEDs on */
         s->led_charge = (b[2] & 8) == 0;
+        s->click = (b[2] & 16) != 0;
+        s->count_vibe = (b[2] & 32) != 0;
         s->tz_hours = (int8_t)b[3];
         s->profile = b[4] < 5 ? b[4] : 2;
     }
@@ -201,7 +205,7 @@ static void save_settings(app_t *a)
         return;
     uint8_t b[8] = {a->settings.theme, a->settings.brightness,
                     (uint8_t)((a->settings.sound ? 1 : 0) | (a->settings.vibration ? 2 : 0) | (a->settings.led_pulse ? 0 : 4) |
-                              (a->settings.led_charge ? 0 : 8)),
+                              (a->settings.led_charge ? 0 : 8) | (a->settings.click ? 16 : 0) | (a->settings.count_vibe ? 32 : 0)),
                     (uint8_t)a->settings.tz_hours, a->settings.profile, 0, 0, 0};
     kv_set(&a->kv, K_SETTINGS, b, 8);
 }
@@ -836,6 +840,8 @@ static void run_second(app_t *a, uint32_t now_ms)
     u->vibration = a->settings.vibration;
     u->led_pulse = a->settings.led_pulse;
     u->led_charge = a->settings.led_charge;
+    u->click = a->settings.click;
+    u->count_vibe = a->settings.count_vibe;
     u->profile = a->settings.profile;
     u->stage = a->stage;
     u->budget_active = a->alarm.budget_active;
@@ -1103,12 +1109,20 @@ static void on_event(app_t *a, input_event_t ev)
             case 2: a->settings.sound = !a->settings.sound; break;
             case 3: a->settings.vibration = !a->settings.vibration; break;
             case 4:
+                a->settings.click = !a->settings.click;
+                H(a)->count_click_enable(a->settings.click);
+                break;
+            case 5:
+                a->settings.count_vibe = !a->settings.count_vibe;
+                H(a)->count_vibe_enable(a->settings.count_vibe);
+                break;
+            case 6:
                 a->settings.led_pulse = !a->settings.led_pulse;
                 H(a)->pulse_led_enable(a->settings.led_pulse);
                 break;
-            case 5: a->settings.led_charge = !a->settings.led_charge; break;
-            case 6: a->settings.tz_hours = (int8_t)(a->settings.tz_hours >= 14 ? -12 : a->settings.tz_hours + 1); break;
-            case 7: open_clock_editor(a); break;
+            case 7: a->settings.led_charge = !a->settings.led_charge; break;
+            case 8: a->settings.tz_hours = (int8_t)(a->settings.tz_hours >= 14 ? -12 : a->settings.tz_hours + 1); break;
+            case 9: open_clock_editor(a); break;
             default: break;
             }
             save_settings(a);
@@ -1459,6 +1473,8 @@ void app_init(app_t *a, const hal_t *hal, uint32_t now_ms)
     apply_theme(a);
     apply_calibration(a);
     hal->pulse_led_enable(a->settings.led_pulse);
+    hal->count_click_enable(a->settings.click);
+    hal->count_vibe_enable(a->settings.count_vibe);
 
     sess_load(a);
     a->sess_prev_total = total_dose(a);

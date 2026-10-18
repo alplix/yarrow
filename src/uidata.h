@@ -92,6 +92,7 @@ typedef struct {
     uint8_t brightness;     /* 1..5 */
     bool sound, vibration;
     bool led_pulse, led_charge;
+    bool click, count_vibe;
 
     /* self test */
     uint8_t selftest_done, selftest_total;
