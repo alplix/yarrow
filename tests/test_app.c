@@ -117,9 +117,12 @@ static int h_sw(const uint8_t *b, uint32_t n)
     return (int)n;
 }
 static void h_usbstart(void) {}
+static bool led_status, led_pulse = true;
+static void h_statusled(bool on) { led_status = on; }
+static void h_pulseled(bool on) { led_pulse = on; }
 
 static hal_t hal = {h_rtc, h_rtc_set, pop_ev, h_pulses, h_mv, h_usb, h_chg, h_e, h_h, h_hvv, h_hvs, h_hvx, h_beep, h_vib, h_led,
-                    h_bl, h_disp, h_off, h_wd, &log_dev, &kv_dev, h_usbc, h_sr, h_sw, h_usbstart};
+                    h_bl, h_disp, h_off, h_wd, &log_dev, &kv_dev, h_usbc, h_sr, h_sw, h_usbstart, h_statusled, h_pulseled};
 
 static app_t app;
 static uint32_t now_ms;
@@ -460,6 +463,48 @@ static void test_flash_wear(void)
     CHECK(kv_erases <= 4, "%ld sector erases in a day would wear the flash out", kv_erases);
 }
 
+/* The charge LED follows the charger, and both LEDs can be switched off in Settings and stay off after a restart. */
+static void test_leds(void)
+{
+    fresh();
+    to_stage5();
+    CHECK(led_pulse && !led_status, "start: count LED on, charge LED off");
+    t_usb = true; t_charging = true;
+    run_s(3);
+    CHECK(led_status, "charging must light the charge LED");
+    t_charging = false; /* full */
+    run_s(3);
+    CHECK(!led_status, "a full battery switches the charge LED off");
+    t_charging = true;
+    run_s(3);
+    CHECK(led_status, "charging again");
+    t_usb = false; t_charging = false;
+    run_s(3);
+    CHECK(!led_status, "unplugged");
+
+    /* settings rows 4 and 5 */
+    while (app_screen(&app) != SCR_MAIN)
+        send(EV_BACK);
+    send(EV_OK);
+    for (int i = 0; i < 12; i++)
+        send(EV_RIGHT);
+    send(EV_OK); /* settings */
+    for (int i = 0; i < 4; i++)
+        send(EV_RIGHT);
+    send(EV_OK); /* count LED off */
+    CHECK(!app.settings.led_pulse && !led_pulse, "count LED switched off");
+    send(EV_RIGHT);
+    send(EV_OK); /* charge LED off */
+    CHECK(!app.settings.led_charge, "charge LED switched off");
+    t_usb = true; t_charging = true;
+    run_s(3);
+    CHECK(!led_status, "charging with the charge LED switched off");
+    reboot();
+    CHECK(!app.settings.led_pulse && !app.settings.led_charge && !led_pulse, "LED settings lost after restart");
+    printf("leds: ok\n");
+    t_usb = false; t_charging = false;
+}
+
 static void test_navigation_and_settings(void)
 {
     fresh();
@@ -557,7 +602,7 @@ static void test_clock_and_calibration(void)
     for (int i = 0; i < 12; i++)
         send(EV_RIGHT);
     send(EV_OK); /* settings */
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 7; i++)
         send(EV_RIGHT);
     send(EV_OK); /* clock row */
     CHECK(app_screen(&app) == SCR_CLOCK, "clock editor screen (%d)", app_screen(&app));
@@ -703,6 +748,7 @@ int main(void)
     test_alarm_and_events();
     test_stillness();
     test_navigation_and_settings();
+    test_leds();
     test_calibration_wizard();
     test_sessions();
     test_flash_wear();

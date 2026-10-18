@@ -17,6 +17,7 @@ static volatile uint8_t tick8;
 static volatile uint32_t buzz_inc, buzz_phase;
 static volatile uint8_t bl_duty = 16, bl_phase; /* full brightness until the app sets a level: the screen must not go dark when the tick starts */
 static volatile uint8_t pulse_led_ms;
+static volatile bool pulse_led_en = true;
 static volatile bool alert_on;
 
 static volatile input_event_t evq[8];
@@ -166,8 +167,10 @@ void exti3_handler(void)
 {
     EXTI_PR = 1u << 3;
     pulses++;
-    pulse_led_ms = 3;
-    GPIO_BSRR(GPIOB) = 1u << (14 + 16); /* pulse LED on */
+    if (pulse_led_en) {
+        pulse_led_ms = 3;
+        GPIO_BSRR(GPIOB) = 1u << (14 + 16); /* pulse LED on */
+    }
 }
 
 /* ---- sound, light, vibration ---- */
@@ -183,6 +186,13 @@ static void h_beep(uint32_t hz)
 
 static void h_vibrate(bool on) { GPIO_BSRR(GPIOB) = on ? (1u << 1) : (1u << (1 + 16)); }
 static void h_alert_led(bool on) { GPIO_BSRR(GPIOB) = on ? (1u << (15 + 16)) : (1u << 15); }
+static void h_status_led(bool on) { GPIO_BSRR(GPIOC) = on ? (1u << (8 + 16)) : (1u << 8); }
+static void h_pulse_led_enable(bool on)
+{
+    pulse_led_en = on;
+    if (!on)
+        GPIO_BSRR(GPIOB) = 1u << 14; /* off (active low) */
+}
 
 static void h_backlight(uint8_t level)
 {
@@ -571,6 +581,7 @@ static const hal_t gc03 = {
     h_rtc_now, h_rtc_set, h_poll_event, h_tube_pulses, h_battery_mv, h_usb_present, h_charging, h_efield_vm_x10,
     h_hfield_ut_x100, h_hv_factory_valid, h_hv_start, h_hv_stop, h_beep, h_vibrate, h_alert_led, h_backlight,
     h_display_enable, h_power_off, h_watchdog_kick, &log_window, &kv_window, h_usb_connected, h_serial_read, h_serial_write, usb_gc03_init,
+    h_status_led, h_pulse_led_enable,
 };
 
 /* bring-up marker: empty in the firmware, a test image can override it to show how far start-up got */

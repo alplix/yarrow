@@ -22,6 +22,7 @@ typedef struct {
     uint8_t theme;
     uint8_t brightness; /* 1..5 */
     bool sound, vibration;
+    bool led_pulse, led_charge; /* the count LED flashes on every pulse; the charge LED lights while charging */
     int8_t tz_hours;
     uint8_t profile;    /* log profile 0..4 */
 } app_settings_t;
@@ -65,6 +66,7 @@ typedef struct {
     bool alarm_dismissed;
     uint32_t drawn_sig;      /* fingerprint of what the screen showed at the last redraw */
     bool usb_was_present;
+    bool status_led_on;
     uint32_t anim_ms;
     app_settings_t settings;
     int theme_before;         /* theme to return to when the picker is cancelled */

@@ -14,6 +14,7 @@ enum {
     K_SESSACT = 0x71
 };
 #define EVT_SLOTS 16
+#define SETTINGS_ROWS 8
 
 /* Flash sectors wear out with every erase. The settings store fills up and is compacted into the other sector every
  * few kilobytes written, so the counters are saved rarely: a clean power-off saves everything anyway, only a pulled
@@ -122,6 +123,8 @@ static void load_settings(app_t *a)
     s->brightness = 4;
     s->sound = true;
     s->vibration = true;
+    s->led_pulse = true;
+    s->led_charge = true;
     s->tz_hours = 3;
     s->profile = 2;
     a->th[0] = 500; a->th[1] = 10000; a->th[2] = 100000;
@@ -135,6 +138,8 @@ static void load_settings(app_t *a)
         s->brightness = b[1] >= 1 && b[1] <= 5 ? b[1] : 4;
         s->sound = (b[2] & 1) != 0;
         s->vibration = (b[2] & 2) != 0;
+        s->led_pulse = (b[2] & 4) == 0; /* stored as 'off' so older records keep the LEDs on */
+        s->led_charge = (b[2] & 8) == 0;
         s->tz_hours = (int8_t)b[3];
         s->profile = b[4] < 5 ? b[4] : 2;
     }
@@ -195,7 +200,8 @@ static void save_settings(app_t *a)
     if (!a->kv_ok)
         return;
     uint8_t b[8] = {a->settings.theme, a->settings.brightness,
-                    (uint8_t)((a->settings.sound ? 1 : 0) | (a->settings.vibration ? 2 : 0)),
+                    (uint8_t)((a->settings.sound ? 1 : 0) | (a->settings.vibration ? 2 : 0) | (a->settings.led_pulse ? 0 : 4) |
+                              (a->settings.led_charge ? 0 : 8)),
                     (uint8_t)a->settings.tz_hours, a->settings.profile, 0, 0, 0};
     kv_set(&a->kv, K_SETTINGS, b, 8);
 }
@@ -705,6 +711,13 @@ static void run_second(app_t *a, uint32_t now_ms)
     if (!usb && a->usb_was_present && cur(a) == SCR_CHARGE)
         pop(a);
     a->usb_was_present = usb;
+    {
+        bool lit = feat_sensors(a) && a->settings.led_charge && usb && H(a)->charging();
+        if (lit != a->status_led_on) {
+            a->status_led_on = lit;
+            H(a)->status_led(lit);
+        }
+    }
 
     /* trends */
     if (++a->trend_timer >= TREND_STEP_S) {
@@ -821,6 +834,8 @@ static void run_second(app_t *a, uint32_t now_ms)
     u->brightness = a->settings.brightness;
     u->sound = a->settings.sound;
     u->vibration = a->settings.vibration;
+    u->led_pulse = a->settings.led_pulse;
+    u->led_charge = a->settings.led_charge;
     u->profile = a->settings.profile;
     u->stage = a->stage;
     u->budget_active = a->alarm.budget_active;
@@ -1071,7 +1086,11 @@ static void on_event(app_t *a, input_event_t ev)
 
     case SCR_SETTINGS:
         if (left || right) {
-            s->sel = wrap(s->sel + dir, 6);
+            s->sel = wrap(s->sel + dir, SETTINGS_ROWS);
+            if (s->sel < s->scroll)
+                s->scroll = s->sel;
+            if (s->sel >= s->scroll + 6)
+                s->scroll = s->sel - 5;
             a->need_draw = true;
         } else if (ev == EV_OK) {
             switch (s->sel) {
@@ -1083,8 +1102,13 @@ static void on_event(app_t *a, input_event_t ev)
             case 1: a->settings.brightness = (uint8_t)(a->settings.brightness % 5 + 1); a->dimmed = false; backlight_apply(a); break;
             case 2: a->settings.sound = !a->settings.sound; break;
             case 3: a->settings.vibration = !a->settings.vibration; break;
-            case 4: a->settings.tz_hours = (int8_t)(a->settings.tz_hours >= 14 ? -12 : a->settings.tz_hours + 1); break;
-            case 5: open_clock_editor(a); break;
+            case 4:
+                a->settings.led_pulse = !a->settings.led_pulse;
+                H(a)->pulse_led_enable(a->settings.led_pulse);
+                break;
+            case 5: a->settings.led_charge = !a->settings.led_charge; break;
+            case 6: a->settings.tz_hours = (int8_t)(a->settings.tz_hours >= 14 ? -12 : a->settings.tz_hours + 1); break;
+            case 7: open_clock_editor(a); break;
             default: break;
             }
             save_settings(a);
@@ -1434,6 +1458,7 @@ void app_init(app_t *a, const hal_t *hal, uint32_t now_ms)
     a->alarm.cfg.th_nsvh[2] = a->th[2];
     apply_theme(a);
     apply_calibration(a);
+    hal->pulse_led_enable(a->settings.led_pulse);
 
     sess_load(a);
     a->sess_prev_total = total_dose(a);

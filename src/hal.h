@@ -56,6 +56,8 @@ typedef struct {
     int (*serial_read)(uint8_t *buf, uint32_t max);
     int (*serial_write)(const uint8_t *buf, uint32_t n);
     void (*usb_start)(void);      /* brings the USB port up (last start-up stage) */
+    void (*status_led)(bool on);        /* the LED that shows charging */
+    void (*pulse_led_enable)(bool on);  /* whether the LED flashes on every tube pulse */
 } hal_t;
 
 #endif

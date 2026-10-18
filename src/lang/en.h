@@ -118,6 +118,8 @@
 #define S_VIBRATION  "Vibration"
 #define S_LANGUAGE   "Language"
 #define S_ATT_TH     "Caution level"
+#define S_LED_PULSE  "Count LED"
+#define S_LED_CHARGE "Charge LED"
 #define S_TIME_ZONE  "Time zone"
 #define S_TH_ATTENTION "Caution"
 #define S_TH_DANGER    "Danger"
@@ -216,6 +218,7 @@
     "Sets the sensitivity with a known source.", "Version and project links."}
 #define SETTINGS_DESC {"Pick the colour theme of the screen.", "A dimmer screen makes the battery last longer.", \
     "Should alarms and warnings make a sound.", "Should the device vibrate on an alarm.", \
+    "The LED flashes on every tube count. Switching it off saves a little power.", "The LED lights while the battery charges.", \
     "Which time zone the clock shows.", "Set the time and date by hand."}
 /* sessions */
 #define S_T_SESSIONS   "Sessions"

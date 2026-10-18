@@ -103,10 +103,15 @@ static void scr_settings(const ui_data_t *d, const ui_state_t *s, bool full)
     }
     status(d);
     static const char *const themes_n[THEME_COUNT] = THEME_NAMES;
-    const char *labels[6] = {S_THEME, S_BRIGHTNESS, S_SOUND, S_VIBRATION, S_TIME_ZONE, S_CLOCK_DATE};
-    static const char *const desc[6] = SETTINGS_DESC;
-    for (int i = 0; i < 6; i++) {
-        int y = 60 + i * 30;
+    const char *labels[8] = {S_THEME, S_BRIGHTNESS, S_SOUND, S_VIBRATION, S_LED_PULSE, S_LED_CHARGE, S_TIME_ZONE, S_CLOCK_DATE};
+    static const char *const desc[8] = SETTINGS_DESC;
+    for (int r = 0; r < 6; r++) {
+        int i = s->scroll + r;
+        int y = 60 + r * 30;
+        if (i >= 8) {
+            display_fill_rect(0, y, UI_W, 28, t->bg);
+            continue;
+        }
         bool sel = i == s->sel;
         uint16_t bg = sel ? t->acc : t->bg;
         uint16_t fg = sel ? t->bg : t->ink;
@@ -127,6 +132,10 @@ static void scr_settings(const ui_data_t *d, const ui_state_t *s, bool full)
         } else if (i == 3) {
             toggle(right, y + 7, d->vibration);
         } else if (i == 4) {
+            toggle(right, y + 7, d->led_pulse);
+        } else if (i == 5) {
+            toggle(right, y + 7, d->led_charge);
+        } else if (i == 6) {
             int32_t h = d->tz_offset_s / 3600;
             char v[16];
             int n = add(v, 0, "UTC+");
@@ -139,7 +148,7 @@ static void scr_settings(const ui_data_t *d, const ui_state_t *s, bool full)
         }
     }
     display_fill_rect(UI_MARGIN, 244, UI_W - 2 * UI_MARGIN, 40, t->panel);
-    ui_text_wrap(&font_12_regular, UI_MARGIN + 8, 250, UI_W - 2 * UI_MARGIN - 16, desc[s->sel % 6], t->ink, t->panel, 3);
+    ui_text_wrap(&font_12_regular, UI_MARGIN + 8, 250, UI_W - 2 * UI_MARGIN - 16, desc[s->sel % 8], t->ink, t->panel, 3);
     ui_footer("[<] " S_BACK, "[OK] " S_CHANGE);
 }
 
