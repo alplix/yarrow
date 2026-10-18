@@ -289,7 +289,7 @@
       "Cierre puertas, ventanas y ventilación.", \
       "Apague el aire acondicionado y los ventiladores.", \
       "Escuche anuncios oficiales en radio o teléfono.", \
-      "No salga hasta que las autoridades lo indiquen.", 0, 0}}, \
+      "No salga hasta nuevo aviso.", 0, 0}}, \
     {"Si estuvo fuera", \
      {"Quítese la ropa exterior y ciérrela en una bolsa. Esto elimina la mayor parte de la contaminación.", \
       "Dúchese con agua y jabón, lávese el pelo.", \

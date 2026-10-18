@@ -285,11 +285,11 @@
 /* emergency guide: GUIDE_PAGES pages of a title and up to seven lines (see guide_page_t in strings.h) */
 #define GUIDE_DATA {\
     {"Rimanere al chiuso", \
-     {"Entrare nell'edificio più vicino, in un seminterrato o in una stanza interna se possibile.", \
+     {"Entrare nell'edificio più vicino, meglio un seminterrato.", \
       "Chiudere porte, finestre e ventilazione.", \
       "Spegnere aria condizionata e ventilatori.", \
       "Ascoltare gli annunci ufficiali alla radio o al telefono.", \
-      "Non uscire finché le autorità non lo dicono.", 0, 0}}, \
+      "Non uscire finché non è consentito.", 0, 0}}, \
     {"Se ti trovavi fuori", \
      {"Togli i vestiti esterni e sigillali in un sacco. Rimuove la maggior parte della contaminazione.", \
       "Fai una doccia con sapone e acqua, lavati i capelli.", \

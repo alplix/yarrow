@@ -285,11 +285,11 @@
 /* emergency guide: GUIDE_PAGES pages of a title and up to seven lines (see guide_page_t in strings.h) */
 #define GUIDE_DATA {\
     {"Fique dentro", \
-     {"Vá para o prédio mais próximo, porão ou cômodo interno, se puder.", \
+     {"Vá ao prédio mais próximo, de preferência ao porão.", \
       "Feche portas, janelas e ventilação.", \
       "Desligue ar condicionado e ventiladores.", \
       "Ouça anúncios oficiais no rádio ou telefone.", \
-      "Não saia até as autoridades orientarem.", 0, 0}}, \
+      "Não saia até serem orientados.", 0, 0}}, \
     {"Se você estava fora", \
      {"Retire suas roupas externas e sele-as em um saco. Isso remove a maior parte da contaminação.", \
       "Tome banho com sabão e água, lave o cabelo.", \
