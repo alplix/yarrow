@@ -44,4 +44,5 @@ other file. Settings and the log are kept.
 | 0x0803F000 – 0x0803FFFF | factory tube calibration, never written |
 
 The Chinese, Japanese and Korean files carry bigger fonts and use a 128 KB firmware area: settings at 0x08026000 and the
-log from 0x08028000. Switching between the two kinds keeps the newest part of the log and starts with default settings.
+log from 0x08028000. Switching between one of these and any other language file starts with default settings and a different log window, so
+read the log out with the host tools first if you want to keep it.
