@@ -19,6 +19,25 @@ static uint32_t mv_at(uint32_t level_x10)
     return hi;
 }
 
+/* charging: the shown level must follow the cell, not the voltage inflated by the charge current */
+static void test_charging(void)
+{
+    bat_t b;
+    bat_init(&b, 0);
+    uint32_t cell_x10 = 400;                          /* 40 % to start */
+    for (int s = 0; s < 120; s++)                    /* two minutes at 1 A: terminal is 0.12 V above the cell */
+        bat_tick(&b, mv_at(cell_x10) + 120, true, true);
+    CHECK(bat_percent(&b) >= 35 && bat_percent(&b) <= 50, "charging starts at %u %%, cell is at 40 %%", (unsigned)bat_percent(&b));
+    for (int s = 0; s < 1200; s++)                   /* 20 more minutes: the cell gains about 7 % */
+        bat_tick(&b, mv_at(400 + s * 70 / 1200) + 120, true, true);
+    CHECK(bat_percent(&b) >= 40 && bat_percent(&b) <= 60, "after 22 minutes %u %%", (unsigned)bat_percent(&b));
+    for (int s = 0; s < 4000; s++)                   /* constant-voltage stage */
+        bat_tick(&b, 4200, true, true);
+    CHECK(bat_percent(&b) >= 90 && bat_percent(&b) <= 99, "end of the constant-voltage stage %u %%", (unsigned)bat_percent(&b));
+    bat_tick(&b, 4200, true, false);
+    CHECK(bat_percent(&b) == 100, "done: %u %%", (unsigned)bat_percent(&b));
+}
+
 static void test_curve(void)
 {
     uint32_t prev = 0;
@@ -131,6 +150,7 @@ static void test_wear(void)
 int main(void)
 {
     test_curve();
+    test_charging();
     test_discharge();
     test_monotonic_and_cycles();
     test_wear();

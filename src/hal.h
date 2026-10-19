@@ -63,6 +63,7 @@ typedef struct {
     bool (*started_by_usb)(void);        /* power came from the cable, not from the power key (valid right after start-up) */
     bool (*power_key_down)(void);        /* the power key is held now (raw, no debounce) */
     void (*led_color)(uint8_t mask);     /* colour of the count flash and the charge light: 1 red, 2 green, 4 blue, mixed by adding */
+    void (*chip_id)(uint32_t id[3]);     /* the chip's 96-bit unique id; only a hash of it ever leaves the device (may be NULL) */
 } hal_t;
 
 #endif

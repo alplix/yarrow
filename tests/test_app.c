@@ -129,8 +129,10 @@ static bool h_keydown(void) { return key_down; }
 static uint8_t led_mask_now = 2;
 static void h_ledcolor(uint8_t m) { led_mask_now = m; }
 
+static void h_chipid(uint32_t id[3]) { id[0] = 0x11223344u; id[1] = 0x55667788u; id[2] = 0x99AABBCCu; }
+
 static hal_t hal = {h_rtc, h_rtc_set, pop_ev, h_pulses, h_mv, h_usb, h_chg, h_e, h_h, h_hvv, h_hvs, h_hvx, h_beep, h_vib, h_led,
-                    h_bl, h_disp, h_off, h_wd, &log_dev, &kv_dev, h_usbc, h_sr, h_sw, h_usbstart, h_statusled, h_pulseled, h_cclick, h_cvibe, h_bootusb, h_keydown, h_ledcolor};
+                    h_bl, h_disp, h_off, h_wd, &log_dev, &kv_dev, h_usbc, h_sr, h_sw, h_usbstart, h_statusled, h_pulseled, h_cclick, h_cvibe, h_bootusb, h_keydown, h_ledcolor, h_chipid};
 
 static app_t app;
 static uint32_t now_ms;
@@ -511,6 +513,7 @@ static void test_leds(void)
     CHECK(!app.settings.led_pulse && !app.settings.led_charge && !led_pulse, "LED settings lost after restart");
     /* click and count vibration, off by default */
     CHECK(!count_click && !count_vibe, "click and count vibration start off");
+    run_s(2); /* the first application second after a restart may bring up the charge screen: let it come first */
     while (app_screen(&app) != SCR_MAIN)
         send(EV_BACK);
     send(EV_OK);
@@ -750,6 +753,28 @@ static void test_protocol(void)
     CHECK(strcmp(ask("PING\n"), "OK pong\n") == 0, "ping: %s", ser_out);
     CHECK(strncmp(ask("INFO\n"), "OK yarrow=0.1 stage=5", 21) == 0, "info: %s", ser_out);
     CHECK(strncmp(ask("INFO\r\n"), "OK yarrow", 9) == 0, "carriage return handling");
+    CHECK(strcmp(ask("UID\n"), "OK 9367a9ef47f81d05\n") == 0, "uid hash: %s", ser_out);
+    {
+        const char *r = ask("STATUS\n");
+        CHECK(strncmp(r, "OK 10", 5) == 0 && strstr(r, "S radiation rate_nsvh=") && strstr(r, "S battery mv=") &&
+                  strstr(r, "S device lang=") && strstr(r, "END\n"),
+              "status reply: %s", r);
+        for (const char *q = r; *q;) {
+            const char *e = strchr(q, 10);
+            CHECK(e && e - q <= 95, "status line too long or unterminated");
+            if (!e)
+                break;
+            q = e + 1;
+        }
+    }
+    CHECK(strstr(ask("CAPS\n"), "proto=2") != 0, "caps reply: %s", ser_out);
+    CHECK(strncmp(ask("BAT\n"), "OK ", 3) == 0 && strlen(ser_out) > 8, "bat reply: %s", ser_out);
+    {
+        unsigned long pulses = 0, hvs = 0, tm = 0;
+        ask("COUNTS\n");
+        CHECK(sscanf(ser_out, "OK %lu %lu %lu", &pulses, &hvs, &tm) == 3 && hvs > 0 && tm > 0,
+              "counts reply: %s", ser_out);
+    }
 
     ask("TIME 1900000000\n");
     CHECK(strcmp(ser_out, "OK\n") == 0 && t_now == 1900000000u, "set time: %s (t=%u)", ser_out, (unsigned)t_now);
@@ -800,6 +825,29 @@ static void test_protocol(void)
     printf("protocol: ok\n");
 }
 
+static void test_clock_follows_rtc(void)
+{
+    /* the millisecond counter runs 1.5 times too fast against the real-time clock: counts must still come out right */
+    fresh();
+    t_cps = 0.5;
+    to_stage5();
+    uint32_t hv0 = app.hv_secs;
+    uint64_t c0 = app.meas.counts_total;
+    uint32_t p0 = t_pulses;
+    for (int s = 0; s < 1200; s++) {
+        t_now++;
+        t_pulses += poisson(t_cps);
+        for (int k = 0; k < 33; k++) {         /* 33 x 20 ms = 660 ms of millisecond counter per clock second */
+            now_ms += 20;
+            app_poll(&app, now_ms);
+        }
+    }
+    uint32_t hv = app.hv_secs - hv0;
+    double counted = (double)(app.meas.counts_total - c0), real = (double)(t_pulses - p0);
+    CHECK(hv >= 1198 && hv <= 1201, "seconds follow the clock: %u of 1200", (unsigned)hv);
+    CHECK(real > 300 && counted > real * 0.97 && counted < real * 1.08, "counts %g of %g real pulses", counted, real);
+}
+
 static void test_display_power_and_shutdown(void)
 {
     fresh();
@@ -832,6 +880,7 @@ int main(void)
     test_threshold_edit_and_budget();
     test_clock_and_calibration();
     test_protocol();
+    test_clock_follows_rtc();
     test_display_power_and_shutdown();
     printf(failures ? "\n%d check(s) FAILED\n" : "\nall app checks passed\n", failures);
     return failures ? 1 : 0;

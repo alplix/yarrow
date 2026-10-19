@@ -52,11 +52,16 @@ typedef struct {
 
     /* time */
     uint32_t next_second_ms;
+    uint32_t last_rtc;       /* the clock second the last application second was started by */
+    uint32_t last_tick_ms;
+    uint32_t clk_rtc0, clk_ms0;   /* start of the current clock comparison */
+    uint32_t ms_per_s;            /* milliseconds counted per real-time clock second: 1000 when the core clock is as assumed */
     uint32_t last_input_ms;
     uint32_t blink_ms;
     bool display_on;
     bool dimmed;
     uint32_t last_pulses;
+    uint32_t hv_secs;        /* seconds the tube high voltage has been on since power on (counts are only valid then) */
     uint32_t seconds_run;
 
     /* screens */

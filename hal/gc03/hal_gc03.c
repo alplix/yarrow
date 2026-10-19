@@ -371,8 +371,9 @@ static uint32_t h_battery_mv(void)
     uint32_t sum = 0;
     for (int i = 0; i < 16; i++)
         sum += adc_read(10);
-    /* divided by two, 3.3 V reference assumed */
-    return sum / 16u * 3300u * 2u / 4095u;
+    /* divided by two. The effective reference is not 3.3 V: a full battery on the charger (TC4056A, 4.2 V) read 4659 mV
+     * for four hours with the old 3300 factor, so 3300 * 4200 / 4659 = 2975 mV */
+    return sum / 16u * 2975u * 2u / 4095u;
 }
 
 static uint32_t isqrt64(uint64_t v)
@@ -647,11 +648,19 @@ bool usb_serial_open(void);
 static int h_serial_read(uint8_t *buf, uint32_t max) { return usb_serial_read(buf, max); }
 static int h_serial_write(const uint8_t *buf, uint32_t n) { return usb_serial_write(buf, n); }
 
+static void h_chip_id(uint32_t id[3])
+{
+    const volatile uint32_t *u = (const volatile uint32_t *)0x1FFFF7E8u; /* CH32F2 unique id, 96 bits */
+    id[0] = u[0];
+    id[1] = u[1];
+    id[2] = u[2];
+}
+
 static const hal_t gc03 = {
     h_rtc_now, h_rtc_set, h_poll_event, h_tube_pulses, h_battery_mv, h_usb_present, h_charging, h_efield_vm_x10,
     h_hfield_ut_x100, h_hv_factory_valid, h_hv_start, h_hv_stop, h_beep, h_vibrate, h_alert_led, h_backlight,
     h_display_enable, h_power_off, h_watchdog_kick, &log_window, &kv_window, h_usb_connected, h_serial_read, h_serial_write, usb_gc03_init,
-    h_status_led, h_pulse_led_enable, h_count_click_enable, h_count_vibe_enable, h_started_by_usb, h_power_key_down, h_led_color,
+    h_status_led, h_pulse_led_enable, h_count_click_enable, h_count_vibe_enable, h_started_by_usb, h_power_key_down, h_led_color, h_chip_id,
 };
 
 /* bring-up marker: empty in the firmware, a test image can override it to show how far start-up got */

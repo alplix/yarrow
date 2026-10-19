@@ -5,6 +5,15 @@
 #define SAMPLE_S 600u              /* one level sample per 10 minutes of discharging */
 #define PRIOR_SAMPLES 12u          /* the default drain counts as this many samples (2 h) of evidence */
 #define BEST_AFTER 24u             /* wear is judged once 4 h of data back the estimate */
+/* While charging, the voltage at the terminal is the cell's own plus the charge current times the resistance of cell,
+ * protection circuit and wiring (a 1 A charger: roughly 0.1-0.15 V), so the curve must not be read from it directly: the
+ * level would jump by tens of percent the moment the cable goes in. The constant-current stage is read with that drop
+ * taken off; at the charger's 4.2 V stage the current tapers over about an hour and the level climbs from 85 % to 99 %
+ * in that time. The charger's own "done" signal is what shows 100 %. */
+#define CHARGE_DROP_MV 120u
+#define CV_START_MV 4170u
+#define CV_LEVEL_X10 850u
+#define CV_SPAN_S 3600u
 
 /* typical single-cell Li-ion curve under light load, millivolts against tenths of a percent */
 static const struct { uint16_t mv; uint16_t x10; } curve[] = {
@@ -95,6 +104,24 @@ void bat_tick(bat_t *b, uint32_t mv, bool usb_present, bool charging)
 
     if (usb_present) {
         b->state = charging ? BAT_CHARGING : BAT_FULL;
+        if (charging) {
+            uint32_t v = b->mv_filtered_x64 / 64u;
+            if (v >= CV_START_MV) {
+                if (b->cv_ticks < CV_SPAN_S)
+                    b->cv_ticks++;
+                level = CV_LEVEL_X10 + (1000u - 10u - CV_LEVEL_X10) * b->cv_ticks / CV_SPAN_S;
+            } else {
+                b->cv_ticks = 0;
+                level = bat_level_from_mv(v > CHARGE_DROP_MV ? v - CHARGE_DROP_MV : 0u);
+                if (level > CV_LEVEL_X10)
+                    level = CV_LEVEL_X10;
+            }
+            if (level < b->level_x10 && b->level_x10 - level < 150u)
+                level = b->level_x10;                /* the shown level does not wobble downwards while charging */
+        } else {
+            level = 1000u;                           /* the charger says it is done */
+            b->cv_ticks = 0;
+        }
         b->level_x10 = level;
         b->hist_n = 0;
         b->sample_timer = 0;

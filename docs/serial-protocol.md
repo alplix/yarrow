@@ -11,6 +11,11 @@ characters.
 | `TIME` | `OK <unix seconds>` |
 | `TIME <unix>` | sets the clock, `OK` |
 | `LIVE 1` / `LIVE 0` | starts / stops a live stream, one line a second: `L <unix> <nSv/h> <cpm> <E x10 V/m> <H x100 µT> <battery %>` |
+| `COUNTS` | `OK <pulses> <hv seconds> <unix>`: raw pulses since power on, seconds the tube voltage has been on since power on, clock |
+| `BAT` | `OK <battery mV> <cable 0/1> <charging 0/1>` |
+| `STATUS` | `OK 10` (the number of groups), then `S <group> key=value ...` lines (radiation, tube, fields, battery, clock, log, settings, thresholds, session, device), then `END`; a group continues on another line with the same group name |
+| `CAPS` | `OK proto=<n>`, then `C <command> ...` lines, then `END`: what this firmware understands |
+| `UID` | `OK <16 hex digits>`: a hash of the chip's unique id, the id itself is never sent |
 | `LOGINFO` | `OK pages=<n> pagesize=<bytes> used=<n> oldest=<unix> newest=<unix>` |
 | `LOGPAGE <n>` | `OK <n> <size>`, the raw logical page as base64 lines, then `END` |
 | `EVENTS` | `OK <count>`, then lines `E <start> <duration s> <peak nSv/h> <level>`, then `END` |

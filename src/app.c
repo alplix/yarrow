@@ -690,6 +690,8 @@ static void run_second(app_t *a, uint32_t now_ms)
         H(a)->usb_start();
     }
     meas_tick(&a->meas, a->hv_on ? pulses : 0);
+    if (a->hv_on)
+        a->hv_secs++;
     uint32_t rate = meas_rate_nsvh(&a->meas);
     uint64_t dose = total_dose(a);
 
@@ -1521,6 +1523,8 @@ void app_init(app_t *a, const hal_t *hal, uint32_t now_ms)
     a->display_on = true;
     a->last_input_ms = now_ms;
     a->next_second_ms = now_ms + 1000;
+    a->last_rtc = hal->rtc_now();
+    a->last_tick_ms = now_ms;
 
     meas_cfg_t mc = {8000, 90};
     meas_init(&a->meas, &mc);
@@ -1609,10 +1613,32 @@ void app_poll(app_t *a, uint32_t now_ms)
     ladder_poll(a, now_ms);
     start_log(a);
 
-    if ((int32_t)(now_ms - a->next_second_ms) >= 0) {
-        a->next_second_ms += 1000;
-        if ((int32_t)(now_ms - a->next_second_ms) > 2000)
-            a->next_second_ms = now_ms + 1000; /* the loop was blocked for a long time: do not catch up */
+    /* The application second follows the real-time clock (a crystal), not the millisecond counter, whose rate rests on
+     * the assumed core clock: an error there once made every count look 1.5 times too slow. If the clock stands still
+     * for 2.5 s the millisecond counter takes over, so measuring never stops. */
+    uint32_t rt = a->hal->rtc_now();
+    bool second = false;
+    if (rt != a->last_rtc) {
+        if (rt - a->last_rtc == 1u) {                 /* compare the two clocks over a minute of undisturbed seconds */
+            if (a->clk_rtc0 == 0) {
+                a->clk_rtc0 = rt;
+                a->clk_ms0 = now_ms;
+            } else if (rt - a->clk_rtc0 >= 60u) {
+                a->ms_per_s = (now_ms - a->clk_ms0) / (rt - a->clk_rtc0);
+                a->clk_rtc0 = 0;
+            }
+        } else {
+            a->clk_rtc0 = 0;                          /* the clock was set: start over */
+        }
+        a->last_rtc = rt;
+        a->last_tick_ms = now_ms;
+        second = true;
+    } else if ((int32_t)(now_ms - a->last_tick_ms) >= 2500) {
+        a->last_tick_ms = now_ms - 1500;
+        second = true;
+    }
+    if (second) {
+        a->next_second_ms = now_ms + 1000;
         run_second(a, now_ms);
         if (screen_sig(a) != a->drawn_sig)
             a->need_draw = true;

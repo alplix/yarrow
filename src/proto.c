@@ -81,6 +81,209 @@ static void cmd_info(proto_t *p)
     out(p, b);
 }
 
+/* FNV-1a 64 over the 96-bit chip id: the same id always gives the same 16 hex digits, the id itself cannot be read back */
+static void cmd_uid(proto_t *p)
+{
+    uint32_t id[3] = {0, 0, 0};
+    if (!p->app->hal->chip_id) {
+        out(p, "ERR unsupported\n");
+        return;
+    }
+    p->app->hal->chip_id(id);
+    uint64_t h = 0xcbf29ce484222325ull;
+    for (int i = 0; i < 12; i++) {
+        h ^= (uint8_t)(id[i / 4] >> (8 * (i % 4)));
+        h *= 0x100000001b3ull;
+    }
+    char b[32] = "OK ";
+    for (int i = 0; i < 16; i++)
+        b[3 + i] = "0123456789abcdef"[(h >> (60 - 4 * i)) & 15];
+    b[19] = '\n';
+    b[20] = 0;
+    out(p, b);
+}
+
+#ifndef YARROW_LANG_CODE
+#define YARROW_LANG_CODE "xx"
+#endif
+#define PROTO_VERSION 2
+
+/* "S <group> key=value key=value ...": a group continues on the next line (same group name) when a line is full */
+typedef struct {
+    const proto_t *p;
+    const char *group;
+    char b[96];
+    int n;
+} sl_t;
+
+static void sl_begin(sl_t *l, const proto_t *p, const char *group)
+{
+    l->p = p;
+    l->group = group;
+    l->n = put_s(l->b, 0, "S ");
+    l->n = put_s(l->b, l->n, group);
+}
+
+static void sl_end(sl_t *l)
+{
+    if (l->n > 0) {
+        put_s(l->b, l->n, "\n");
+        out(l->p, l->b);
+    }
+    l->n = 0;
+}
+
+static void sl_key(sl_t *l, const char *k)
+{
+    int klen = 0;
+    while (k[klen])
+        klen++;
+    if (l->n + 1 + klen + 1 + 11 > 94) {            /* the longest value is a signed 32-bit number */
+        sl_end(l);
+        l->n = put_s(l->b, 0, "S ");
+        l->n = put_s(l->b, l->n, l->group);
+    }
+    l->n = put_s(l->b, l->n, " ");
+    l->n = put_s(l->b, l->n, k);
+    l->n = put_s(l->b, l->n, "=");
+}
+
+static void sl_u(sl_t *l, const char *k, uint32_t v)
+{
+    sl_key(l, k);
+    l->n = put_u(l->b, l->n, v);
+}
+
+static void sl_i(sl_t *l, const char *k, int32_t v)
+{
+    sl_key(l, k);
+    if (v < 0) {
+        l->n = put_s(l->b, l->n, "-");
+        v = -v;
+    }
+    l->n = put_u(l->b, l->n, (uint32_t)v);
+}
+
+static void sl_s(sl_t *l, const char *k, const char *v)
+{
+    sl_key(l, k);
+    l->n = put_s(l->b, l->n, v);
+}
+
+static uint32_t sat32(uint64_t v) { return v > 0xFFFFFFFFu ? 0xFFFFFFFFu : (uint32_t)v; }
+
+/* Everything the device knows, in groups. The Hub and other hosts read this instead of scraping screens. */
+static void cmd_status(proto_t *p)
+{
+    app_t *a = p->app;
+    const ui_data_t *d = &a->ui;
+    sl_t l;
+    out(p, "OK 10\n");
+    sl_begin(&l, p, "radiation");
+    sl_u(&l, "rate_nsvh", d->rate_nsvh);
+    sl_u(&l, "cpm", d->cpm);
+    sl_u(&l, "level", d->level);
+    sl_u(&l, "bg_nsvh", d->bg_nsvh);
+    sl_u(&l, "dose_today_nsv", sat32(d->dose_today_nsv));
+    sl_u(&l, "dose_week_nsv", sat32(d->dose_week_nsv));
+    sl_u(&l, "dose_total_nsv", sat32(d->dose_total_nsv));
+    sl_end(&l);
+    sl_begin(&l, p, "tube");
+    sl_u(&l, "pulses", a->hal->tube_pulses());
+    sl_u(&l, "hv", a->hv_on);
+    sl_u(&l, "hv_s", a->hv_secs);
+    sl_u(&l, "total_pulses", d->total_pulses);
+    sl_u(&l, "bg_cpm", d->bg_cpm);
+    sl_u(&l, "deadtime", d->deadtime_on);
+    sl_u(&l, "factory", d->hv_factory);
+    sl_u(&l, "life", d->tube_life);
+    sl_end(&l);
+    sl_begin(&l, p, "fields");
+    sl_u(&l, "e_vm_x10", d->e_vm_x10);
+    sl_u(&l, "e_avg_x10", d->e_avg_x10);
+    sl_u(&l, "e_peak_x10", d->e_peak_x10);
+    sl_u(&l, "h_ut_x100", d->h_ut_x100);
+    sl_u(&l, "h_avg_x100", d->h_avg_x100);
+    sl_u(&l, "h_peak_x100", d->h_peak_x100);
+    sl_end(&l);
+    sl_begin(&l, p, "battery");
+    sl_u(&l, "mv", a->hal->battery_mv());
+    sl_u(&l, "pct", d->bat_percent);
+    sl_u(&l, "state", d->bat_state);
+    sl_u(&l, "minutes", d->bat_minutes);
+    sl_u(&l, "health", d->bat_health);
+    sl_u(&l, "cycles", d->bat_cycles);
+    sl_u(&l, "cable", d->usb);
+    sl_end(&l);
+    sl_begin(&l, p, "clock");
+    sl_u(&l, "now", a->hal->rtc_now());
+    sl_i(&l, "tz_s", d->tz_offset_s);
+    sl_u(&l, "uptime_s", a->seconds_run);
+    sl_u(&l, "on_hours", d->on_hours);
+    sl_end(&l);
+    sl_begin(&l, p, "log");
+    sl_u(&l, "days", d->days_stored);
+    sl_u(&l, "storage_pct", d->storage_pct);
+    sl_u(&l, "oldest", d->oldest_time);
+    sl_u(&l, "profile", d->profile);
+    sl_u(&l, "alarms", d->alarm_count);
+    sl_u(&l, "events", d->event_count);
+    sl_end(&l);
+    sl_begin(&l, p, "settings");
+    sl_u(&l, "theme", d->theme);
+    sl_u(&l, "brightness", d->brightness);
+    sl_u(&l, "sound", d->sound);
+    sl_u(&l, "vibration", d->vibration);
+    sl_u(&l, "pulse_led", d->led_pulse);
+    sl_u(&l, "charge_led", d->led_charge);
+    sl_u(&l, "click", d->click);
+    sl_u(&l, "count_vibe", d->count_vibe);
+    sl_u(&l, "led_color", d->led_color);
+    sl_u(&l, "usb_start", d->usb_start);
+    sl_end(&l);
+    sl_begin(&l, p, "thresholds");
+    sl_u(&l, "attention_nsvh", d->th_nsvh[0]);
+    sl_u(&l, "danger_nsvh", d->th_nsvh[1]);
+    sl_u(&l, "evacuate_nsvh", d->th_nsvh[2]);
+    sl_u(&l, "budget_active", d->budget_active);
+    sl_u(&l, "budget_nsv", d->budget_nsv);
+    sl_u(&l, "budget_used_nsv", d->budget_used_nsv);
+    sl_end(&l);
+    sl_begin(&l, p, "session");
+    sl_u(&l, "active", d->sess_active);
+    sl_u(&l, "kind", d->sess_kind);
+    sl_u(&l, "start", d->sess_start);
+    sl_u(&l, "seconds", d->sess_seconds);
+    sl_u(&l, "dose_nsv", sat32(d->sess_dose_nsv));
+    sl_end(&l);
+    sl_begin(&l, p, "device");
+    sl_s(&l, "lang", YARROW_LANG_CODE);
+    sl_u(&l, "ms_per_s", a->ms_per_s);                 /* 1000 when the core clock is as assumed; 0 until measured */
+    sl_u(&l, "stage", a->stage);
+    sl_u(&l, "verified", a->verified);
+    sl_u(&l, "suspect", a->suspect_mask);
+    sl_u(&l, "selftest_fail", d->selftest_fail);
+    sl_u(&l, "sens_x100", d->cal[0]);
+    sl_u(&l, "dead_us", d->cal[1]);
+    sl_u(&l, "e_scale", d->cal[2]);
+    sl_u(&l, "h_scale", d->cal[3]);
+    sl_end(&l);
+    out(p, "END\n");
+}
+
+/* What this firmware understands, so a host can adapt to old and new devices */
+static void cmd_caps(proto_t *p)
+{
+    char b[48];
+    int n = put_s(b, 0, "OK proto=");
+    n = put_u(b, n, PROTO_VERSION);
+    put_s(b, n, "\n");
+    out(p, b);
+    out(p, "C PING INFO TIME LIVE LOGINFO LOGPAGE EVENTS CAL SET\n");
+    out(p, "C COUNTS UID BAT STATUS CAPS\n");
+    out(p, "END\n");
+}
+
 static void cmd_loginfo(proto_t *p)
 {
     app_t *a = p->app;
@@ -233,6 +436,30 @@ static void run_line(proto_t *p, const char *line)
         p->live = *args == '1';
         p->live_sent_s = 0;
         out(p, "OK\n");
+    } else if (starts(line, "COUNTS")) {
+        char b[64];
+        int n = put_s(b, 0, "OK ");
+        n = put_u(b, n, a->hal->tube_pulses());
+        n = put_s(b, n, " ");
+        n = put_u(b, n, a->hv_secs);
+        n = put_s(b, n, " ");
+        n = put_u(b, n, a->hal->rtc_now());
+        put_s(b, n, "\n");
+        out(p, b);
+    } else if (starts(line, "BAT")) {
+        char b[64];
+        int n = put_s(b, 0, "OK ");
+        n = put_u(b, n, a->hal->battery_mv());
+        n = put_s(b, n, a->hal->usb_present() ? " 1" : " 0");
+        n = put_s(b, n, a->hal->charging() ? " 1" : " 0");
+        put_s(b, n, "\n");
+        out(p, b);
+    } else if (starts(line, "STATUS")) {
+        cmd_status(p);
+    } else if (starts(line, "CAPS")) {
+        cmd_caps(p);
+    } else if (starts(line, "UID")) {
+        cmd_uid(p);
     } else if (starts(line, "LOGINFO")) {
         cmd_loginfo(p);
     } else if (starts(line, "LOGPAGE")) {

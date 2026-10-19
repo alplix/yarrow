@@ -29,6 +29,7 @@ typedef struct {
     uint16_t hist[BAT_HIST];    /* filtered level every 10 minutes, oldest first */
     uint32_t hist_n;
     uint32_t sample_timer;
+    uint32_t cv_ticks;          /* seconds spent at the charger's constant-voltage stage */
 } bat_t;
 
 void bat_init(bat_t *b, const bat_stats_t *stats);

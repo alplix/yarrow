@@ -162,6 +162,7 @@ static void ep0_send(const uint8_t *data, uint32_t len, uint32_t max)
 {
     if (len > max)
         len = max;
+    ep0_arm_rx();
     ctl_data = data;
     ctl_len = len;
     ctl_sent = 0;
@@ -176,6 +177,7 @@ static void ep0_send(const uint8_t *data, uint32_t len, uint32_t max)
 
 static void ep0_status(void)
 {
+    ep0_arm_rx();
     ctl_len = 0;
     ctl_sent = 0;
     ctl_zlp = false;
@@ -417,8 +419,9 @@ int usb_serial_write(const uint8_t *buf, uint32_t n)
 
 void usb_gc03_init(void)
 {
-    /* USB clock = 96 MHz / 2 */
-    RCC_CFGR = (RCC_CFGR & ~(3u << 22)) | (1u << 22);
+    /* USB clock = 96 MHz / 2 = 48 MHz. USBPRE[1:0] (CFGR bits 23:22) keeps the old single-bit meaning for 0 and 1
+     * (00 = PLL/1.5, 01 = PLL/1) and adds 10 = PLL/2, 11 = PLL/3. */
+    RCC_CFGR = (RCC_CFGR & ~(3u << 22)) | (2u << 22);
     RCC_APB1ENR |= 1u << 23;
     EXTEN_CTR &= ~(1u << 1); /* pull-up off: the host sees a disconnect */
     delay_ms(50);
