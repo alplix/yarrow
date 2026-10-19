@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Yarrow: doğal fon radyasyonunun canlı haritası</title><meta name="description" content="Yarrow, gönüllülerin Geiger sayaçlarını doğal fon doz hızının canlı, açık bir haritasına dönüştürür: FNIRSI GC-03 için açık yazılım, BOINC monitörü, istatistiksel denetimler ve dünya haritası."/>
+<link rel="canonical" href="https://yarrow.athena.org.tr/index.tr.html"/><link rel="alternate" hreflang="en" href="https://yarrow.athena.org.tr/"/><link rel="alternate" hreflang="tr" href="https://yarrow.athena.org.tr/index.tr.html"/><link rel="alternate" hreflang="x-default" href="https://yarrow.athena.org.tr/"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/><meta name="theme-color" content="#0b1020"/>
+<meta property="og:type" content="website"/><meta property="og:site_name" content="Yarrow"/><meta property="og:title" content="Yarrow: doğal fon radyasyonunun canlı haritası"/>
+<meta property="og:description" content="Yarrow, gönüllülerin Geiger sayaçlarını doğal fon doz hızının canlı, açık bir haritasına dönüştürür: FNIRSI GC-03 için açık yazılım, BOINC monitörü, istatistiksel denetimler ve dünya haritası."/><meta property="og:url" content="https://yarrow.athena.org.tr/index.tr.html"/><meta property="og:locale" content="tr_TR"/>
+<meta property="og:image" content="https://yarrow.athena.org.tr/assets/hero.png"/><meta name="twitter:card" content="summary_large_image"/>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Yarrow","applicationCategory":"UtilitiesApplication","operatingSystem":"Windows, Linux","license":"https://www.gnu.org/licenses/gpl-3.0.html","url":"https://yarrow.athena.org.tr/","description":"Yarrow, gönüllülerin Geiger sayaçlarını doğal fon doz hızının canlı, açık bir haritasına dönüştürür: FNIRSI GC-03 için açık yazılım, BOINC monitörü, istatistiksel denetimler ve dünya haritası."}</script>
+<style>
+:root{--bg:#0b1020;--bg2:#10172e;--panel:#141d3a;--panel2:#1a2547;--line:#2a3a6e;--text:#e8ecfb;--muted:#a8b3d6;--muted2:#7886b3;
+--green:#00e436;--blue:#29adff;--violet:#a16cdd;--pink:#ff77a8;--red:#ff004d;--ink:#05081a}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:linear-gradient(180deg,var(--bg),var(--bg2) 70%);color:var(--text);line-height:1.6;
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+a{color:var(--blue)}.wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+.px{font-family:ui-monospace,"Cascadia Mono","SF Mono",Consolas,monospace;letter-spacing:.02em}
+header.site{position:sticky;top:0;z-index:20;background:rgba(11,16,32,.9);backdrop-filter:blur(8px);border-bottom:3px solid var(--ink);
+box-shadow:0 2px 0 var(--line)}
+.bar{display:flex;align-items:center;gap:16px;padding:10px 0;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.2rem;color:var(--text);text-decoration:none}
+nav.links{display:flex;gap:16px;flex:1;overflow-x:auto;white-space:nowrap;scrollbar-width:none;font-size:.9rem}
+nav.links a{color:var(--muted);text-decoration:none}nav.links a:hover{color:var(--text)}
+.lang a{color:var(--muted2);text-decoration:none;border:2px solid var(--line);padding:2px 8px;font-size:.78rem}
+.lang a.cur{color:var(--green);border-color:var(--green)}
+.btn{display:inline-block;padding:10px 20px;color:var(--ink);background:var(--green);border:3px solid var(--ink);font-weight:800;
+text-decoration:none;box-shadow:4px 4px 0 var(--ink);transition:transform .08s}
+.btn:hover{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+.btn.alt{background:var(--panel2);color:var(--text);border-color:var(--line);box-shadow:4px 4px 0 var(--ink)}
+.hero{padding:56px 0 36px;text-align:center;position:relative;overflow:hidden}
+.hero h1{font-size:clamp(2rem,5vw,3.3rem);margin:12px 0 10px;line-height:1.15}
+.hero h1 b{color:var(--green)}.tag{color:var(--muted);font-size:1.15rem;max-width:760px;margin:0 auto 26px}
+.cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:26px}
+.pills{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+.pill{border:2px solid var(--line);background:var(--panel);padding:4px 12px;font-size:.82rem;color:var(--muted)}
+.screens{max-width:1000px;margin:6px auto 0;border:3px solid var(--ink);box-shadow:inset 0 0 0 2px var(--line),6px 6px 0 var(--ink)}
+.screens img{display:block;width:100%;height:auto;image-rendering:auto}
+.pulses{display:flex;gap:6px;justify-content:center;margin:0 0 4px}.pulses i{width:10px;height:10px;background:var(--green);opacity:.15;animation:pulse 2.4s infinite}
+@keyframes pulse{0%,60%,100%{opacity:.15}8%{opacity:1}}
+.pulses i:nth-child(2){animation-delay:.5s}.pulses i:nth-child(3){animation-delay:1.1s}.pulses i:nth-child(4){animation-delay:.2s}
+.pulses i:nth-child(5){animation-delay:1.7s}.pulses i:nth-child(6){animation-delay:.8s}.pulses i:nth-child(7){animation-delay:1.4s}
+section{padding:54px 0}section.alt{background:rgba(255,255,255,.02);border-top:3px solid var(--ink);border-bottom:3px solid var(--ink)}
+h2{font-size:1.7rem;margin:0 0 6px}h2 .px{color:var(--green)}.sub{color:var(--muted);max-width:780px;margin:0 0 26px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.card{background:var(--panel);border:3px solid var(--ink);box-shadow:inset 0 0 0 2px var(--line),4px 4px 0 var(--ink);padding:16px 18px}
+.card h3{margin:0 0 6px;font-size:1.05rem}.card p{margin:0;color:var(--muted);font-size:.95rem}.ic{font-size:1.6rem;display:block;margin-bottom:6px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;counter-reset:s}
+.step{background:var(--panel);border:3px solid var(--ink);box-shadow:inset 0 0 0 2px var(--line),4px 4px 0 var(--ink);padding:16px 18px;position:relative}
+.step:before{counter-increment:s;content:counter(s);position:absolute;top:-14px;left:14px;background:var(--green);color:var(--ink);
+font-weight:800;width:28px;height:28px;text-align:center;line-height:28px;border:3px solid var(--ink)}
+.step h3{margin:6px 0 6px;font-size:1.05rem}.step p{margin:0;color:var(--muted);font-size:.94rem}
+table{border-collapse:collapse;width:100%;font-size:.93rem}th,td{padding:9px 10px;border-bottom:2px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted2);font-weight:600}
+.tag-ok{color:var(--green);font-weight:700}.tag-wip{color:var(--blue);font-weight:700}
+.dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:16px 0}
+.dl a{display:block;text-align:center;padding:9px 6px;background:var(--panel2);border:3px solid var(--ink);color:var(--text);
+text-decoration:none;box-shadow:3px 3px 0 var(--ink);font-size:.9rem}.dl a:hover{border-color:var(--green)}.dl small{display:block;color:var(--muted2)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}.legend span{display:flex;align-items:center;gap:6px;font-size:.88rem;color:var(--muted)}
+.legend i{width:16px;height:16px;border:2px solid var(--ink);display:inline-block}
+details{background:var(--panel);border:3px solid var(--ink);box-shadow:inset 0 0 0 2px var(--line);padding:10px 16px;margin:10px 0}
+summary{cursor:pointer;font-weight:700}details p{color:var(--muted);margin:8px 0 2px}
+ol.num{padding-left:22px}ol.num li{margin:8px 0}code{background:var(--ink);padding:1px 6px}
+footer{border-top:3px solid var(--ink);padding:26px 0;color:var(--muted2);font-size:.88rem;text-align:center}
+footer a{color:var(--muted)}
+@media (max-width:640px){.lang{order:3}nav.links{order:4;width:100%}}
+@media (prefers-reduced-motion:reduce){.pulses i{animation:none;opacity:.6}}
+</style></head><body>
+<header class="site"><div class="wrap bar"><a class="brand px" href="/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15 18" width="24" height="28" shape-rendering="crispEdges"><rect x="7" y="1" width="1" height="1" fill="#ff77a8"/><rect x="3" y="2" width="1" height="1" fill="#ff77a8"/><rect x="6" y="2" width="1" height="1" fill="#ff77a8"/><rect x="7" y="2" width="1" height="1" fill="#fff1e8"/><rect x="8" y="2" width="1" height="1" fill="#ff77a8"/><rect x="11" y="2" width="1" height="1" fill="#ff77a8"/><rect x="2" y="3" width="1" height="1" fill="#ff77a8"/><rect x="3" y="3" width="1" height="1" fill="#fff1e8"/><rect x="4" y="3" width="1" height="1" fill="#ff77a8"/><rect x="7" y="3" width="1" height="1" fill="#ff77a8"/><rect x="10" y="3" width="1" height="1" fill="#ff77a8"/><rect x="11" y="3" width="1" height="1" fill="#fff1e8"/><rect x="12" y="3" width="1" height="1" fill="#ff77a8"/><rect x="3" y="4" width="1" height="1" fill="#ff77a8"/><rect x="11" y="4" width="1" height="1" fill="#ff77a8"/><rect x="5" y="5" width="1" height="1" fill="#ff77a8"/><rect x="9" y="5" width="1" height="1" fill="#ff77a8"/><rect x="4" y="6" width="1" height="1" fill="#ff77a8"/><rect x="5" y="6" width="1" height="1" fill="#fff1e8"/><rect x="6" y="6" width="1" height="1" fill="#ff77a8"/><rect x="8" y="6" width="1" height="1" fill="#ff77a8"/><rect x="9" y="6" width="1" height="1" fill="#fff1e8"/><rect x="10" y="6" width="1" height="1" fill="#ff77a8"/><rect x="5" y="7" width="1" height="1" fill="#ff77a8"/><rect x="9" y="7" width="1" height="1" fill="#ff77a8"/><rect x="5" y="8" width="1" height="1" fill="#00e436"/><rect x="7" y="8" width="1" height="1" fill="#00e436"/><rect x="6" y="9" width="1" height="1" fill="#00e436"/><rect x="7" y="9" width="1" height="1" fill="#00e436"/><rect x="9" y="9" width="1" height="1" fill="#00e436"/><rect x="7" y="10" width="1" height="1" fill="#00e436"/><rect x="8" y="10" width="1" height="1" fill="#00e436"/><rect x="4" y="11" width="1" height="1" fill="#00e436"/><rect x="5" y="11" width="1" height="1" fill="#00e436"/><rect x="7" y="11" width="1" height="1" fill="#00e436"/><rect x="6" y="12" width="1" height="1" fill="#00e436"/><rect x="7" y="12" width="1" height="1" fill="#00e436"/><rect x="9" y="12" width="1" height="1" fill="#00e436"/><rect x="10" y="12" width="1" height="1" fill="#00e436"/><rect x="7" y="13" width="1" height="1" fill="#00e436"/><rect x="8" y="13" width="1" height="1" fill="#00e436"/><rect x="5" y="14" width="1" height="1" fill="#00e436"/><rect x="7" y="14" width="1" height="1" fill="#00e436"/><rect x="6" y="15" width="1" height="1" fill="#00e436"/><rect x="7" y="15" width="1" height="1" fill="#00e436"/><rect x="9" y="15" width="1" height="1" fill="#00e436"/><rect x="7" y="16" width="1" height="1" fill="#00e436"/><rect x="8" y="16" width="1" height="1" fill="#00e436"/><rect x="7" y="17" width="1" height="1" fill="#00e436"/></svg>Yarrow</a>
+<nav class="links"><a href="#what">Nedir</a><a href="#how">Nasıl çalışır</a><a href="#detector">Dedektör</a>
+<a href="#monitor">Monitör</a><a href="#trust">Güven</a><a href="#join">Katıl</a></nav>
+<div class="lang"><a href="/" hreflang="en">English</a><a href="/index.tr.html" hreflang="tr" class=cur>Türkçe</a></div></div></header>
+
+<div class="hero"><div class="wrap">
+<div class="pulses" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<h1 class="px">Doğal <b>fon radyasyonunun</b> canlı haritası</h1>
+<p class="tag">Bilgisayarınıza bir Geiger sayacı takın ve dünya çapında bir gönüllü ağına katılın. Her on dakikada gerçek sayımlar, şehir şehir fon doz hızının canlı, açık haritasına gider.</p>
+<div class="cta"><a class="btn" href="https://bitboinc.athena.org.tr/yarrow.php">Canlı haritayı aç</a>
+<a class="btn alt" href="#join">5 adımda katıl</a></div>
+<div class="screens"><img src="/assets/hero.png" width="1240" height="320" alt="Yarrow yazılımının ekranları: doz hızı, menü, tehlike alarmı, alan bulucu, numune testi"/></div>
+<div class="pills px"><span class="pill">Açık yazılım, GPL-3.0</span><span class="pill">16 dil</span>
+<span class="pill">Windows · Linux</span><span class="pill">Yalnızca ham sayım</span><span class="pill">Her geçerli dilim için kredi</span></div>
+</div></div>
+
+<section id="what"><div class="wrap"><h2 class="px">Yarrow nedir?</h2>
+<p class="sub">Yeryüzünde her yerde, her an biraz iyonlaştırıcı radyasyon sizden geçer: kayaç ve topraktan gelen gama ışınları, oturduğunuz bina, havadaki radon ve uzaydan gelen kozmik ışınlar. Bu seviyelerde zararsızdır ve yerden yere değişir: granit tortuldan, bir dağ köyü kıyıdan yüksek okur. Her biri kendi köşesini izleyen ucuz dedektörlerden oluşan bir ağ, her yerde normalin neye benzediğini gösterir; böylece olağandışı fark edilebilir.</p>
+<div class="grid">
+<div class="card"><span class="ic">📡</span><h3>Siz ölçersiniz</h3><p>Bir Geiger-Müller tüpü her iyonlaştırıcı olay için bir darbe verir. Fon seviyesinde bu yaklaşık iki saniyede bir olur.</p></div>
+<div class="card"><span class="ic">🗺️</span><h3>Biz haritalarız</h3><p>Tüm dedektörlerin sayımları, her şehrin son bir saat, 3 saat, 24 saat ya da 7 gündeki medyan doz hızına dönüşür.</p></div>
+<div class="card"><span class="ic">🔎</span><h3>Herkes görür</h3><p>Harita herkese açıktır; yer başına geçmiş grafiği ve değerler belirgin biçimde olağandan yüksekse bir uyarı sunar.</p></div>
+</div></div></section>
+
+<section id="how" class="alt"><div class="wrap"><h2 class="px">Nasıl çalışır</h2>
+<p class="sub">Tüpten haritaya dört adımda.</p>
+<div class="steps">
+<div class="step"><h3>Dedektör sayar</h3><p>Yarrow yazılımlı FNIRSI GC-03, J321 tüpünün ham darbelerini sayar; bir darbe sayacı ve bir saat tutar.</p></div>
+<div class="step"><h3>Monitör dilimler</h3><p>Küçük bir BOINC görevi sayacı okur ve saate oturan tam 10, 30 ya da 60 dakikalık dilimlere böler; on dakikada bir gönderir.</p></div>
+<div class="step"><h3>Sunucu denetler</h3><p>İmkânsız değerler hemen reddedilir. Bir gün sonra her akış istatistik testini geçmelidir. Dilimler ancak o zaman sayılır ve kredi kazandırır.</p></div>
+<div class="step"><h3>Harita gösterir</h3><p>Şehirler medyan doz hızına göre renklenen noktalar olarak görünür. Bir şehirden daha ayrıntılı hiçbir şey gönderilmez ya da gösterilmez.</p></div>
+</div>
+<div class="legend px"><span><i style="background:#29adff"></i>< 80</span><span><i style="background:#00e436"></i>80 - 150</span><span><i style="background:#a16cdd"></i>150 - 300</span><span><i style="background:#ff77a8"></i>300 - 600</span><span><i style="background:#ff004d"></i>600 - 1500</span><span><i style="background:#fff1e8"></i>> 1500</span><span>nSv/h</span></div></div></section>
+
+<section id="detector"><div class="wrap"><h2 class="px">Dedektör: FNIRSI GC-03 + Yarrow yazılımı</h2>
+<p class="sub">FNIRSI GC-03; J321 tüplü, renkli ekranlı, döner düğmeli, bataryalı ve USB girişli cep Geiger sayacıdır. Yarrow, onun için sıfırdan yazılmış açık yazılımdır; çünkü orijinali bir bilgisayarın kullanabileceği hiçbir şey vermez.</p>
+<div class="grid"><div class="card"><span class="ic">☢️</span><h3>Güvenebileceğiniz doz hızı</h3><p>Uyarlanır ortalama penceresi: fon seviyesinde sakin, seviye yükselince hızlı. Ölü zaman düzeltmesi güçlü kaynakları doğru okutur.</p></div><div class="card"><span class="ic">🚨</span><h3>Alarmlar ve acil durum rehberi</h3><p>Histerezisli dikkat, tehlike ve tahliye seviyeleri; ses, titreşim ve ışık; ne yapılacağını düz dille anlatan bir rehber.</p></div><div class="card"><span class="ic">📒</span><h3>Her şeye dayanan kayıt</h3><p>Haftalarca saniye ayrıntısından yıllarca saatlik kayda; elektrik kesintisine dayanıklı, alarm anları saniyede bir saklanır.</p></div><div class="card"><span class="ic">📊</span><h3>Oturumlar, bütçe ve numune testi</h3><p>Günlük doz bütçesi tutun, oturum kaydedin, bir numuneyi fon ile istatistiksel bir kararla karşılaştırın.</p></div><div class="card"><span class="ic">⚡</span><h3>Alan ve kablo bulucu</h3><p>Elektrik ve manyetik alan ölçümü; bir kaynağa ya da duvardaki kabloya yaklaşırken yükselen ses ve çubuklar.</p></div><div class="card"><span class="ic">🎨</span><h3>Temalar, 16 dil, pil bakımı</h3><p>On altı renk teması, 16 dil, sağlık ve şarj döngüsü gösteren pil göstergesi; tüp, algılayıcı ve saat için kendi kendini sınama.</p></div><div class="card"><span class="ic">🔬</span><h3>Kalibrasyon sihirbazı</h3><p>Dedektörü doz hızını bildiğiniz bir kaynağın yanına koyun; kendi tüpünüzün duyarlılığını bulur (varsayılan: 1 µSv/h için dakikada 180 sayım).</p></div><div class="card"><span class="ic">🔌</span><h3>Basit bir USB protokolü</h3><p>Ham darbe sayacı, kimlik, kalibrasyon ve saat; USB seri hat üzerinden, belgelenmiş ve açık. Monitörün okuduğu budur.</p></div></div>
+<div class="screens" style="margin-top:26px"><img src="/assets/screens.png" width="920" height="1008" loading="lazy" alt="Yarrow yazılımının tüm ekranları"/></div></div></section>
+
+<section id="firmware" class="alt"><div class="wrap"><h2 class="px">Yazılımı edinin</h2>
+<p class="sub">Her dil için bir dosya. Kendinizinkini seçin:</p>
+<div class="dl px"><a href="https://github.com/alplix/yarrow/releases/latest/download/yarrow-gc03-tr.bin" rel="noopener">Türkçe<small>yarrow-gc03-tr.bin</small></a><a href="https://github.com/alplix/yarrow/releases/latest/download/yarrow-gc03-en.bin" rel="noopener">English<small>yarrow-gc03-en.bin</small></a><a href="https://github.com/alplix/yarrow/releases/latest/download/yarrow-gc03-de.bin" rel="noopener">Deutsch<small>yarrow-gc03-de.bin</small></a><a href="https://github.com/alplix/yarrow/releases/latest/download/yarrow-gc03-fr.bin" rel="noopener">Français<small>yarrow-gc03-fr.bin</small></a><a href="https://github.com/alplix/yarrow/releases/latest/download/yarrow-gc03-es.bin" rel="noopener">Español<small>yarrow-gc03-es.bin</small></a><a href="https://github.com/alplix/yarrow/releases/latest/download/yarrow-gc03-it.bin" rel="noopener">Italiano<small>yarrow-gc03-it.bin</small></a><a href="https://github.com/alplix/yarrow/releases/latest/download/yarrow-gc03-pt.bin" rel="noopener">Português<small>yarrow-gc03-pt.bin</small></a><a href="https://github.com/alplix/yarrow/releases/latest/download/yarrow-gc03-nl.bin" rel="noopener">Nederlands<small>yarrow-gc03-nl.bin</small></a><a href="https://github.com/alplix/yarrow/releases/latest/download/yarrow-gc03-pl.bin" rel="noopener">Polski<small>yarrow-gc03-pl.bin</small></a><a href="https://github.com/alplix/yarrow/releases/latest/download/yarrow-gc03-ru.bin" rel="noopener">Русский<small>yarrow-gc03-ru.bin</small></a><a href="https://github.com/alplix/yarrow/releases/latest/download/yarrow-gc03-uk.bin" rel="noopener">Українська<small>yarrow-gc03-uk.bin</small></a><a href="https://github.com/alplix/yarrow/releases/latest/download/yarrow-gc03-id.bin" rel="noopener">Bahasa Indonesia<small>yarrow-gc03-id.bin</small></a><a href="https://github.com/alplix/yarrow/releases/latest/download/yarrow-gc03-vi.bin" rel="noopener">Tiếng Việt<small>yarrow-gc03-vi.bin</small></a><a href="https://github.com/alplix/yarrow/releases/latest/download/yarrow-gc03-ja.bin" rel="noopener">日本語<small>yarrow-gc03-ja.bin</small></a><a href="https://github.com/alplix/yarrow/releases/latest/download/yarrow-gc03-ko.bin" rel="noopener">한국어<small>yarrow-gc03-ko.bin</small></a><a href="https://github.com/alplix/yarrow/releases/latest/download/yarrow-gc03-zh.bin" rel="noopener">中文<small>yarrow-gc03-zh.bin</small></a></div>
+<ol class="num"><li>Dedektörü kapatın, <b>OK</b> tuşunu basılı tutun, güç tuşuna basın ve USB kabloyu takın.</li>
+<li>Bir sürücü belirir. Dilinize ait <code>.bin</code> dosyasını üzerine kopyalayın.</li>
+<li>Dedektör Yarrow ile yeniden başlar. Orijinal önyükleyiciye ve fabrika tüp kalibrasyonuna hiç dokunulmaz.</li></ol>
+<p class="sub"><a href="https://github.com/alplix/yarrow/blob/main/docs/install.md">Adım adım yönergeler ve kaynak kod</a> · GPL-3.0</p></div></section>
+
+<section id="monitor"><div class="wrap"><h2 class="px">Monitör ve okuduğu sayaçlar</h2>
+<p class="sub">Yarrow'un BOINC bölümü neredeyse hiç işlemci kullanmayan küçük bir programdır. Her 15 saniyede bir sayaç arar, darbe sayacını tam dilimlere böler ve BOINC trickle'ları olarak gönderir. Bir dilim yalnızca tam olduğunda tutulur: iki kenar da doğru saniyede okunmuş, tüp gerilimi tüm süre açık, sayaç yeniden başlamamış, saat sıçramamış. Hiçbir şey tahmin edilmez ya da doldurulmaz. Windows (x64, x86, ARM64) ve Linux (x86-64, ARM64, ARMv7) için derlemeler var.</p>
+<table><tr><th>Sayaç</th><th>Bağlantı</th><th>Durum</th></tr>
+<tr><td>FNIRSI GC-03 + Yarrow</td><td>USB serial</td><td class="tag-ok">Hazır</td></tr>
+<tr><td>GQ GMC-280 / 300 / 320 / 500</td><td>USB serial</td><td class="tag-wip">Ekleniyor</td></tr>
+<tr><td>Radioactive@Home USB counter (SBM-20)</td><td>USB HID</td><td class="tag-wip">Ekleniyor</td></tr></table>
+<p class="sub" style="margin-top:12px">Her sayaç için kural aynıdır: yalnızca tüpten gelen ham darbe sayımı kabul edilir, sayacın kendi yumuşattığı bir hız asla.</p></div></section>
+
+<section id="trust" class="alt"><div class="wrap"><h2 class="px">Veriyi dürüst tutmak</h2>
+<p class="sub">Ev cihazlarından oluşan bir ağ sayılarına güvenebilmelidir ve Yarrow bir gönüllünün bilgisayarını kilitleyemez. Bu yüzden sahte ya da bozuk verinin geçemeyeceği denetimleri yapar.</p>
+<div class="grid"><div class="card"><h3>Kapıda fizik</h3><p>İmkânsız dilimler hemen reddedilir: 1.000 µSv/h üzeri doz hızı, gelecekten ya da çok eskiden gelen veri, imkânsız ölü zaman ya da duyarlılık.</p></div><div class="card"><h3>İstatistik testi</h3><p>Bir gün sonra her akış sınanır. Gerçek sayımlar rastgeledir; dağılımları Poisson istatistiğine uymalıdır. Uydurma bir sabit fazla düzgündür ve geçemez.</p></div><div class="card"><h3>Kimlik ve sınırlar</h3><p>Her dedektörün çip numarasından türeyen kendi kimliği vardır. Başka bir dedektörün sayımlarının kopyası, yeniden gönderilen kayıtlı bir gün ya da şehrin diğer dedektörlerinden çok uzak bir doz hızı bekletilir ve incelenir. Yeni dedektörler, tutarlı bir geçmişle büyüyen bir kredi payı alır; gönüllü başına en fazla 5 dedektör, günlük üst sınır.</p></div><div class="card"><h3>Kalabalık</h3><p>Harita bir şehrin medyanını gösterir; tek bir hatalı dedektör onu oynatamaz. Kredi yalnızca denetimlerden sonra verilir.</p></div></div>
+<p class="sub" style="margin-top:16px">Her geçerli dilim 10 kredi değerindedir (dedektör başına günde en fazla 150 dilim); veri geldikten yaklaşık bir gün sonra, denetimler geçildiğinde verilir.</p></div></section>
+
+<section id="privacy"><div class="wrap"><h2 class="px">Gizlilik</h2>
+<p class="sub">Haritadaki bir nokta, tercihlerinize yazdığınız şehirdir. Bir şehirden daha ayrıntılı hiçbir şey gönderilmez ya da gösterilmez: adres, GPS ya da sokak yok. Gönüllüler tablosu BOINC kullanıcı adlarını ve miktarları gösterir, asla yer göstermez. Şehir konumları GeoNames'ten (CC BY 4.0), dünya haritası Natural Earth'ten (kamu malı) gelir.</p></div></section>
+
+<section id="join" class="alt"><div class="wrap"><h2 class="px">5 adımda katılın</h2>
+<ol class="num">
+<li>Bir <b>FNIRSI GC-03</b> edinin ve Yarrow yazılımını yükleyin (yukarıda).</li>
+<li><a href="https://bitboinc.athena.org.tr/signup.php">BitBOINC</a>'e katılın ve bilgisayarınızı BOINC Yöneticisi'nde bağlayın.</li>
+<li><a href="https://bitboinc.athena.org.tr/prefs.php?subset=project">Proje tercihlerinizde</a> <b>Test uygulamalarını çalıştır</b>'ı işaretleyin, <b>Yarrow monitörünü</b> seçin ve ülkenizi (iki harf), şehrinizi ve dilim uzunluğunu girin.</li>
+<li>Dedektörü bilgisayara takın, açın ve ana ekranda bırakın. Monitör onu kendisi bulur.</li>
+<li>Çalışır halde bırakın. İlk dilim bir sonraki 10 dakikalık işarette gelir; ne kadar uzun çalışırsa denetimler ve harita o kadar memnun olur.</li></ol>
+<div class="cta" style="justify-content:flex-start;margin-top:18px"><a class="btn" href="https://bitboinc.athena.org.tr/yarrow.php">Canlı haritayı aç</a>
+<a class="btn alt" href="https://bitboinc.athena.org.tr/yarrow_status.php">İlerleme ve durum</a></div></div></section>
+
+<section id="faq"><div class="wrap"><h2 class="px">Sorular</h2><details><summary>İşlemcimi kullanır mı?</summary><p>Neredeyse hayır. Monitör sayacı saniyede yaklaşık bir kez okur ve on dakikada bir küçük bir mesaj gönderir.</p></details><details><summary>Dedektörü nereye koymalıyım?</summary><p>Hep aynı kalan bir yere; raf ya da masa olur. Nadiren yerini değiştirin, bina ve çevre ölçümün bir parçasıdır.</p></details><details><summary>Değerim komşumunkinden farklı.</summary><p>Bu normaldir: zemin, bina ve tüp farklıdır, tek bir dedektörün sayım gürültüsü yüzde birkaçtır. 24 saatlik ya da 7 günlük değere bakın, örüntüyü okuyun.</p></details><details><summary>Normal değer nedir?</summary><p>Yaklaşık 50 ile 200 nSv/h. Granit ve bazı volkanik kayaçlar, taş binalar ve yüksek rakım değeri artırır.</p></details><details><summary>Resmî bir uyarı sistemi mi?</summary><p>Hayır. Gönüllülerin hobi cihazlarından gelen bir bilgidir. Resmî bilgi için ulusal otoritenizi izleyin.</p></details><details><summary>Başka bir Geiger sayacı kullanabilir miyim?</summary><p>Aynı monitöre başka USB sayaçlar için destek ekleniyor; GQ GMC ailesi ve eski Radioactive@Home projesinin USB sayacıyla başlanıyor. Yalnızca ham darbe sayımı kabul edilir.</p></details><details><summary>Orijinal yazılıma dönebilir miyim?</summary><p>Evet. Orijinal önyükleyiciye ve fabrika tüp kalibrasyonuna hiç dokunulmaz; orijinal dosyayı aynı yöntemle kopyalayın.</p></details></div></section>
+
+<footer><div class="wrap"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 15 18" width="18" height="21" shape-rendering="crispEdges"><rect x="7" y="1" width="1" height="1" fill="#ff77a8"/><rect x="3" y="2" width="1" height="1" fill="#ff77a8"/><rect x="6" y="2" width="1" height="1" fill="#ff77a8"/><rect x="7" y="2" width="1" height="1" fill="#fff1e8"/><rect x="8" y="2" width="1" height="1" fill="#ff77a8"/><rect x="11" y="2" width="1" height="1" fill="#ff77a8"/><rect x="2" y="3" width="1" height="1" fill="#ff77a8"/><rect x="3" y="3" width="1" height="1" fill="#fff1e8"/><rect x="4" y="3" width="1" height="1" fill="#ff77a8"/><rect x="7" y="3" width="1" height="1" fill="#ff77a8"/><rect x="10" y="3" width="1" height="1" fill="#ff77a8"/><rect x="11" y="3" width="1" height="1" fill="#fff1e8"/><rect x="12" y="3" width="1" height="1" fill="#ff77a8"/><rect x="3" y="4" width="1" height="1" fill="#ff77a8"/><rect x="11" y="4" width="1" height="1" fill="#ff77a8"/><rect x="5" y="5" width="1" height="1" fill="#ff77a8"/><rect x="9" y="5" width="1" height="1" fill="#ff77a8"/><rect x="4" y="6" width="1" height="1" fill="#ff77a8"/><rect x="5" y="6" width="1" height="1" fill="#fff1e8"/><rect x="6" y="6" width="1" height="1" fill="#ff77a8"/><rect x="8" y="6" width="1" height="1" fill="#ff77a8"/><rect x="9" y="6" width="1" height="1" fill="#fff1e8"/><rect x="10" y="6" width="1" height="1" fill="#ff77a8"/><rect x="5" y="7" width="1" height="1" fill="#ff77a8"/><rect x="9" y="7" width="1" height="1" fill="#ff77a8"/><rect x="5" y="8" width="1" height="1" fill="#00e436"/><rect x="7" y="8" width="1" height="1" fill="#00e436"/><rect x="6" y="9" width="1" height="1" fill="#00e436"/><rect x="7" y="9" width="1" height="1" fill="#00e436"/><rect x="9" y="9" width="1" height="1" fill="#00e436"/><rect x="7" y="10" width="1" height="1" fill="#00e436"/><rect x="8" y="10" width="1" height="1" fill="#00e436"/><rect x="4" y="11" width="1" height="1" fill="#00e436"/><rect x="5" y="11" width="1" height="1" fill="#00e436"/><rect x="7" y="11" width="1" height="1" fill="#00e436"/><rect x="6" y="12" width="1" height="1" fill="#00e436"/><rect x="7" y="12" width="1" height="1" fill="#00e436"/><rect x="9" y="12" width="1" height="1" fill="#00e436"/><rect x="10" y="12" width="1" height="1" fill="#00e436"/><rect x="7" y="13" width="1" height="1" fill="#00e436"/><rect x="8" y="13" width="1" height="1" fill="#00e436"/><rect x="5" y="14" width="1" height="1" fill="#00e436"/><rect x="7" y="14" width="1" height="1" fill="#00e436"/><rect x="6" y="15" width="1" height="1" fill="#00e436"/><rect x="7" y="15" width="1" height="1" fill="#00e436"/><rect x="9" y="15" width="1" height="1" fill="#00e436"/><rect x="7" y="16" width="1" height="1" fill="#00e436"/><rect x="8" y="16" width="1" height="1" fill="#00e436"/><rect x="7" y="17" width="1" height="1" fill="#00e436"/></svg> Yarrow · GPL-3.0 altında açık kaynak ·
+<a href="https://github.com/alplix/yarrow">GitHub</a> · <a href="https://bitboinc.athena.org.tr">BitBOINC</a> · <a href="https://athena.org.tr">Athena</a><br>
+Gönüllülerin hobi cihazları; resmî bir uyarı sistemi değildir.</div></footer></body></html>
