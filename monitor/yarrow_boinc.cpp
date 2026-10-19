@@ -46,6 +46,15 @@ int glue_init(int, char **, yprefs_t *p)
     return 0;
 }
 
+static std::string lock_file()
+{
+    APP_INIT_DATA aid;
+    boinc_get_init_data(aid);
+    static std::string p;
+    p = std::string(aid.project_dir[0] ? aid.project_dir : ".") + "/yarrow_monitor.lock";
+    return p;
+}
+
 static std::string state_file()
 {
     std::string out;
@@ -82,6 +91,13 @@ void glue_checkpoint_write(const char *text, size_t n)
 int glue_send_trickle(const char *text)
 {
     return boinc_send_trickle_up(const_cast<char *>("yarrow"), const_cast<char *>(text));
+}
+
+const char *glue_lock_path(void)
+{
+    static std::string p;
+    p = lock_file();
+    return p.c_str();
 }
 
 int glue_quit_requested(void)

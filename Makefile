@@ -135,7 +135,7 @@ sim: $(BUILD)/font_data.c
 # Host-side monitor for BOINC (see docs/boinc-monitor.md): the bin cutter and trickle writer are tested here;
 # `make monitor` builds the command-line host, monitor/yarrow_boinc.cpp replaces it inside the BOINC build.
 MON = monitor/yarrow_bin.c monitor/yarrow_trickle.c
-SRCS = monitor/yarrow_src.c monitor/yarrow_src_yarrow.c monitor/yarrow_src_rah.c monitor/yarrow_src_gmc.c monitor/yarrow_hid.c
+SRCS = monitor/yarrow_lock.c monitor/yarrow_src.c monitor/yarrow_src_yarrow.c monitor/yarrow_src_rah.c monitor/yarrow_src_gmc.c monitor/yarrow_hid.c
 HIDLIBS = $(if $(findstring Windows,$(OS)),-lhid -lsetupapi,)
 monitor-check:
 	mkdir -p $(BUILD)/tests

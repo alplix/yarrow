@@ -13,6 +13,7 @@ typedef struct {
     void (*close)(void *ctx);
     char name[96];           /* USB product string, empty when unknown */
     char serial[64];         /* USB serial string, empty when it has none */
+    uint16_t version;        /* USB device release number (bcdDevice, 0x0251 is 2.51), 0 when unknown */
 } yhid_t;
 
 /* Opens the first HID device with this vendor and product id whose product string contains name_part. 0 on success. */

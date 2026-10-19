@@ -28,6 +28,8 @@ One BOINC result stays running for as long as the BOINC client does. It looks fo
 while it is attached, and keeps the unsent bins in a checkpoint. When the detector disappears or the client closes, the
 open bin is dropped, never padded; the bins already finished are still sent.
 
+The monitor is a non-CPU-intensive (NCI) app: the server sends one task per computer and the BOINC client runs it next to a full set of CPU tasks, so it does not take a thread away from other work. Only one monitor runs per computer anyway: a lock file in the BOINC project folder keeps a second task out, which puts itself aside for six hours. The server gives every task a large work estimate, so the client does not ask for more than one.
+
 Settings come from the project preferences on the web site (`yarrow_interval`, `yarrow_country`, `yarrow_city`), so a
 volunteer sets them once for every computer. Source: `monitor/` (`yarrow_bin.c` cuts bins, `yarrow_trickle.c` writes
 trickles, `yarrow_serial.c` talks to the port, `yarrow_boinc.cpp` is the BOINC host, `yarrow_standalone.c` a command-line
@@ -91,19 +93,32 @@ described in [upload-api.md](upload-api.md).
 ## Server checks
 
 The trickle handler only stores bins that are aligned, not in the future and not already received for the device.
-The validator then marks a day of bins valid when:
+Impossible counts (for the stated sensitivity and dead time, or a dose rate above 1,000 uSv/h) are rejected at once.
+A day later the validator tests the whole stream of a device:
 
-- each count is physically possible for the stated sensitivity and dead time
-- the counts follow a Poisson process (variance close to the mean) over a few days
-- the same device does not report from two places at once, and one account's devices stay under the per-account limit
+- the counts follow a Poisson process: variance close to the mean, neither far smaller (a made-up constant) nor far larger
+- consecutive bins differ about as much as two independent counts do (a smooth curve scaled to the right spread fails)
+- there is enough data to judge (72 bins, or 24 bins with at least 2,000 counts); until then a stream earns nothing
 
-Bins that fail are kept, marked rejected, and shown to the user with the reason.
+Checks that look at devices side by side hold a device when something is off. A held device keeps sending, its bins stay,
+but it earns nothing until the project owner has looked at it:
+
+- **copy**: the counts equal, or move together with, those of another device (independent counters never do); the later
+  device is the copy and its bins are rejected
+- **replay**: the counts repeat those of one day or one week earlier (a recorded day sent again); the repeats are rejected
+- **region**: the median dose rate is one no place has (under 10 or over 2,000 nSv/h), or is far from the median of the
+  trusted detectors of its city (needs three of them, so one odd detector never decides the reference)
+
+Region holds lift themselves when the numbers become plausible, unless the owner marked the device as reviewed. Bins that
+fail are kept, marked rejected, with the reason.
 
 ## Credit
 
-Credit is per valid bin, so a 10-minute stream earns six times a 1-hour stream of the same duration. The credit batch
-runs daily after validation and grants through the project's normal credit path; the amount per bin is a single server
-setting.
+Credit is per valid bin, so a 10-minute stream earns six times a 1-hour stream of the same duration. A new device earns a
+part of the credit per bin (30 % at first, 60 % after 3 days and 288 valid bins, 100 % after 14 days and 2,000 valid
+bins), so a device made up for the purpose never pays much. Per device and day only the first 150 valid bins pay, and an
+account is paid for at most five devices. Every payment is written per device, so the owner can take the credit of a
+device back. All amounts and thresholds are server settings.
 
 ## Map
 

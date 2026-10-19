@@ -18,9 +18,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define RAH_VID 0x16c0
-#define RAH_PID 0x05df
+/* The counters of the project (sensors.xml of its program): V-USB boards 16c0:05df (revisions 2.01 to 2.60, the kit) and the PIC
+ * board 04d8:f6fe (3.01). The shared V-USB / Microchip ids are only accepted with the project's name in the product string. */
+static const struct { uint16_t vid, pid; } RAH_IDS[] = {{0x16c0, 0x05df}, {0x04d8, 0xf6fe}};
 #define RAH_NAME "radioactiveathome"
+#define RAH_NAME_KIT "Radiation Detector KIT"
 #define RAH_SENS_X100 17123          /* 171.232876 counts per minute for 1 uSv/h */
 #define RAH_DEAD_US 190
 #define RAH_REPORT 129               /* report id + 128 data bytes */
@@ -127,7 +129,10 @@ ysrc_t *yrah_make(const yhid_t *hid, const yrah_env_t *env, ydev_t *dev)
     }
     memset(dev, 0, sizeof *dev);
     make_uid(hid->serial, env->host, dev->uid);
-    snprintf(dev->fw, sizeof dev->fw, "rah");
+    if (hid->version)
+        snprintf(dev->fw, sizeof dev->fw, "rah-%x.%02x", (hid->version >> 8) & 0xff, hid->version & 0xff);
+    else
+        snprintf(dev->fw, sizeof dev->fw, "rah");
     dev->sens_x100 = RAH_SENS_X100;
     dev->dead_us = RAH_DEAD_US;
     return &r->base;
@@ -139,7 +144,11 @@ ysrc_t *ysrc_rah_find(ydev_t *dev)
 {
     yhid_t hid;
     memset(&hid, 0, sizeof hid);
-    if (yhid_open(RAH_VID, RAH_PID, RAH_NAME, &hid) != 0)
+    int found = 0;
+    for (size_t i = 0; i < sizeof RAH_IDS / sizeof RAH_IDS[0] && !found; i++)
+        found = yhid_open(RAH_IDS[i].vid, RAH_IDS[i].pid, RAH_NAME, &hid) == 0 ||
+                yhid_open(RAH_IDS[i].vid, RAH_IDS[i].pid, RAH_NAME_KIT, &hid) == 0;
+    if (!found)
         return NULL;
     char host[64] = "";
     yhost_name(host, sizeof host);

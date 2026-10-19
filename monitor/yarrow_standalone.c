@@ -67,6 +67,13 @@ int glue_send_trickle(const char *text)
     return 0;
 }
 
+const char *glue_lock_path(void)
+{
+    static char p[300];
+    snprintf(p, sizeof p, "%s.lock", state_path);
+    return p;
+}
+
 int glue_quit_requested(void) { return quit; }
 
 void glue_log(const char *line)

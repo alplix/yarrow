@@ -77,6 +77,7 @@ static yhid_t hid(void)
     h.get_feature = fake_get;
     h.close = fake_close;
     snprintf(h.name, sizeof h.name, "obdev.at radioactiveathome.org GRS");
+    h.version = 0x0251;
     return h;
 }
 
@@ -125,7 +126,7 @@ static void bins_match_truth(void)
     if (!src)
         return;
     CHECK(dev.sens_x100 == 17123 && dev.dead_us == 190, "tube calibration %u %u", dev.sens_x100, dev.dead_us);
-    CHECK(strlen(dev.uid) == 16 && strcmp(dev.fw, "rah") == 0, "identity %s %s", dev.uid, dev.fw);
+    CHECK(strlen(dev.uid) == 16 && strcmp(dev.fw, "rah-2.51") == 0, "identity %s %s", dev.uid, dev.fw);
     run(src, BASE + 1800.5);
     CHECK(got_n == 2, "two bins between the edges (got %d)", got_n);
     for (int i = 0; i < got_n; i++) {

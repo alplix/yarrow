@@ -21,6 +21,8 @@ size_t glue_checkpoint_read(char *buf, size_t cap);
 void glue_checkpoint_write(const char *text, size_t n);
 int glue_send_trickle(const char *text);                      /* 0 when it was handed over */
 int glue_quit_requested(void);
+/* The file that keeps a second monitor of this computer out (a lock is taken on it). */
+const char *glue_lock_path(void);
 void glue_log(const char *line);
 void glue_done(int status);
 /* The settings are missing or wrong: tell the volunteer and try again later (BOINC restarts the task after an hour). */

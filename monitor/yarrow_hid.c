@@ -78,6 +78,7 @@ int yhid_open(uint16_t vid, uint16_t pid, const char *name_part, yhid_t *out)
                             out->close = win_close;
                             snprintf(out->name, sizeof out->name, "%s", name);
                             narrow(ws, out->serial, sizeof out->serial);
+                            out->version = a.VersionNumber;
                             free(d);
                             SetupDiDestroyDeviceInfoList(set);
                             return 0;
@@ -144,6 +145,25 @@ struct yhidraw_devinfo {
 #ifdef __linux__
 typedef struct { int fd; } posix_hid_t;
 
+/* the USB device release number of /dev/hidrawN, from sysfs (the USB device is one or two levels above the HID device) */
+static uint16_t sysfs_bcd(const char *node)
+{
+    static const char *up[] = {"../", "../../", NULL};
+    for (int i = 0; up[i]; i++) {
+        char path[300];
+        snprintf(path, sizeof path, "/sys/class/hidraw/%s/device/%sbcdDevice", node, up[i]);
+        FILE *f = fopen(path, "r");
+        if (!f)
+            continue;
+        unsigned v = 0;
+        int ok = fscanf(f, "%x", &v) == 1;
+        fclose(f);
+        if (ok)
+            return (uint16_t)v;
+    }
+    return 0;
+}
+
 static int posix_get_feature(void *ctx, uint8_t *buf, size_t len)
 {
     posix_hid_t *p = ctx;
@@ -185,6 +205,7 @@ int yhid_open(uint16_t vid, uint16_t pid, const char *name_part, yhid_t *out)
                     snprintf(out->name, sizeof out->name, "%s", name);
                     out->serial[0] = 0;
                     ioctl(fd, HIDIOCGRAWUNIQ(sizeof out->serial - 1), out->serial);
+                    out->version = sysfs_bcd(e->d_name);
                     closedir(d);
                     return 0;
                 }

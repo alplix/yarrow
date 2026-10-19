@@ -1,6 +1,7 @@
 /* Yarrow monitor: reads a Yarrow detector live, cuts the counts into bins and reports them as trickles. */
 #include "yarrow_bin.h"
 #include "yarrow_glue.h"
+#include "yarrow_lock.h"
 #include "yarrow_serial.h"
 #include "yarrow_src.h"
 #include "yarrow_trickle.h"
@@ -66,6 +67,12 @@ int main(int argc, char **argv)
         pr.interval = 600;
     if (!ydev_valid_place(pr.cc, pr.city)) {
         glue_wait_for_prefs("Set your country (two capital letters) and your city in the project preferences on the web site");
+        return 1;
+    }
+    if (!ylock_acquire(glue_lock_path())) {
+        glue_log("another Yarrow monitor is already running on this computer");
+        glue_no_detector("Another Yarrow monitor is already running on this computer; one is enough.");
+        glue_done(1);
         return 1;
     }
     static char saved[YT_MAX_PENDING * 24];
