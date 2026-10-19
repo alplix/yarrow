@@ -48,7 +48,7 @@ device and calibration they were counted under.
 
 ## Trickle-up
 
-Variety `yarrow`, one trickle per sent batch (at most one per hour, up to 6 bins of 10 minutes):
+Variety `yarrow`, one trickle per sent batch (at most one every 10 minutes, so the live map is about one bin behind):
 
 ```xml
 <yarrow v="1" start="1792347600" interval="600" dev="9f3c…" fw="0.1.0" sens="8000" dead="90"

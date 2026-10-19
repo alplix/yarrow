@@ -9,7 +9,7 @@
 #include <string.h>
 #include <time.h>
 
-#define SEND_EVERY_S 3600.0
+#define SEND_EVERY_S 600.0
 #define RECAL_EVERY_S 60.0
 
 static ypending_t pending;
@@ -40,7 +40,7 @@ static void flush(int force)
 {
     if (!pending.n || dev.uid[0] == 0)
         return;
-    if (!force && yser_now() - last_send < SEND_EVERY_S && dev.interval != 3600)
+    if (!force && yser_now() - last_send < SEND_EVERY_S)
         return;
     static char xml[4096];
     uint32_t k = ypending_xml(&pending, &dev, xml, sizeof xml);
