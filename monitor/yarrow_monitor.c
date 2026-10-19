@@ -63,6 +63,24 @@ static int num(const char *s, unsigned *out)
     return 1;
 }
 
+#define CLOCK_SLACK_S 90
+
+/* The server refuses bins from a device whose clock is far from real time, so a device whose clock is wrong (never set, or
+ * drifted) is set to the host's UTC time before anything is counted. Returns 1 when the clock was set. */
+static int fix_clock(yser_t *s, uint32_t dev_t)
+{
+    uint32_t now = (uint32_t)time(NULL);
+    uint32_t diff = dev_t > now ? dev_t - now : now - dev_t;
+    if (diff <= CLOCK_SLACK_S)
+        return 0;
+    char cmd[40], r[160];
+    snprintf(cmd, sizeof cmd, "TIME %u", (unsigned)now);
+    if (yser_command(s, cmd, r, sizeof r, 800) != 0)
+        return 0;
+    glue_log("the detector's clock was off, set to the computer's time (UTC)");
+    return 1;
+}
+
 /* Reads identity and calibration. 0 on success. */
 static int identify(yser_t *s, const yprefs_t *pr, ydev_t *nd)
 {
@@ -85,6 +103,11 @@ static int identify(yser_t *s, const yprefs_t *pr, ydev_t *nd)
     if (yser_command(s, "COUNTS", probe, sizeof probe, 800) != 0) {
         glue_log("this firmware cannot report raw counts (COUNTS); update the detector");
         return -1;
+    }
+    {
+        unsigned pp, hh, tt;
+        if (sscanf(probe, "OK %u %u %u", &pp, &hh, &tt) == 3)
+            fix_clock(s, tt);
     }
     if (yser_command(s, "CAL", r, sizeof r, 800) != 0)
         return -1;
@@ -206,6 +229,8 @@ int main(int argc, char **argv)
         ybin_feed(&binner, &s);
         if (yser_now() >= next_cal) {
             next_cal = yser_now() + RECAL_EVERY_S;
+            if (s.t >= 1700000000u && fix_clock(ser, s.t))
+                ybin_break(&binner);                   /* the bin that spans the change is not exact */
             char r[160];
             unsigned sens = 0, dead = 0;
             const char *p, *q;

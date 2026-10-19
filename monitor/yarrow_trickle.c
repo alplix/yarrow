@@ -92,14 +92,19 @@ int ydev_valid_place(const char *cc, const char *city)
 {
     if (strlen(cc) != 2 || cc[0] < 'A' || cc[0] > 'Z' || cc[1] < 'A' || cc[1] > 'Z')
         return 0;
+    /* the same rule as the server (yarrow_core._CITY) and the preferences page: letters of any alphabet (UTF-8 bytes from 128
+     * up count as letters), spaces, dots, apostrophes and hyphens; it starts with a letter and ends with a letter or a dot */
     size_t n = strlen(city);
     if (n < 2 || n > 40)
         return 0;
     for (size_t i = 0; i < n; i++) {
         unsigned char c = (unsigned char)city[i];
-        if (c == '<' || c == '>' || c == '"' || c == '&' || c < 32 || c == 127)
+        int letter = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c >= 128;
+        if (i == 0 && !letter)
             return 0;
-        if ((c >= '0' && c <= '9') || c == '_' || c == '=' || c == ';' || c == '\\' || c == '/')
+        if (i == n - 1 && !letter && c != '.')
+            return 0;
+        if (!letter && c != ' ' && c != '.' && c != '\'' && c != '-')
             return 0;
     }
     return 1;

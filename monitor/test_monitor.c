@@ -202,6 +202,12 @@ static void trickle(void)
     CHECK(ydev_valid_place("TR", "Denizli") && ydev_valid_place("TR", "Saint-Etienne") && !ydev_valid_place("tr", "Denizli")
               && !ydev_valid_place("TR", "<b>") && !ydev_valid_place("TR", "A") && !ydev_valid_place("TRX", "Denizli"),
           "place check");
+    CHECK(ydev_valid_place("FR", "Saint-\xC3\x89tienne") && ydev_valid_place("CN", "\xE5\x8C\x97\xE4\xBA\xAC") && ydev_valid_place("CN", "Xi'an")
+              && ydev_valid_place("CA", "St. John's") && ydev_valid_place("TR", "\xC4\xB0stanbul") && ydev_valid_place("RU", "\xD0\x9C\xD0\xBE\xD1\x81\xD0\xBA\xD0\xB2\xD0\xB0"),
+          "real place names are accepted");
+    CHECK(!ydev_valid_place("DE", "Berlin 2") && !ydev_valid_place("DE", "-Berlin") && !ydev_valid_place("DE", "Berlin-") && !ydev_valid_place("DE", "Berlin, DE")
+              && !ydev_valid_place("DE", "Ber(lin)") && !ydev_valid_place("DE", "Ber\tlin") && !ydev_valid_place("DE", "Berlin\n"),
+          "names the server would refuse are refused here too");
     if (getenv("YARROW_PRINT_XML")) {
         ypending_add(&p, 1792347600u, 12);
         ypending_add(&p, 1792348200u, 9);
