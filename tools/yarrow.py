@@ -6,7 +6,7 @@
     python tools/yarrow.py COM5 live                 stream measurements until Ctrl+C
     python tools/yarrow.py COM5 download log.csv     read the whole log and decode it
     python tools/yarrow.py COM5 cal                  show the calibration
-    python tools/yarrow.py COM5 cal 8000 90 100 100  set sensitivity (x100), dead time us, E %, H %
+    python tools/yarrow.py COM5 cal 18000 90 100 100  set sensitivity (x100), dead time us, E %, H %
     python tools/yarrow.py COM5 events
 """
 import base64

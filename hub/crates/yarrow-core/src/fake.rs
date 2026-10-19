@@ -43,7 +43,7 @@ impl FakeDevice {
             version: "0.1.0".into(),
             clock,
             theme: 0,
-            cal: [8000, 90, 100, 100],
+            cal: [18000, 90, 100, 100],
             events: vec![[1_791_980_000, 95, 640, 1], [1_792_050_000, 12, 1210, 2]],
             live: false,
             realtime: false,

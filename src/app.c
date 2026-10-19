@@ -158,7 +158,7 @@ static void load_settings(app_t *a)
     s->tz_hours = 3;
     s->profile = 2;
     a->th[0] = 500; a->th[1] = 10000; a->th[2] = 100000;
-    a->ui.cal[0] = 8000; a->ui.cal[1] = 90; a->ui.cal[2] = 100; a->ui.cal[3] = 100;
+    a->ui.cal[0] = 18000; a->ui.cal[1] = 90; a->ui.cal[2] = 100; a->ui.cal[3] = 100;
     if (!a->kv_ok)
         return;
 
@@ -254,7 +254,7 @@ static void save_thresholds(app_t *a)
 
 static void restore_calibration(app_t *a)
 {
-    a->ui.cal[0] = 8000; a->ui.cal[1] = 90; a->ui.cal[2] = 100; a->ui.cal[3] = 100;
+    a->ui.cal[0] = 18000; a->ui.cal[1] = 90; a->ui.cal[2] = 100; a->ui.cal[3] = 100;
     uint8_t b[KV_MAX_VALUE];
     if (a->kv_ok && kv_get(&a->kv, K_CALIB, b, sizeof b) == 16) {
         uint32_t c0 = rl32(b), c1 = rl32(b + 4), c2 = rl32(b + 8), c3 = rl32(b + 12);
@@ -1526,7 +1526,7 @@ void app_init(app_t *a, const hal_t *hal, uint32_t now_ms)
     a->last_rtc = hal->rtc_now();
     a->last_tick_ms = now_ms;
 
-    meas_cfg_t mc = {8000, 90};
+    meas_cfg_t mc = {18000, 90};
     meas_init(&a->meas, &mc);
     alarm_cfg_t ac = {{500, 10000, 100000}};
     alarm_init(&a->alarm, &ac);

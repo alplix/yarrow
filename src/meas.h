@@ -10,7 +10,7 @@
 #define MEAS_HISTORY 300 /* seconds of history kept */
 
 typedef struct {
-    uint32_t cpm_per_usvh_x100; /* tube sensitivity, counts per minute for 1 uSv/h, times 100 (J321: 8000) */
+    uint32_t cpm_per_usvh_x100; /* tube sensitivity, counts per minute for 1 uSv/h, times 100 (J321: 18000, the factory firmware uses 180) */
     uint32_t dead_time_us;      /* tube dead time, 0 turns the correction off */
 } meas_cfg_t;
 

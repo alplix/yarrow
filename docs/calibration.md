@@ -4,7 +4,7 @@ A dose rate is only as good as three numbers (Menu, Calibration):
 
 | Value | Meaning | Default |
 |---|---|---|
-| Sensitivity | counts per minute for 1 µSv/h | 80 (J321 / M4011 tube data sheet) |
+| Sensitivity | counts per minute for 1 µSv/h | 180 (what the factory firmware of the GC-03 uses for its J321 tube) |
 | Dead time | the time after a pulse during which the tube is blind, in µs; matters at high rates | 90 |
 | Electric factor / magnetic factor | percent scale on the field readings | 100 |
 

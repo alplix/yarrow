@@ -717,7 +717,7 @@ static void test_clock_and_calibration(void)
     for (int i = 0; i < 5; i++)
         send(EV_RIGHT);
     send(EV_OK);
-    CHECK(app.ui.cal[0] > 8000 && app.meas.cfg.cpm_per_usvh_x100 == app.ui.cal[0], "sensitivity %u", (unsigned)app.ui.cal[0]);
+    CHECK(app.ui.cal[0] > 18000 && app.meas.cfg.cpm_per_usvh_x100 == app.ui.cal[0], "sensitivity %u", (unsigned)app.ui.cal[0]);
     uint32_t cal0 = app.ui.cal[0];
     reboot();
     CHECK(app.meas.cfg.cpm_per_usvh_x100 == cal0, "calibration lost after restart (%u vs %u)", (unsigned)app.meas.cfg.cpm_per_usvh_x100, (unsigned)cal0);
@@ -781,7 +781,7 @@ static void test_protocol(void)
     CHECK(strncmp(ask("TIME\n"), "OK 19000000", 11) == 0, "get time: %s", ser_out);
     CHECK(strncmp(ask("TIME abc\n"), "ERR", 3) == 0, "bad time");
 
-    CHECK(strncmp(ask("CAL\n"), "OK sens=8000 dead=90 e=100 h=100", 31) == 0, "cal: %s", ser_out);
+    CHECK(strncmp(ask("CAL\n"), "OK sens=18000 dead=90 e=100 h=100", 31) == 0, "cal: %s", ser_out);
     CHECK(strcmp(ask("CAL 7800 100 120 90\n"), "OK\n") == 0, "set cal: %s", ser_out);
     CHECK(app.meas.cfg.cpm_per_usvh_x100 == 7800 && app.meas.cfg.dead_time_us == 100 && app.ui.cal[2] == 120, "calibration not applied");
     CHECK(strncmp(ask("CAL 1 1 1 1\n"), "ERR", 3) == 0, "out of range calibration accepted");

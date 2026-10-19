@@ -26,7 +26,7 @@ Counts, not dose: the server converts with the calibration the device had, so a 
 ```json
 {
   "account_key": "…",
-  "device": {"uid_hash": "…", "firmware": "0.1.0", "lang": "tr", "sensitivity_x100": 8000, "dead_time_us": 90},
+  "device": {"uid_hash": "…", "firmware": "0.1.0", "lang": "tr", "sensitivity_x100": 18000, "dead_time_us": 90},
   "location": {"country": "TR", "city": "Denizli"},
   "interval_s": 600,
   "start": 1792347600,
