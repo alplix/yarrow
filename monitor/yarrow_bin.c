@@ -41,13 +41,13 @@ void ybin_feed(ybinner_t *b, const ysample_t *s)
         uint32_t end = b->bin_start + b->interval;
         uint32_t span = s->t - b->first.t, hv = s->hv_s - b->first.hv_s;
         /* edge samples must both be in the edge second; the voltage counter ticks on its own phase, so it may differ by 1 */
-        if (s->t == end && b->first.t == b->bin_start && span == b->interval && hv + 1 >= span && hv <= span + 1)
+        if (s->t == end && !s->inexact && b->first.t == b->bin_start && span == b->interval && hv + 1 >= span && hv <= span + 1)
             b->emit(b->ctx, b->bin_start, s->pulses - b->first.pulses);
         b->open = 0;
     }
     if (!b->open) {
         uint32_t edge = s->t - s->t % b->interval;
-        if (s->t == edge) {
+        if (s->t == edge && !s->inexact) {
             b->open = 1;
             b->bin_start = edge;
             b->first = *s;

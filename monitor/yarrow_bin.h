@@ -11,6 +11,7 @@ typedef struct {
     uint32_t pulses;  /* raw pulses since the device was switched on */
     uint32_t hv_s;    /* seconds the tube voltage has been on since the device was switched on */
     double host_s;    /* host monotonic clock when the reply arrived */
+    int inexact;      /* the sample was not taken at a bin edge to the precision this source promises: never a bin edge */
 } ysample_t;
 
 typedef void (*ybin_emit_fn)(void *ctx, uint32_t start, uint32_t count);

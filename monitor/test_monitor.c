@@ -43,7 +43,7 @@ static void dev_second(void)
 
 static ysample_t sample(void)
 {
-    ysample_t s = {dev.t, dev.pulses, dev.hv_s, host};
+    ysample_t s = {dev.t, dev.pulses, dev.hv_s, host, 0};
     return s;
 }
 

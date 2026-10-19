@@ -2,6 +2,7 @@
 #include "yarrow_bin.h"
 #include "yarrow_glue.h"
 #include "yarrow_serial.h"
+#include "yarrow_src.h"
 #include "yarrow_trickle.h"
 
 #include <stdio.h>
@@ -53,91 +54,6 @@ static void flush(int force)
     }
 }
 
-static int num(const char *s, unsigned *out)
-{
-    char *end;
-    unsigned long v = strtoul(s, &end, 10);
-    if (end == s)
-        return 0;
-    *out = (unsigned)v;
-    return 1;
-}
-
-#define CLOCK_SLACK_S 90
-
-/* The server refuses bins from a device whose clock is far from real time, so a device whose clock is wrong (never set, or
- * drifted) is set to the host's UTC time before anything is counted. Returns 1 when the clock was set. */
-static int fix_clock(yser_t *s, uint32_t dev_t)
-{
-    uint32_t now = (uint32_t)time(NULL);
-    uint32_t diff = dev_t > now ? dev_t - now : now - dev_t;
-    if (diff <= CLOCK_SLACK_S)
-        return 0;
-    char cmd[40], r[160];
-    snprintf(cmd, sizeof cmd, "TIME %u", (unsigned)now);
-    if (yser_command(s, cmd, r, sizeof r, 800) != 0)
-        return 0;
-    glue_log("the detector's clock was off, set to the computer's time (UTC)");
-    return 1;
-}
-
-/* Reads identity and calibration. 0 on success. */
-static int identify(yser_t *s, const yprefs_t *pr, ydev_t *nd)
-{
-    char r[160];
-    yser_command(s, "LIVE 0", r, sizeof r, 300);
-    if (yser_command(s, "INFO", r, sizeof r, 800) != 0 || !strstr(r, "yarrow="))
-        return -1;
-    const char *v = strstr(r, "yarrow=");
-    size_t i = 0;
-    for (v += 7; *v && *v != ' ' && i < sizeof nd->fw - 1; v++)
-        nd->fw[i++] = *v;
-    nd->fw[i] = 0;
-    if (yser_command(s, "UID", r, sizeof r, 800) != 0 || strlen(r) != 19) {
-        glue_log("this firmware cannot report its identity (UID); update the detector");
-        return -1;
-    }
-    memcpy(nd->uid, r + 3, 16);
-    nd->uid[16] = 0;
-    char probe[160];
-    if (yser_command(s, "COUNTS", probe, sizeof probe, 800) != 0) {
-        glue_log("this firmware cannot report raw counts (COUNTS); update the detector");
-        return -1;
-    }
-    {
-        unsigned pp, hh, tt;
-        if (sscanf(probe, "OK %u %u %u", &pp, &hh, &tt) == 3)
-            fix_clock(s, tt);
-    }
-    if (yser_command(s, "CAL", r, sizeof r, 800) != 0)
-        return -1;
-    unsigned sens = 0, dead = 0;
-    const char *p = strstr(r, "sens="), *q = strstr(r, "dead=");
-    if (!p || !q || !num(p + 5, &sens) || !num(q + 5, &dead) || !sens || !dead)
-        return -1;
-    nd->sens_x100 = sens;
-    nd->dead_us = dead;
-    snprintf(nd->cc, sizeof nd->cc, "%s", pr->cc);
-    snprintf(nd->city, sizeof nd->city, "%s", pr->city);
-    nd->interval = pr->interval;
-    return 0;
-}
-
-static int poll_counts(yser_t *s, ysample_t *out)
-{
-    char r[160];
-    if (yser_command(s, "COUNTS", r, sizeof r, 700) != 0)
-        return -1;
-    unsigned p, h, t;
-    if (sscanf(r, "OK %u %u %u", &p, &h, &t) != 3)
-        return -1;
-    out->pulses = p;
-    out->hv_s = h;
-    out->t = t;
-    out->host_s = yser_now();
-    return 0;
-}
-
 int main(int argc, char **argv)
 {
     yprefs_t pr;
@@ -173,39 +89,33 @@ int main(int argc, char **argv)
         ypending_drop(&pending, pending.n);
     ybin_init(&binner, pr.interval, on_bin, 0);
 
-    yser_t *ser = NULL;
+    ysrc_t *src = NULL;
     glue_log("looking for a detector (plugged in, switched on, on the main screen)");
     double next_find = 0, next_cal = 0, searching_since = yser_now();
     ysample_t s;
+    memset(&s, 0, sizeof s);
     while (!glue_quit_requested()) {
-        if (!ser) {
+        if (!src) {
             if (yser_now() < next_find) {
                 yser_sleep_ms(500);
                 continue;
             }
             next_find = yser_now() + 15;
-            char path[64] = "";
-            if (pr.port[0]) {
-                ser = yser_open(pr.port);
-            } else {
-                ser = yser_find(path, sizeof path);
-            }
-            if (!ser) {
+            ydev_t nd;
+            memset(&nd, 0, sizeof nd);
+            src = ysrc_find(pr.port, &nd);
+            if (!src) {
                 if (yser_now() - searching_since > 300) {      /* nothing plugged in: do not hold a CPU for it */
                     flush(1);
                     save_state();
-                    glue_no_detector("No Yarrow detector found. Plug it in, switch it on and leave it on the main screen.");
+                    glue_no_detector("No detector found. Plug it in, switch it on (a Yarrow detector on its main screen).");
                     searching_since = yser_now();
                 }
                 continue;
             }
-            ydev_t nd;
-            memset(&nd, 0, sizeof nd);
-            if (identify(ser, &pr, &nd) != 0) {
-                yser_close(ser);
-                ser = NULL;
-                continue;
-            }
+            snprintf(nd.cc, sizeof nd.cc, "%s", pr.cc);
+            snprintf(nd.city, sizeof nd.city, "%s", pr.city);
+            nd.interval = pr.interval;
             if (dev.uid[0] && (strcmp(dev.uid, nd.uid) != 0 || dev.sens_x100 != nd.sens_x100 || dev.dead_us != nd.dead_us ||
                                dev.interval != nd.interval)) {
                 flush(1);                                /* what is pending was counted by another set-up */
@@ -215,12 +125,14 @@ int main(int argc, char **argv)
             ybin_break(&binner);
             next_cal = yser_now() + RECAL_EVERY_S;
             last_send = yser_now();
-            glue_log("detector found");
+            char line[96];
+            snprintf(line, sizeof line, "found: %s", src->name);
+            glue_log(line);
             searching_since = yser_now();
         }
-        if (poll_counts(ser, &s) != 0) {
-            yser_close(ser);
-            ser = NULL;
+        if (src->poll(src, pr.interval, &s) != 0) {
+            src->close(src);
+            src = NULL;
             ybin_break(&binner);
             glue_log("detector lost");
             searching_since = yser_now();
@@ -229,27 +141,26 @@ int main(int argc, char **argv)
         ybin_feed(&binner, &s);
         if (yser_now() >= next_cal) {
             next_cal = yser_now() + RECAL_EVERY_S;
-            if (s.t >= 1700000000u && fix_clock(ser, s.t))
-                ybin_break(&binner);                   /* the bin that spans the change is not exact */
-            char r[160];
-            unsigned sens = 0, dead = 0;
-            const char *p, *q;
-            if (yser_command(ser, "CAL", r, sizeof r, 800) == 0 && (p = strstr(r, "sens=")) && (q = strstr(r, "dead=")) &&
-                num(p + 5, &sens) && num(q + 5, &dead) && sens && dead && (sens != dev.sens_x100 || dead != dev.dead_us)) {
-                flush(1);                              /* bins sent so far keep the calibration they were counted with */
-                dev.sens_x100 = sens;
-                dev.dead_us = dead;
-                ybin_break(&binner);
+            if (src->housekeeping) {
+                yhk_t hk;
+                src->housekeeping(src, &dev, &s, &hk);
+                if (hk.clock_set)
+                    ybin_break(&binner);                   /* the bin that spans the change is not exact */
+                if (hk.cal_changed) {
+                    flush(1);                              /* bins sent so far keep the calibration they were counted with */
+                    dev.sens_x100 = hk.sens_x100;
+                    dev.dead_us = hk.dead_us;
+                    ybin_break(&binner);
+                }
             }
         }
         flush(0);
-        /* poll fast around the bin edges, slowly otherwise */
-        uint32_t to_edge = ybin_to_edge(&binner, s.t);
-        yser_sleep_ms(to_edge <= 3 || to_edge >= pr.interval - 2 ? 100 : 1000);
+        yser_sleep_ms(src->next_wait_ms(src, ybin_to_edge(&binner, s.t), pr.interval));
     }
     flush(1);
     save_state();
-    yser_close(ser);
+    if (src)
+        src->close(src);
     glue_done(0);
     return 0;
 }

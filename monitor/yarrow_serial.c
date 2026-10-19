@@ -242,3 +242,113 @@ yser_t *yser_find(char *path_out, size_t cap)
 #endif
     return NULL;
 }
+
+/* ---- raw (binary) access, for counters that do not speak the Yarrow line protocol ---- */
+
+#ifdef _WIN32
+yser_t *yser_open_baud(const char *path, int baud)
+{
+    yser_t *s = yser_open(path);
+    if (!s)
+        return NULL;
+    DCB dcb;
+    memset(&dcb, 0, sizeof dcb);
+    dcb.DCBlength = sizeof dcb;
+    GetCommState(s->h, &dcb);
+    dcb.BaudRate = (DWORD)baud;
+    SetCommState(s->h, &dcb);
+    return s;
+}
+
+int yser_write(yser_t *s, const void *p, size_t n) { return wr(s, p, n) ? 0 : -1; }
+
+int yser_read(yser_t *s, void *buf, size_t n, int timeout_ms)
+{
+    size_t got = 0;
+    double end = yser_now() + timeout_ms / 1000.0;
+    while (got < n) {
+        double left = end - yser_now();
+        if (left <= 0)
+            break;
+        COMMTIMEOUTS to = {MAXDWORD, MAXDWORD, (DWORD)(left * 1000) + 1, 0, 0};   /* wait for the first byte, take what is there */
+        SetCommTimeouts(s->h, &to);
+        DWORD r = 0;
+        if (!ReadFile(s->h, (char *)buf + got, (DWORD)(n - got), &r, NULL))
+            break;
+        got += r;
+    }
+    return (int)got;
+}
+
+void yser_drain(yser_t *s)
+{
+    char junk[256];
+    while (yser_read(s, junk, sizeof junk, 30) > 0)
+        ;
+}
+
+int yser_ports(char out[][64], int max)
+{
+    int n = 0;
+    for (int i = 0; i < 64 && n < max; i++)
+        snprintf(out[n++], 64, "COM%d", i + 1);
+    return n;
+}
+#else
+yser_t *yser_open_baud(const char *path, int baud)
+{
+    yser_t *s = yser_open(path);
+    if (!s)
+        return NULL;
+    struct termios t;
+    speed_t sp = baud == 57600 ? B57600 : baud == 38400 ? B38400 : baud == 19200 ? B19200 : baud == 9600 ? B9600 : B115200;
+    if (tcgetattr(s->fd, &t) == 0) {
+        cfsetspeed(&t, sp);
+        tcsetattr(s->fd, TCSANOW, &t);
+    }
+    return s;
+}
+
+int yser_write(yser_t *s, const void *p, size_t n) { return write(s->fd, p, n) == (ssize_t)n ? 0 : -1; }
+
+int yser_read(yser_t *s, void *buf, size_t n, int timeout_ms)
+{
+    size_t got = 0;
+    double end = yser_now() + timeout_ms / 1000.0;
+    while (got < n) {
+        double left = end - yser_now();
+        if (left <= 0)
+            break;
+        struct pollfd p = {s->fd, POLLIN, 0};
+        if (poll(&p, 1, (int)(left * 1000) + 1) <= 0)
+            break;
+        ssize_t r = read(s->fd, (char *)buf + got, n - got);
+        if (r <= 0)
+            break;
+        got += (size_t)r;
+    }
+    return (int)got;
+}
+
+void yser_drain(yser_t *s)
+{
+    char junk[256];
+    while (yser_read(s, junk, sizeof junk, 30) > 0)
+        ;
+}
+
+int yser_ports(char out[][64], int max)
+{
+    static const char *pats[] = {"/dev/ttyUSB*", "/dev/ttyACM*", "/dev/cu.usbserial*", "/dev/cu.usbmodem*", NULL};
+    int n = 0;
+    for (int k = 0; pats[k]; k++) {
+        glob_t g;
+        if (glob(pats[k], 0, NULL, &g) != 0)
+            continue;
+        for (size_t i = 0; i < g.gl_pathc && n < max; i++)
+            snprintf(out[n++], 64, "%s", g.gl_pathv[i]);
+        globfree(&g);
+    }
+    return n;
+}
+#endif

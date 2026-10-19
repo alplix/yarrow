@@ -36,6 +36,23 @@ host that prints the trickles). `make monitor-check` tests the bin cutter agains
 The GC-03 driver uses the serial commands `UID`, `INFO`, `CAL` and `COUNTS` ([serial-protocol.md](serial-protocol.md)).
 `COUNTS` returns the raw pulse counter, the seconds the tube voltage has been on and the device clock in one line.
 
+## Supported counters
+
+The monitor reads the raw tube pulses of a counter through a source (`monitor/yarrow_src_*.c`); every source hands over the
+same things: cumulative raw pulses with a time, the counter's identity, the sensitivity of its tube and its dead time.
+
+| Counter | Source | Notes |
+|---|---|---|
+| Yarrow firmware (FNIRSI GC-03) | `yarrow_src_yarrow.c` | USB serial; the device has a clock of its own and latches its counters every second |
+| Radioactive@Home USB counter (SBM-20, HID `16c0:05df`) | `yarrow_src_rah.c` | USB HID feature report; sensitivity 171.2 counts per minute for 1 uSv/h, dead time 190 us |
+| GQ GMC-280, 300, 320, 500 | `yarrow_src_gmc.c` | USB serial (115200 or 57600 baud); one `<HEARTBEAT1>>` count per second; the sensitivity is read from the calibration stored in the counter, dead time 90 us |
+
+A counter without a clock of its own is cut on the host's clock (the GQ GMC counts seconds of its own, so its edge reading is the one-second heartbeat that arrives within half a second of the edge, and a missing or bunched heartbeat drops the bin): a reading counts as the bin edge when it was taken within
+50 ms before to 100 ms after the edge, which is a few hundredths of a count at background level. All other readings are
+marked inexact and never close or open a bin. Only counters that give raw pulses are accepted; a counter that reports a
+smoothed rate cannot pass the statistical checks of the server. The identity of a counter without a serial number is made
+from its kind and the name of the computer. Looking for a counter sends nothing but `<GETVER>>` to the serial ports.
+
 A bin is reported only when it is exact:
 
 - both edge readings carry the device's clock second of the edge (the monitor polls ten times a second around edges)
