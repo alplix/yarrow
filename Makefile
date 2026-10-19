@@ -25,7 +25,7 @@ TARGET = $(BUILD)/yarrow-gc03
 
 CFLAGS = -mcpu=cortex-m3 -mthumb -Os -g \
          -std=c11 -Wall -Wextra -ffunction-sections -fdata-sections \
-         -ffreestanding -fno-common -MMD -MP -DYLOG_MAX_PAGE=4096 -DYARROW_LANG_HEADER='"lang/$(YLANG).h"' $(LAYOUT_CFLAGS) -Ihal/gc03 -Isrc
+         -ffreestanding -fno-common -MMD -MP -DYLOG_MAX_PAGE=4096 -DYARROW_LANG_HEADER='"lang/$(YLANG).h"' -DYARROW_LANG_CODE='"$(YLANG)"' $(LAYOUT_CFLAGS) -Ihal/gc03 -Isrc
 LDFLAGS = -mcpu=cortex-m3 -mthumb -nostartfiles -nostdlib \
           -T$(BUILD)/gc03.ld -Wl,--gc-sections -Wl,-Map=$(TARGET).map
 
@@ -100,6 +100,7 @@ check:
 	$(BUILD)/tests/test_render
 	gcc -std=c11 -O2 -Wall -Wextra -Werror -Isrc tests/test_app.c src/app.c src/cal.c src/meas.c src/alarm.c src/bat.c src/kv.c src/ylog.c src/ylc.c src/ui.c src/screens.c src/screens2.c src/font.c src/font_data.c src/fmt.c src/proto.c src/render.c -lm -o $(BUILD)/tests/test_app
 	$(BUILD)/tests/test_app
+	$(MAKE) monitor-check
 
 # The Python decoder must agree with the C decoder on a real log image
 hostcheck:
@@ -131,7 +132,21 @@ sim: $(BUILD)/font_data.c
 	$(BUILD)/sim/sim $(BUILD)/sim
 	python tools/montage.py $(BUILD)/sim
 
+# Host-side monitor for BOINC (see docs/boinc-monitor.md): the bin cutter and trickle writer are tested here;
+# `make monitor` builds the command-line host, monitor/yarrow_boinc.cpp replaces it inside the BOINC build.
+MON = monitor/yarrow_bin.c monitor/yarrow_trickle.c
+monitor-check:
+	mkdir -p $(BUILD)/tests
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -Imonitor monitor/test_monitor.c $(MON) -o $(BUILD)/tests/test_monitor
+	$(BUILD)/tests/test_monitor
+
+monitor:
+	mkdir -p $(BUILD)/monitor
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -Imonitor monitor/yarrow_monitor.c monitor/yarrow_serial.c monitor/yarrow_standalone.c $(MON) -o $(BUILD)/monitor/yarrow_monitor
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -Imonitor monitor/yarrow_batlog.c monitor/yarrow_serial.c -o $(BUILD)/monitor/yarrow_batlog
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -Imonitor monitor/yarrow_watch.c monitor/yarrow_serial.c -lm -o $(BUILD)/monitor/yarrow_watch
+
 clean:
 	rm -rf $(BUILD)
 
-.PHONY: all clean sim test check hostcheck canary fonts release
+.PHONY: all clean sim test check hostcheck canary fonts release monitor monitor-check

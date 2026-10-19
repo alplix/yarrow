@@ -1,5 +1,8 @@
 # Measurement upload API
 
+The bin record below is the unit the BOINC monitor reports ([boinc-monitor.md](boinc-monitor.md)); only live counts are
+sent, never the device's stored log. The HTTPS form is kept for clients that cannot run a BOINC task.
+
 Yarrow Hub can share a device's measurements with a project server (the first one is bitboinc). This page is the
 contract between the Hub and a server. Sharing is off until the user switches it on, and it only ever sends what the
 user has seen in the preview.
