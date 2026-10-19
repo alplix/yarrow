@@ -23,11 +23,53 @@ fn save_settings(app: State<'_, Arc<App>>, new: Settings) -> Res<Settings> {
     s.language = new.language;
     s.theme = new.theme;
     s.fw_folder = new.fw_folder;
-    s.account = new.account;
-    s.country = new.country;
-    s.city = new.city;
+    s.unit = new.unit;
+    s.alarm_caution = new.alarm_caution;
+    s.alarm_danger = new.alarm_danger;
+    s.alarm_sound = new.alarm_sound;
+    s.auto_live = new.auto_live;
+    s.record_live = new.record_live;
     s.save(&app.dir).map_err(err)?;
     Ok(s.clone())
+}
+
+/// Writes a text file the user chose in the save dialog (CSV exports).
+#[tauri::command]
+fn write_text_file(path: String, contents: String) -> Res<u64> {
+    std::fs::write(&path, contents.as_bytes()).map_err(err)?;
+    Ok(contents.len() as u64)
+}
+
+/// Writes a binary file the user chose in the save dialog (a chart as PNG); the data comes as base64.
+#[tauri::command]
+fn write_base64_file(path: String, data: String) -> Res<u64> {
+    let bytes = decode_base64(&data).ok_or_else(|| "the picture data is not valid".to_string())?;
+    std::fs::write(&path, &bytes).map_err(err)?;
+    Ok(bytes.len() as u64)
+}
+
+fn decode_base64(s: &str) -> Option<Vec<u8>> {
+    let mut out = Vec::with_capacity(s.len() / 4 * 3);
+    let (mut acc, mut bits) = (0u32, 0u32);
+    for c in s.bytes() {
+        let v = match c {
+            b'A'..=b'Z' => c - b'A',
+            b'a'..=b'z' => c - b'a' + 26,
+            b'0'..=b'9' => c - b'0' + 52,
+            b'+' => 62,
+            b'/' => 63,
+            b'=' | b'\n' | b'\r' => continue,
+            _ => return None,
+        } as u32;
+        acc = (acc << 6) | v;
+        bits += 6;
+        if bits >= 8 {
+            bits -= 8;
+            out.push((acc >> bits) as u8);
+            acc &= (1 << bits) - 1;
+        }
+    }
+    Some(out)
 }
 
 #[tauri::command]
@@ -49,6 +91,8 @@ pub fn run() {
             get_settings,
             save_settings,
             about,
+            write_text_file,
+            write_base64_file,
             device::ports,
             device::connect,
             device::disconnect,
@@ -75,4 +119,17 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running Yarrow Hub");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::decode_base64;
+
+    #[test]
+    fn base64_decodes() {
+        assert_eq!(decode_base64("aGVsbG8=").unwrap(), b"hello");
+        assert_eq!(decode_base64("aGVsbG8gd29ybGQ=").unwrap(), b"hello world");
+        assert_eq!(decode_base64("").unwrap(), b"");
+        assert!(decode_base64("@@@").is_none());
+    }
 }

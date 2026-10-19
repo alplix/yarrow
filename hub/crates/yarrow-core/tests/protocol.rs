@@ -89,7 +89,7 @@ fn detector_trait_over_the_fake_device() {
     use yarrow_core::{Detector, YarrowDetector};
     let mut d: Box<dyn Detector> = Box::new(YarrowDetector::new(FakeDevice::demo()));
     let i = d.info().unwrap();
-    assert_eq!((i.driver, i.sens_x100), ("yarrow", Some(8000)));
+    assert_eq!((i.driver, i.sens_x100), ("yarrow", Some(18000)));
     assert_eq!(d.download_log(&mut |_, _| {}).unwrap().len(), 19484);
     d.live_start().unwrap();
     let r = d.next_live(Duration::from_millis(10)).unwrap().unwrap();

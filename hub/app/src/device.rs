@@ -127,7 +127,9 @@ pub async fn live_start(app: Ap<'_>, handle: AppHandle) -> Res<()> {
     blocking(move || {
         with_client(&a, |s| s.det.live_start().map_err(err))?;
         let gen = a.live_gen.fetch_add(1, Ordering::SeqCst) + 1;
+        let device_id = lock(&a.session).as_ref().map(|s| s.device_id.clone()).unwrap_or_default();
         std::thread::spawn(move || {
+            let mut minute: Option<(u32, f64, u32)> = None;
             while a.live_gen.load(Ordering::SeqCst) == gen {
                 let r = {
                     let mut g = lock(&a.session);
@@ -138,6 +140,7 @@ pub async fn live_start(app: Ap<'_>, handle: AppHandle) -> Res<()> {
                 };
                 match r {
                     Ok(Some(sample)) => {
+                        record_minute(&a, &device_id, &mut minute, sample.time, sample.cpm);
                         let _ = handle.emit("live", sample);
                     }
                     Ok(None) => {}
@@ -153,6 +156,29 @@ pub async fn live_start(app: Ap<'_>, handle: AppHandle) -> Res<()> {
         Ok(())
     })
     .await
+}
+
+/// Keeps a per-minute record of what the live view shows: the mean counts per minute of every whole minute, stored as
+/// the pulses of that minute. A minute with fewer than 30 readings (the stream started or stopped inside it) is skipped.
+fn record_minute(a: &App, id: &str, acc: &mut Option<(u32, f64, u32)>, time: u32, cpm: f64) {
+    if time < 1_700_000_000 || id.is_empty() {
+        return;                                  // the device clock was never set: such times mean nothing
+    }
+    let minute = time / 60 * 60;
+    if let Some((m, sum, n)) = acc.as_mut() {
+        if *m == minute {
+            *sum += cpm;
+            *n += 1;
+            return;
+        }
+    }
+    if let Some((m, sum, n)) = acc.take() {
+        if n >= 30 && lock(&a.settings).record_live {
+            let s = yarrow_core::Sample { time: m, interval: 60, time_valid: true, value: (sum / n as f64).round().max(0.0) as u32 };
+            let _ = lock(&a.store).insert_samples(id, &[s]);
+        }
+    }
+    *acc = Some((minute, cpm, 1));
 }
 
 #[tauri::command]

@@ -10,11 +10,16 @@ pub struct Settings {
     pub language: String,
     /// "system", "dark" or "light".
     pub theme: String,
-    /// Reserved for a later BOINC monitor: the account name and the place (country code and city) the user picks.
-    /// Nothing reads or sends them yet.
-    pub account: String,
-    pub country: String,
-    pub city: String,
+    /// How dose rates are written: "auto" (nSv/h or uSv/h, whichever reads best), "nsv", "usv" or "urem".
+    pub unit: String,
+    /// Alarm levels in nSv/h: a reading at or above the first is a caution, at or above the second a danger.
+    pub alarm_caution: u32,
+    pub alarm_danger: u32,
+    /// A short beep when a level is reached.
+    pub alarm_sound: bool,
+    /// Start reading the device as soon as it is connected, and keep a per-minute record of what it shows.
+    pub auto_live: bool,
+    pub record_live: bool,
     pub fw_folder: String,
     pub last_port: String,
     pub selected_device: String,
@@ -25,9 +30,12 @@ impl Default for Settings {
         Settings {
             language: String::new(),
             theme: "system".into(),
-            account: String::new(),
-            country: String::new(),
-            city: String::new(),
+            unit: "auto".into(),
+            alarm_caution: 500,
+            alarm_danger: 10_000,
+            alarm_sound: true,
+            auto_live: true,
+            record_live: true,
             fw_folder: String::new(),
             last_port: String::new(),
             selected_device: String::new(),
@@ -61,7 +69,7 @@ mod tests {
         assert_eq!(s.theme, "system");
         let dir = std::env::temp_dir().join(format!("yarrow-settings-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
-        let t = Settings { language: "tr".into(), city: "Denizli".into(), ..Settings::default() };
+        let t = Settings { language: "tr".into(), alarm_caution: 700, ..Settings::default() };
         t.save(&dir).unwrap();
         assert_eq!(Settings::load(&dir), t);
         // An older or damaged file falls back to the defaults.
