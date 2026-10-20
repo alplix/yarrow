@@ -1,0 +1,13 @@
+(version 1)
+# 400 V nets keep 2.5 mm from everything that is not itself high voltage (IPC-2221, 301 to 500 V, uncoated, external)
+(rule "HV to low voltage"
+  (condition "A.NetClass == 'HV' && B.NetClass != 'HV' && B.NetClass != 'HVDIV'")
+  (constraint clearance (min 2.5mm)))
+# the divider carries up to 300 V; between neighbours of the chain 100 V is all that is across a pad gap
+(rule "HV divider to low voltage"
+  (condition "A.NetClass == 'HVDIV' && B.NetClass != 'HV' && B.NetClass != 'HVDIV'")
+  (constraint clearance (min 1.5mm)))
+# the leads of the MOSFET are as far apart as its package makes them (600 V part, 1.1 mm); coat the board there
+(rule "Q1 package"
+  (condition "A.memberOfFootprint('Q1') && B.memberOfFootprint('Q1')")
+  (constraint clearance (min 0.9mm)))

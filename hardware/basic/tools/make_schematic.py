@@ -140,6 +140,7 @@ R12 = "Resistor_SMD:R_1206_3216Metric"
 C = "Capacitor_SMD:C_0402_1005Metric"
 C08 = "Capacitor_SMD:C_0805_2012Metric"
 C12 = "Capacitor_SMD:C_1206_3216Metric"
+C1812 = "Capacitor_SMD:C_1812_4532Metric"   # wider pad gap for the 400 V nodes
 
 PARTS = []  # (ref, libid, value, footprint, {pin: net})
 
@@ -192,9 +193,9 @@ two("C7", "Device:C", "22uF", C08, "5V_BOOST", "GND")
 two("L1", "Device:L", "1mH", "Inductor_SMD:L_7.3x7.3_H4.5", "5V_BOOST", "SW")
 part("U5", "74xGxx:74AHCT1G04", "74AHCT1G04", "Package_TO_SOT_SMD:SOT-23-5", {"2": "PWM", "4": "GATE", "5": "+5V", "3": "GND", "1": None}, units=(1, 2))
 two("R20", "Device:R", "100R", R, "GATE", "Q1G")
-part("Q1", "Transistor_FET:Q_NMOS_GDS", "600V N-MOSFET", "Package_TO_SOT_SMD:SOT-223", {"1": "Q1G", "2": "SW", "3": "GND"})
+part("Q1", "Transistor_FET:Q_NMOS_GDS", "600V N-MOSFET", "Package_TO_SOT_SMD:TO-252-3_TabPin2", {"1": "Q1G", "2": "SW", "3": "GND"})
 two("D1", "Device:D", "ES1J", "Diode_SMD:D_SMA", "SW", "HV")
-two("C2", "Device:C", "10nF 630V", C12, "HV", "GND")
+two("C2", "Device:C", "10nF 630V", C1812, "HV", "GND")
 two("R5", "Device:R", "5.1M", R12, "HV", "DIV1")
 two("R6", "Device:R", "5.1M", R12, "DIV1", "DIV2")
 two("R7", "Device:R", "5.1M", R12, "DIV2", "DIV3")
@@ -203,10 +204,11 @@ two("R9", "Device:R", "62k", R, "HV_ADC", "GND")
 two("C8", "Device:C", "100nF", C, "HV_ADC", "GND")
 two("R10", "Device:R", "4.7M", R12, "HV", "ANODE_R")
 two("R11", "Device:R", "4.7M", R12, "ANODE_R", "ANODE")
-part("J4", "Connector:Conn_01x02_Pin", "TUBE (anode, cathode)", "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical", {"1": "ANODE", "2": "GND"})
+part("J4", "Connector:Conn_01x01_Pin", "tube clip, anode", "TestPoint:TestPoint_THTPad_D3.0mm_Drill1.5mm", {"1": "ANODE"})
+part("J5", "Connector:Conn_01x01_Pin", "tube clip, cathode", "TestPoint:TestPoint_THTPad_D3.0mm_Drill1.5mm", {"1": "GND"})
 
 # pulse input
-two("C1", "Device:C", "22pF 1kV", C12, "ANODE", "PNODE")
+two("C1", "Device:C", "22pF 1kV", C1812, "ANODE", "PNODE")
 two("R12", "Device:R", "220k", R, "+3V3", "PNODE")
 two("R13", "Device:R", "330k", R, "PNODE", "GND")
 part("D2", "Diode:BAV99", "BAV99", "Package_TO_SOT_SMD:SOT-23", {"1": "GND", "2": "+3V3", "3": "PNODE"})

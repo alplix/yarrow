@@ -73,6 +73,25 @@ to the timer input (PA0). Only the falling edge is used, so the recovery of the 
 - The internal temperature sensor goes in the identity report: the first board's job is to show how the count rate and
   the voltage follow temperature.
 
+## Board layout (placement draft)
+
+![Placement](kicad/placement.png)
+
+140 x 50 mm, two layers, a ground pour on the bottom. From the left: USB-C on the edge, the 3.3 V supply, the MCU with its
+decoupling at the corners, crystal and reset on its left, SWD and boot jumper, the pulse input and the buzzer, and the
+high-voltage corner on the right inside a silkscreen box. The tube lies along the top strip on two clips 108 mm apart
+(cathode left, anode right), so the anode resistors sit right under the anode clip and nothing high-voltage runs along the
+board. The divider is a column of resistors on the right edge, 6.5 mm apart.
+
+Rules (`kicad/yarrow_counter_basic.kicad_dru`, net classes in the project): every 400 V net (`HV`, `SW`, `ANODE`,
+`ANODE_R`) keeps 2.5 mm from everything that is not high voltage (IPC-2221, 301 to 500 V, uncoated), the divider nets
+1.5 mm. The leads of the MOSFET (DPAK) are 1.1 mm apart, which its 600 V rating allows but the 2.5 mm rule does not:
+the rule is relaxed for Q1's own pads, and the area is to be conformally coated (IPC-2221 coated: 0.8 mm).
+
+State: placement only, no tracks. The design rule check (`kicad/drc_report.txt`) finds no clearance, short or courtyard
+violation; what remains are the 132 unrouted connections and a few silkscreen overlaps. `tools/run_pcb.sh` regenerates
+the board, runs the check and renders the picture.
+
 ## What the first board must show
 
 Measured with the board side by side with a GC-03 and a Radioactive@Home counter:
@@ -95,4 +114,4 @@ The numbers go to `hardware/reports/` and into the next spin.
   data by `tools/make_schematic.py`; `erc_report.txt` is KiCad's electrical rules check (0 violations). Every pin carries a
   short wire and a net label, so the sheet reads like a net list and can be redrawn by hand. `tools/run_all.sh` regenerates
   the schematic, runs the check and exports the net list; `tools/check_nets.py` compares the nets that matter with the
-  design. Not done yet: the PCB layout.
+  design. Not done yet: the routing of the PCB.
