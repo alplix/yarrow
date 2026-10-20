@@ -1,12 +1,46 @@
 # Yarrow
 
-Open firmware for the FNIRSI GC-03 radiation detector. Readable at a glance, measures honestly, logs for years.
+Open software for Geiger counters: firmware for the FNIRSI GC-03, a BOINC monitor that reads several kinds of counters, and
+a desktop app. Together they feed a live, open map of the natural background dose rate, city by city.
 
 ![Yarrow screens](docs/images/hero.png)
 
-**Website:** [yarrow.athena.org.tr](https://yarrow.athena.org.tr) · **Releases:** one firmware file per language
+**Website:** [yarrow.athena.org.tr](https://yarrow.athena.org.tr) · **Live map:** [bitboinc.athena.org.tr/yarrow.php](https://bitboinc.athena.org.tr/yarrow.php) · **Data by city:** [bitboinc.athena.org.tr/yarrow_history.php](https://bitboinc.athena.org.tr/yarrow_history.php) · **Releases:** [firmware per language and Yarrow Hub](https://github.com/alplix/yarrow/releases)
 
-## What it does
+## The parts
+
+| | |
+|---|---|
+| **Firmware** (`src/`) | Open firmware for the FNIRSI GC-03: readable at a glance, measures honestly, logs for years. |
+| **BOINC monitor** (`monitor/`) | A small program that reads a counter, cuts its pulses into exact 10-minute bins and sends them to the project as BOINC trickles. |
+| **Yarrow Hub** (`hub/`) | A desktop app that works without BOINC: live dose rate, history, statistics, alarms, CSV export. |
+| **Website** (`site/`) | The project page, in English and Turkish. |
+
+## Supported counters
+
+| Counter | Connection | Monitor | Hub |
+|---|---|---|---|
+| FNIRSI GC-03 with the Yarrow firmware | USB serial | yes | yes |
+| Radioactive@Home USB counters (boards 2.01 to 2.60, the kit, and 3.01) | USB HID, nothing to flash | yes | yes |
+| GQ GMC-300 / 320 / 500 / 600 | USB serial | yes | not yet |
+
+Only raw pulse counts from the tube are accepted, never a rate the counter has smoothed itself. A new counter is one small
+driver in `monitor/yarrow_src_*.c`; see [docs/boinc-monitor.md](docs/boinc-monitor.md).
+
+## Join the map
+
+1. Join [bitboinc](https://bitboinc.athena.org.tr) and attach your computer in the BOINC Manager.
+2. In your project preferences select the Yarrow monitor and enter your country, city and (if you like) your detector.
+3. Plug in the counter and leave the computer on. Only the city is shared, never a more exact place.
+
+## Yarrow Hub
+
+Download [yarrow-hub-windows-x64-setup.exe](https://github.com/alplix/yarrow/releases/latest/download/yarrow-hub-windows-x64-setup.exe).
+It shows the live dose rate, keeps the history on your computer, draws statistics, shows nSv/h, µSv/h or µrem/h, rings
+alarms at levels you choose and exports CSV. With a GC-03 it also sets the clock, calibrates the tube and installs
+firmware. Built with Tauri (Rust and TypeScript); to build it: `cd hub/app && cargo tauri build`.
+
+## What the firmware does
 
 **Radiation**
 - Dose rate, counts per minute, dose today, this week and in total
@@ -26,11 +60,11 @@ Open firmware for the FNIRSI GC-03 radiation detector. Readable at a glance, mea
 - 21 colour themes, pixel-art decoration, a self test
 - USB serial protocol for the host tools
 
-## Install
+## Install the firmware
 
 Download the file for your language from [Releases](https://github.com/alplix/yarrow/releases) and copy it to the device in update mode. The stock bootloader is never touched, so the stock firmware can always be put back the same way. Step by step: [docs/install.md](docs/install.md).
 
-## Build
+## Build the firmware
 
 Needs `arm-none-eabi-gcc`, GNU make and Python 3 for the build helpers.
 
@@ -63,6 +97,7 @@ pass: [docs/translating.md](docs/translating.md).
 |---|---|
 | [docs/install.md](docs/install.md) | putting Yarrow on the device and going back |
 | [docs/usage.md](docs/usage.md) | keys, screens, alarms, sessions |
+| [docs/boinc-monitor.md](docs/boinc-monitor.md) | the BOINC monitor, supported counters, server checks, credit |
 | [docs/calibration.md](docs/calibration.md) | matching the readings to a reference |
 | [docs/hardware.md](docs/hardware.md) | pins and memory map of the GC-03 |
 | [docs/serial-protocol.md](docs/serial-protocol.md) | the USB command protocol |
