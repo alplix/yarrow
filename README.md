@@ -21,7 +21,7 @@ a desktop app. Together they feed a live, open map of the natural background dos
 | Counter | Connection | Monitor | Hub |
 |---|---|---|---|
 | FNIRSI GC-03 with the Yarrow firmware | USB serial | yes | yes |
-| Radioactive@Home USB counters (boards 2.01 to 2.60, the kit, and 3.01) | USB HID, nothing to flash | yes | yes |
+| [Radioactive@Home USB counters](docs/radioactive-at-home.md) (boards 2.01 to 2.60, the kit, and 3.01) | USB HID, nothing to flash | yes | yes |
 | GQ GMC-300 / 320 / 500 / 600 | USB serial | yes | not yet |
 
 Only raw pulse counts from the tube are accepted, never a rate the counter has smoothed itself. A new counter is one small
@@ -98,6 +98,7 @@ pass: [docs/translating.md](docs/translating.md).
 | [docs/install.md](docs/install.md) | putting Yarrow on the device and going back |
 | [docs/usage.md](docs/usage.md) | keys, screens, alarms, sessions |
 | [docs/boinc-monitor.md](docs/boinc-monitor.md) | the BOINC monitor, supported counters, server checks, credit |
+| [docs/radioactive-at-home.md](docs/radioactive-at-home.md) | the Radioactive@Home counters: boards, V2.60 schematic, report format |
 | [docs/data.md](docs/data.md) | what is sent, how it is checked, where to read the data |
 | [docs/calibration.md](docs/calibration.md) | matching the readings to a reference |
 | [docs/hardware.md](docs/hardware.md) | pins and memory map of the GC-03 |
