@@ -27,7 +27,7 @@ number of pulses. Everything below serves one of four things.
 | Idea | the cheapest board that is correct | better tube and voltage control | the best reading one location can get |
 | MCU | CH32F203 (as in the GC-03) | CH32F203 | CH32F203 or a larger one, plus ESP32-C3 for Wi-Fi |
 | Tube | SBM-20 (the Radioactive@Home tube) | larger or higher-sensitivity tube (footprint for J305 and M4011 class) | two tubes of the same kind |
-| High voltage | open-loop boost, trimmed once | closed loop on a measured voltage | closed loop, measured, temperature-compensated |
+| High voltage | boost regulated by the firmware from a measured voltage | the same plus a hardware limit | the same, temperature-compensated |
 | Pulses | timer capture, microsecond stamps | the same, with pulse width | the same on both tubes, coincidences logged |
 | Time | host clock, edges as the monitor does now | RTC with backup cell | GPS pulse-per-second discipline |
 | Link | USB (CDC serial) | USB | USB and Wi-Fi (headless station) |
@@ -62,4 +62,5 @@ Each round ends with a measurement report in `hardware/reports/` (the numbers, n
 
 ## What is here
 
-This page, and next: `basic/` with the schematic, the bill of materials and the firmware port.
+[basic/](basic/DESIGN.md): the design of the Basic board with the calculations (`hv_calc.py`), the bill of materials and the
+net list the schematic is drawn from. Next: the KiCad schematic and layout, and the firmware port.

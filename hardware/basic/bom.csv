@@ -1,0 +1,44 @@
+Ref,Qty,Value,Package,Description,Suggested part
+U1,1,CH32F203C8T6,LQFP-48,MCU with USB,WCH CH32F203C8T6
+U2,1,3.3 V LDO,SOT-23-5,600 mA low-dropout regulator,Diodes AP2112K-3.3
+U3,1,USBLC6-2SC6,SOT-23-6,USB ESD protection,ST USBLC6-2SC6
+U4,1,TLV3201,SOT-23-5,40 ns comparator for the pulse input,TI TLV3201AIDBVR
+U5,1,74AHCT1G04,SOT-23-5,inverter with TTL input levels; 5 V gate drive,Nexperia 74AHCT1G04GW
+Q1,1,600 V N-MOSFET,SOT-223 or DPAK,boost switch; check Rds(on) at Vgs = 5 V,onsemi FQD1N60C or equivalent
+Q2,1,2N7002,SOT-23,buzzer driver,any 2N7002
+D1,1,ES1J,SMA,600 V 35 ns boost diode,Diodes ES1J
+D2,1,BAV99,SOT-23,pulse input clamp (dual series diode),any BAV99
+D3,1,LED,0805,pulse indicator (green),any
+L1,1,1 mH,>= 100 mA saturation,boost inductor shielded SMD,e.g. Bourns SDR0805-102KL or larger
+F1,1,500 mA,1206,USB polyfuse,any 1206 resettable fuse
+J1,1,USB-C receptacle,16-pin,power and data (sink only),any 16-pin USB-C
+J2,1,SWD header,1x4 2.54 mm,3V3 SWDIO SWCLK GND,pin header
+J3,1,BOOT0 jumper,1x2 2.54 mm,boot-select,pin header
+SW1,1,NRST,SMD 3x4 mm,reset button,any tact switch
+Y1,1,8 MHz,3225,crystal 18 pF load,any
+BZ1,1,piezo,12 mm,passive transducer about 4 kHz,any passive piezo
+TUBE,2,tube clip,for 11 mm tube,holds the SBM-20 / STS-5 on the board (about 108 mm apart; anode clip at the high-voltage end),any metal tube clip
+C1,1,22 pF 1 kV,1206 C0G,pulse coupling capacitor,Murata GRM31A5C3A220JW01 or equivalent
+C2,1,10 nF 630 V,1206 or 1210 X7R,HV output capacitor,any 630 V
+C3-C4,2,18 pF,0402,crystal load,any C0G
+C5-C6,2,10 uF,0805,LDO in and out,any
+C7,1,22 uF,0805 or 1206,boost supply reservoir,any
+C8,1,100 nF,0402,HV divider filter at the ADC pin,any
+C9-C16,8,100 nF,0402,decoupling,any
+C17,1,4.7 nF,0402,USB shield to ground,any
+R1-R2,2,5.1 k,0402,USB-C CC pull-downs,any
+R3,1,1 M,0402,USB shield to ground,any
+R4,1,10 R,0603,boost supply filter,any
+R5-R8,4,5.1 M,1206,HV divider top (each sees about 100 V),any 1206 1 % (rated for 200 V)
+R9,1,62 k,0402,HV divider bottom,any 1 %
+R10-R11,2,4.7 M,1206,tube anode resistors,any 1206 5 %
+R12,1,220 k,0402,pulse node pull-up,any
+R13,1,330 k,0402,pulse node pull-down,any
+R14,1,10 k,0402,pulse node series (protects the comparator input),any
+R15,1,10 k,0402,comparator reference divider top (3.3 V),any
+R16,1,4.3 k,0402,comparator reference divider bottom (gives 0.99 V),any
+R17,1,10 k,0402,BOOT0 pull-down,any
+R18,1,1 k,0402,LED series,any
+R19,1,10 k,0402,Q2 gate pull-down,any
+R20,1,100 R,0402,gate resistor of Q1,any
+DNP1-DNP2,2,22 R,0402,USB series footprints (fit only if D+ and D- ring),not fitted
