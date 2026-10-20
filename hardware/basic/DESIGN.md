@@ -89,5 +89,10 @@ The numbers go to `hardware/reports/` and into the next spin.
 ## Files
 
 - `bom.csv`: the parts, values, packages, suggested part numbers.
-- `netlist.md`: every net and which pins are on it; the schematic is drawn from this.
+- `netlist.md`: every net and which pins are on it.
 - `hv_calc.py`: the calculations.
+- `kicad/`: the KiCad 9 project. `yarrow_counter_basic.kicad_sch` is the schematic (also as `.pdf`), generated from the same
+  data by `tools/make_schematic.py`; `erc_report.txt` is KiCad's electrical rules check (0 violations). Every pin carries a
+  short wire and a net label, so the sheet reads like a net list and can be redrawn by hand. `tools/run_all.sh` regenerates
+  the schematic, runs the check and exports the net list; `tools/check_nets.py` compares the nets that matter with the
+  design. Not done yet: the PCB layout.

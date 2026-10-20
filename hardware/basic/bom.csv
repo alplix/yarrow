@@ -41,4 +41,4 @@ R17,1,10 k,0402,BOOT0 pull-down,any
 R18,1,1 k,0402,LED series,any
 R19,1,10 k,0402,Q2 gate pull-down,any
 R20,1,100 R,0402,gate resistor of Q1,any
-DNP1-DNP2,2,22 R,0402,USB series footprints (fit only if D+ and D- ring),not fitted
+R21-R22,2,0 R,0402,USB series positions (DNP1 and DNP2 in the schematic): 0 ohm links in the first spin; 22 ohm if D+ and D- ring,any
