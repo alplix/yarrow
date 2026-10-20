@@ -30,6 +30,7 @@ export function devicePage(): Page {
 
   function portLabel(p: PortEntry): string {
     if (p.name === "demo") return t("device.demo");
+    if (p.name.startsWith("rah:")) return p.product ?? "Radioactive@Home counter";
     return p.is_yarrow ? t("device.yarrow_port", { name: p.name }) : p.name + (p.product ? ` — ${p.product}` : "");
   }
 

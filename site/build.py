@@ -176,8 +176,8 @@ def render(lang, name, locale, fname):
                                                                "Yaklaşık 50 ile 200 nSv/h. Granit ve bazı volkanik kayaçlar, taş binalar ve yüksek rakım değeri artırır.")),
         (p("Is this an official warning system?", "Resmî bir uyarı sistemi mi?"), p("No. It is information from volunteers' hobby instruments. For official information follow your national authority.",
                                                                                   "Hayır. Gönüllülerin hobi cihazlarından gelen bir bilgidir. Resmî bilgi için ulusal otoritenizi izleyin.")),
-        (p("Can I use another Geiger counter?", "Başka bir Geiger sayacı kullanabilir miyim?"), p("Support for other USB counters is being added to the same monitor, starting with the GQ GMC family and the USB counter of the old Radioactive@Home project. Only raw pulse counts are accepted.",
-                                                                                              "Aynı monitöre başka USB sayaçlar için destek ekleniyor; GQ GMC ailesi ve eski Radioactive@Home projesinin USB sayacıyla başlanıyor. Yalnızca ham darbe sayımı kabul edilir.")),
+        (p("Can I use another Geiger counter?", "Başka bir Geiger sayacı kullanabilir miyim?"), p("Yes. Besides the FNIRSI GC-03 the monitor reads the USB counters of the old Radioactive@Home project (no flashing needed) and the GQ GMC family. Only raw pulse counts are accepted. Tell us what you have: a new counter is one small driver away.",
+                                                                                              "Evet. FNIRSI GC-03'ün yanında monitör eski Radioactive@Home projesinin USB sayaçlarını (yazılım yüklemeden) ve GQ GMC ailesini okur. Yalnızca ham darbe sayımı kabul edilir. Elinizdekini bize söyleyin: yeni bir sayaç küçük bir sürücü uzağınızda.")),
         (p("Can I go back to the original firmware?", "Orijinal yazılıma dönebilir miyim?"), p("Yes. The original bootloader and the factory tube calibration are never touched; copy the original file the same way.",
                                                                                               "Evet. Orijinal önyükleyiciye ve fabrika tüp kalibrasyonuna hiç dokunulmaz; orijinal dosyayı aynı yöntemle kopyalayın.")),
     ]
@@ -186,7 +186,7 @@ def render(lang, name, locale, fname):
     body = f"""
 <header class="site"><div class="wrap bar"><a class="brand px" href="/">{flower_svg(24)}Yarrow</a>
 <nav class="links"><a href="#what">{p('What', 'Nedir')}</a><a href="#how">{p('How it works', 'Nasıl çalışır')}</a><a href="#detector">{p('Detector', 'Dedektör')}</a>
-<a href="#monitor">{p('Monitor', 'Monitör')}</a><a href="#trust">{p('Trust', 'Güven')}</a><a href="#join">{p('Join', 'Katıl')}</a></nav>
+<a href="#monitor">{p('Monitor', 'Monitör')}</a><a href="#hub">Hub</a><a href="#trust">{p('Trust', 'Güven')}</a><a href="#join">{p('Join', 'Katıl')}</a></nav>
 <div class="lang">{langsw}</div></div></header>
 
 <div class="hero"><div class="wrap">
@@ -239,9 +239,15 @@ def render(lang, name, locale, fname):
                   "Yarrow'un BOINC bölümü neredeyse hiç işlemci kullanmayan küçük bir programdır. Her 15 saniyede bir sayaç arar, darbe sayacını tam dilimlere böler ve BOINC trickle'ları olarak gönderir. Bir dilim yalnızca tam olduğunda tutulur: iki kenar da doğru saniyede okunmuş, tüp gerilimi tüm süre açık, sayaç yeniden başlamamış, saat sıçramamış. Hiçbir şey tahmin edilmez ya da doldurulmaz. Windows (x64, x86, ARM64) ve Linux (x86-64, ARM64, ARMv7) için derlemeler var.")}</p>
 <table><tr><th>{p('Counter', 'Sayaç')}</th><th>{p('Connection', 'Bağlantı')}</th><th>{p('State', 'Durum')}</th></tr>
 <tr><td>FNIRSI GC-03 + Yarrow</td><td>USB serial</td><td class="tag-ok">{p('Available', 'Hazır')}</td></tr>
-<tr><td>GQ GMC-280 / 300 / 320 / 500</td><td>USB serial</td><td class="tag-wip">{p('Being added', 'Ekleniyor')}</td></tr>
-<tr><td>Radioactive@Home USB counter (SBM-20)</td><td>USB HID</td><td class="tag-wip">{p('Being added', 'Ekleniyor')}</td></tr></table>
+<tr><td>{p('Radioactive@Home USB counter (SBM-20; boards 2.01 to 2.60, the kit, and 3.01)', 'Radioactive@Home USB sayacı (SBM-20; 2.01 ile 2.60 arası kartlar, kit ve 3.01)')}</td><td>USB HID</td><td class="tag-ok">{p('Available', 'Hazır')}</td></tr>
+<tr><td>GQ GMC-300 / 320 / 500 / 600</td><td>USB serial</td><td class="tag-ok">{p('Available', 'Hazır')}</td></tr></table>
 <p class="sub" style="margin-top:12px">{p('The rule for every counter stays the same: only raw pulse counts from the tube are accepted, never a rate the counter has smoothed itself.', 'Her sayaç için kural aynıdır: yalnızca tüpten gelen ham darbe sayımı kabul edilir, sayacın kendi yumuşattığı bir hız asla.')}</p></div></section>
+
+<section id="hub"><div class="wrap"><h2 class="px">{p('Yarrow Hub: the desktop app', 'Yarrow Hub: masaüstü uygulaması')}</h2>
+<p class="sub">{p("Yarrow Hub works on its own, without BOINC. It shows the live dose rate of your counter, keeps your history on your computer, draws graphs and statistics, shows the dose in nSv/h, µSv/h or µrem/h, rings an alarm at levels you choose and exports CSV. It runs with the FNIRSI GC-03 and with the Radioactive@Home counters. With a GC-03 it also sets the clock, calibrates the tube and installs firmware.",
+                  "Yarrow Hub tek başına, BOINC olmadan çalışır. Sayacınızın canlı doz hızını gösterir, geçmişi bilgisayarınızda tutar, grafik ve istatistik çizer, dozu nSv/h, µSv/h veya µrem/h olarak gösterir, seçtiğiniz düzeylerde alarm çalar ve CSV dışa aktarır. FNIRSI GC-03 ve Radioactive@Home sayaçlarıyla çalışır. GC-03 ile ayrıca saati ayarlar, tüpü kalibre eder ve yazılım yükler.")}</p>
+<div class="cta" style="justify-content:flex-start"><a class="btn" href="https://github.com/alplix/yarrow/releases">{p('Download Yarrow Hub', 'Yarrow Hub\'ı indir')}</a>
+<a class="btn alt" href="https://bitboinc.athena.org.tr/yarrow_history.php">{p('Data by city', 'Şehir bazında veriler')}</a></div></div></section>
 
 <section id="trust" class="alt"><div class="wrap"><h2 class="px">{p('Keeping the data honest', 'Veriyi dürüst tutmak')}</h2>
 <p class="sub">{p("A network of home instruments needs to trust its numbers, and Yarrow cannot lock a volunteer's computer. So it makes the checks that fake or broken data cannot pass.",
@@ -256,10 +262,10 @@ def render(lang, name, locale, fname):
 
 <section id="join" class="alt"><div class="wrap"><h2 class="px">{p('Join in 5 steps', '5 adımda katılın')}</h2>
 <ol class="num">
-<li>{p('Get a <b>FNIRSI GC-03</b> and put the Yarrow firmware on it (above).', 'Bir <b>FNIRSI GC-03</b> edinin ve Yarrow yazılımını yükleyin (yukarıda).')}</li>
+<li>{p('Get a counter: a <b>FNIRSI GC-03</b> with the Yarrow firmware (above), or use a Radioactive@Home or GQ GMC counter you already have.', 'Bir sayaç edinin: Yarrow yazılımlı bir <b>FNIRSI GC-03</b> (yukarıda) ya da elinizdeki bir Radioactive@Home veya GQ GMC sayacı.')}</li>
 <li>{p('Join <a href="https://bitboinc.athena.org.tr/signup.php">BitBOINC</a> and attach your computer in the BOINC Manager.', '<a href="https://bitboinc.athena.org.tr/signup.php">BitBOINC</a>\'e katılın ve bilgisayarınızı BOINC Yöneticisi\'nde bağlayın.')}</li>
-<li>{p('In <a href="https://bitboinc.athena.org.tr/prefs.php?subset=project">your project preferences</a> tick <b>Run test applications</b>, select the <b>Yarrow monitor</b>, and enter your country (two letters), city and bin length.', '<a href="https://bitboinc.athena.org.tr/prefs.php?subset=project">Proje tercihlerinizde</a> <b>Test uygulamalarını çalıştır</b>\'ı işaretleyin, <b>Yarrow monitörünü</b> seçin ve ülkenizi (iki harf), şehrinizi ve dilim uzunluğunu girin.')}</li>
-<li>{p('Plug the detector into the computer, switch it on and leave it on the main screen. The monitor finds it by itself.', 'Dedektörü bilgisayara takın, açın ve ana ekranda bırakın. Monitör onu kendisi bulur.')}</li>
+<li>{p('In <a href="https://bitboinc.athena.org.tr/prefs.php?subset=project">your project preferences</a> tick the <b>Yarrow monitor</b>, and enter your country (two letters), city, bin length and, if you like, your detector.', '<a href="https://bitboinc.athena.org.tr/prefs.php?subset=project">Proje tercihlerinizde</a> <b>Yarrow monitörünü</b> işaretleyin ve ülkenizi (iki harf), şehrinizi, dilim uzunluğunu ve isterseniz dedektörünüzü girin.')}</li>
+<li>{p('Plug the detector into the computer and switch it on (a GC-03: leave it on the main screen). The monitor finds it by itself.', 'Dedektörü bilgisayara takın ve açın (GC-03 ise ana ekranda bırakın). Monitör onu kendisi bulur.')}</li>
 <li>{p('Leave it running. The first bin arrives at the next 10-minute mark; the longer it runs, the better the checks and the map like it.', 'Çalışır halde bırakın. İlk dilim bir sonraki 10 dakikalık işarette gelir; ne kadar uzun çalışırsa denetimler ve harita o kadar memnun olur.')}</li></ol>
 <div class="cta" style="justify-content:flex-start;margin-top:18px"><a class="btn" href="https://bitboinc.athena.org.tr/yarrow.php">{p('Open the live map', 'Canlı haritayı aç')}</a>
 <a class="btn alt" href="https://bitboinc.athena.org.tr/yarrow_status.php">{p('Progress and status', 'İlerleme ve durum')}</a></div></div></section>

@@ -13,5 +13,14 @@ hex = "0.4"
 thiserror = "2"
 serde = { version = "1", features = ["derive"] }
 
+[target.'cfg(windows)'.dependencies]
+hidapi = { version = "2.6.7", default-features = false, features = ["windows-native"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+hidapi = { version = "2.6.7", default-features = false, features = ["linux-static-hidraw"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+hidapi = { version = "2.6.7", default-features = false, features = ["macos-shared-device"] }
+
 [lints]
 workspace = true

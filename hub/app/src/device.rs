@@ -7,7 +7,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, State};
 use yarrow_core::fake::FakeDevice;
-use yarrow_core::{device_hash, fallback_id, Calibration, Detector, DetectorInfo, Event, Info, PortEntry, SerialTransport, Tools, Transport, YarrowDetector};
+use yarrow_core::{device_hash, fallback_id, Calibration, Detector, DetectorInfo, Event, Info, PortEntry, SerialTransport, Tools, YarrowDetector};
 use yarrow_store::{Device, SeriesPoint};
 
 type Ap<'a> = State<'a, Arc<App>>;
@@ -19,6 +19,7 @@ pub const DEMO_PORT: &str = "demo";
 pub async fn ports() -> Res<Vec<PortEntry>> {
     blocking(|| {
         let mut v = yarrow_core::list_ports().map_err(err)?;
+        v.extend(yarrow_core::list_counters());
         v.push(PortEntry {
             name: DEMO_PORT.into(),
             vid: None,
@@ -50,15 +51,17 @@ pub async fn connect(app: Ap<'_>, port: String) -> Res<Connected> {
     blocking(move || {
         stop_live(&a);
         *lock(&a.session) = None;
-        let (transport, usb): (Box<dyn Transport>, Option<PortEntry>) = if port == DEMO_PORT {
+        let (mut det, usb): (Box<dyn Detector>, Option<PortEntry>) = if port == DEMO_PORT {
             let mut d = FakeDevice::demo();
             d.realtime = true;
-            (Box::new(d), None)
+            (Box::new(YarrowDetector::new(d)), None)
+        } else if port.starts_with(yarrow_core::RAH_PREFIX) {
+            let entry = yarrow_core::list_counters().into_iter().find(|p| p.name == port);
+            (Box::new(yarrow_core::rah::open_counter(&port).map_err(err)?), entry)
         } else {
             let entry = yarrow_core::list_ports().map_err(err)?.into_iter().find(|p| p.name == port);
-            (Box::new(SerialTransport::open(&port).map_err(err)?), entry)
+            (Box::new(YarrowDetector::new(SerialTransport::open(&port).map_err(err)?)), entry)
         };
-        let mut det: Box<dyn Detector> = Box::new(YarrowDetector::new(transport));
         let info = det.info().map_err(err)?;
         let cal = match det.tools() {
             Some(t) => Some(t.cal().map_err(err)?),
@@ -72,7 +75,7 @@ pub async fn connect(app: Ap<'_>, port: String) -> Res<Connected> {
         let device_id = device_hash(&raw_id);
         let device = Device {
             id: device_id.clone(),
-            name: "GC-03".into(),
+            name: info.model.rsplit(' ').next().filter(|_| info.driver == "yarrow").unwrap_or(&info.model).to_string(),
             firmware: info.firmware.clone(),
             lang: info.lang.clone().unwrap_or_default(),
             last_seen: now(),

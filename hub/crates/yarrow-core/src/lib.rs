@@ -11,6 +11,7 @@ pub mod client;
 pub mod detector;
 pub mod fake;
 pub mod id;
+pub mod rah;
 pub mod transport;
 pub mod ylc;
 pub mod ylog;
@@ -38,3 +39,4 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 pub use detector::{Detector, DetectorInfo, LocalValue, Reading, Tools, YarrowDetector};
 pub use id::{device_hash, fallback_id};
+pub use rah::{list_counters, RahDetector, RahSource, RAH_PREFIX};
