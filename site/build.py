@@ -246,7 +246,7 @@ def render(lang, name, locale, fname):
 <section id="hub"><div class="wrap"><h2 class="px">{p('Yarrow Hub: the desktop app', 'Yarrow Hub: masaüstü uygulaması')}</h2>
 <p class="sub">{p("Yarrow Hub works on its own, without BOINC. It shows the live dose rate of your counter, keeps your history on your computer, draws graphs and statistics, shows the dose in nSv/h, µSv/h or µrem/h, rings an alarm at levels you choose and exports CSV. It runs with the FNIRSI GC-03 and with the Radioactive@Home counters. With a GC-03 it also sets the clock, calibrates the tube and installs firmware.",
                   "Yarrow Hub tek başına, BOINC olmadan çalışır. Sayacınızın canlı doz hızını gösterir, geçmişi bilgisayarınızda tutar, grafik ve istatistik çizer, dozu nSv/h, µSv/h veya µrem/h olarak gösterir, seçtiğiniz düzeylerde alarm çalar ve CSV dışa aktarır. FNIRSI GC-03 ve Radioactive@Home sayaçlarıyla çalışır. GC-03 ile ayrıca saati ayarlar, tüpü kalibre eder ve yazılım yükler.")}</p>
-<div class="cta" style="justify-content:flex-start"><a class="btn" href="https://github.com/alplix/yarrow/releases">{p('Download Yarrow Hub', 'Yarrow Hub\'ı indir')}</a>
+<div class="cta" style="justify-content:flex-start"><a class="btn" href="https://github.com/alplix/yarrow/releases/latest/download/yarrow-hub-windows-x64-setup.exe">{p('Download Yarrow Hub', 'Yarrow Hub\'ı indir')}</a>
 <a class="btn alt" href="https://bitboinc.athena.org.tr/yarrow_history.php">{p('Data by city', 'Şehir bazında veriler')}</a></div></div></section>
 
 <section id="trust" class="alt"><div class="wrap"><h2 class="px">{p('Keeping the data honest', 'Veriyi dürüst tutmak')}</h2>
