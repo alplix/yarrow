@@ -75,20 +75,20 @@ Variety `yarrow`, one trickle per sent batch (at most one every 10 minutes, so t
 ```
 
 `start` is the UTC Unix time of the first bin and a multiple of `interval`. `-` is a gap. The bin record is the one
-described in [upload-api.md](upload-api.md).
+described in [data.md](data.md).
 
 ## Running it on a project
 
 - **Work.** The generator keeps a few monitor tasks ready; a task has no input, a year-long deadline and no time limit, and
   `max_jobs_in_progress` allows one per host, so one detector is never read twice. A task ends only when the client does.
-- **Settings.** `yarrow_interval`, `yarrow_country` and `yarrow_city` are project preferences on the web site. While they
+- **Settings.** `yarrow_interval`, `yarrow_country`, `yarrow_city` and (optional) `yarrow_detector` are project preferences on the web site. While they
   are missing the task shows a message in the BOINC Manager and tries again an hour later.
 - **Validation.** The task is valid when it ends normally; the bins are checked by the server job (above) and the credit
   comes from there.
 - **Linux.** The BOINC client's user needs access to the serial port (`usermod -aG dialout boinc`).
 - **Build.** `monitor/` builds with `make monitor-check` (bin cutter tests) and, for the project, against the BOINC
   libraries of every platform; the server pieces (schema, job, generator, scripts, public page) sit with the project.
-- **Public page.** Median dose rate per city, shown only where at least three different detectors reported in the last day.
+- **Public pages.** The map (median dose rate per city) and the table of every city with its history; see [data.md](data.md).
 
 ## Server checks
 

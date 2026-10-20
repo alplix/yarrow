@@ -98,6 +98,7 @@ pass: [docs/translating.md](docs/translating.md).
 | [docs/install.md](docs/install.md) | putting Yarrow on the device and going back |
 | [docs/usage.md](docs/usage.md) | keys, screens, alarms, sessions |
 | [docs/boinc-monitor.md](docs/boinc-monitor.md) | the BOINC monitor, supported counters, server checks, credit |
+| [docs/data.md](docs/data.md) | what is sent, how it is checked, where to read the data |
 | [docs/calibration.md](docs/calibration.md) | matching the readings to a reference |
 | [docs/hardware.md](docs/hardware.md) | pins and memory map of the GC-03 |
 | [docs/serial-protocol.md](docs/serial-protocol.md) | the USB command protocol |
