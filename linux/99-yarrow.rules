@@ -1,0 +1,13 @@
+# Yarrow: lets the BOINC client (its own user, no desktop session) open the Geiger counters the monitor reads.
+# Only these counters are touched; the rule matches the USB ids and, for the shared ids, the product name.
+# Install:  sudo cp 99-yarrow.rules /etc/udev/rules.d/ && sudo udevadm control --reload-rules && sudo udevadm trigger
+# then unplug the counter and plug it in again. (yarrow-linux-setup.sh does exactly this.)
+
+# Radioactive@Home counters, V-USB boards (2.01 to 2.60 and the kit)
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="16c0", ATTRS{idProduct}=="05df", ATTRS{product}=="*radioactiveathome*", MODE="0666"
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="16c0", ATTRS{idProduct}=="05df", ATTRS{product}=="*Radiation Detector KIT*", MODE="0666"
+# Radioactive@Home counters, PIC board (3.01)
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="f6fe", ATTRS{product}=="*radioactiveathome*", MODE="0666"
+
+# FNIRSI GC-03 with the Yarrow firmware (USB serial); ModemManager must not probe it with AT commands
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1209", ATTRS{idProduct}=="0001", MODE="0666", ENV{ID_MM_DEVICE_IGNORE}="1"

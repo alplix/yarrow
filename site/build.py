@@ -260,6 +260,14 @@ def render(lang, name, locale, fname):
 <p class="sub">{p("A point on the map is a city, the name you type in your preferences. Nothing finer than a city is ever sent or shown: no address, no GPS, no street. The volunteers table shows BOINC user names and amounts, never places. City positions come from GeoNames (CC BY 4.0), the world map from Natural Earth (public domain).",
                   "Haritadaki bir nokta, tercihlerinize yazdığınız şehirdir. Bir şehirden daha ayrıntılı hiçbir şey gönderilmez ya da gösterilmez: adres, GPS ya da sokak yok. Gönüllüler tablosu BOINC kullanıcı adlarını ve miktarları gösterir, asla yer göstermez. Şehir konumları GeoNames'ten (CC BY 4.0), dünya haritası Natural Earth'ten (kamu malı) gelir.")}</p></div></section>
 
+<section id="linux"><div class="wrap"><h2 class="px">{p('Linux and Raspberry Pi', 'Linux ve Raspberry Pi')}</h2>
+<p class="sub">{p("On Linux the BOINC client runs as its own user and may not open USB devices, so the task says <b>No detector found</b> although a test program finds the counter. One command lets BOINC open the counters Yarrow reads (it only touches those):",
+                  "Linux'ta BOINC istemcisi kendi kullanıcısıyla çalışır ve USB aygıtlarını açamayabilir; bu yüzden bir test programı sayacı bulsa bile görev <b>No detector found</b> der. Tek bir komut BOINC'in Yarrow'un okuduğu sayaçları açmasını sağlar (yalnızca onlara dokunur):")}</p>
+<pre style="overflow-x:auto;background:var(--card,#1b2140);padding:12px 14px;border-radius:6px">curl -fsSL https://raw.githubusercontent.com/alplix/yarrow/main/linux/yarrow-linux-setup.sh | sudo sh
+sudo systemctl restart boinc-client</pre>
+<p class="sub">{p('Then unplug the counter and plug it in again. Works the same on Raspberry Pi OS. More details and what to look for in the task log: <a href="https://github.com/alplix/yarrow/blob/main/docs/linux.md">docs/linux.md</a>.',
+                  'Sonra sayacı çıkarıp yeniden takın. Raspberry Pi OS\'ta da aynıdır. Ayrıntılar ve görev günlüğünde nelere bakılacağı: <a href="https://github.com/alplix/yarrow/blob/main/docs/linux.md">docs/linux.md</a>.')}</p></div></section>
+
 <section id="join" class="alt"><div class="wrap"><h2 class="px">{p('Join in 5 steps', '5 adımda katılın')}</h2>
 <ol class="num">
 <li>{p('Get a counter: a <b>FNIRSI GC-03</b> with the Yarrow firmware (above), or use a Radioactive@Home or GQ GMC counter you already have.', 'Bir sayaç edinin: Yarrow yazılımlı bir <b>FNIRSI GC-03</b> (yukarıda) ya da elinizdeki bir Radioactive@Home veya GQ GMC sayacı.')}</li>

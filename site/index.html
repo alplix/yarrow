@@ -133,6 +133,12 @@ footer a{color:var(--muted)}
 <section id="privacy"><div class="wrap"><h2 class="px">Privacy</h2>
 <p class="sub">A point on the map is a city, the name you type in your preferences. Nothing finer than a city is ever sent or shown: no address, no GPS, no street. The volunteers table shows BOINC user names and amounts, never places. City positions come from GeoNames (CC BY 4.0), the world map from Natural Earth (public domain).</p></div></section>
 
+<section id="linux"><div class="wrap"><h2 class="px">Linux and Raspberry Pi</h2>
+<p class="sub">On Linux the BOINC client runs as its own user and may not open USB devices, so the task says <b>No detector found</b> although a test program finds the counter. One command lets BOINC open the counters Yarrow reads (it only touches those):</p>
+<pre style="overflow-x:auto;background:var(--card,#1b2140);padding:12px 14px;border-radius:6px">curl -fsSL https://raw.githubusercontent.com/alplix/yarrow/main/linux/yarrow-linux-setup.sh | sudo sh
+sudo systemctl restart boinc-client</pre>
+<p class="sub">Then unplug the counter and plug it in again. Works the same on Raspberry Pi OS. More details and what to look for in the task log: <a href="https://github.com/alplix/yarrow/blob/main/docs/linux.md">docs/linux.md</a>.</p></div></section>
+
 <section id="join" class="alt"><div class="wrap"><h2 class="px">Join in 5 steps</h2>
 <ol class="num">
 <li>Get a counter: a <b>FNIRSI GC-03</b> with the Yarrow firmware (above), or use a Radioactive@Home or GQ GMC counter you already have.</li>

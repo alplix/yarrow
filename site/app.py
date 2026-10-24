@@ -45,6 +45,11 @@ async def security_headers(request: Request, call_next):
     return resp
 
 
+@app.get("/linux")
+async def linux_page():
+    return RedirectResponse("/#linux", status_code=302)
+
+
 @app.exception_handler(404)
 async def not_found(request: Request, exc):
     return RedirectResponse("/", status_code=302)

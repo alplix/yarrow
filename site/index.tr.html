@@ -133,6 +133,12 @@ footer a{color:var(--muted)}
 <section id="privacy"><div class="wrap"><h2 class="px">Gizlilik</h2>
 <p class="sub">Haritadaki bir nokta, tercihlerinize yazdığınız şehirdir. Bir şehirden daha ayrıntılı hiçbir şey gönderilmez ya da gösterilmez: adres, GPS ya da sokak yok. Gönüllüler tablosu BOINC kullanıcı adlarını ve miktarları gösterir, asla yer göstermez. Şehir konumları GeoNames'ten (CC BY 4.0), dünya haritası Natural Earth'ten (kamu malı) gelir.</p></div></section>
 
+<section id="linux"><div class="wrap"><h2 class="px">Linux ve Raspberry Pi</h2>
+<p class="sub">Linux'ta BOINC istemcisi kendi kullanıcısıyla çalışır ve USB aygıtlarını açamayabilir; bu yüzden bir test programı sayacı bulsa bile görev <b>No detector found</b> der. Tek bir komut BOINC'in Yarrow'un okuduğu sayaçları açmasını sağlar (yalnızca onlara dokunur):</p>
+<pre style="overflow-x:auto;background:var(--card,#1b2140);padding:12px 14px;border-radius:6px">curl -fsSL https://raw.githubusercontent.com/alplix/yarrow/main/linux/yarrow-linux-setup.sh | sudo sh
+sudo systemctl restart boinc-client</pre>
+<p class="sub">Sonra sayacı çıkarıp yeniden takın. Raspberry Pi OS'ta da aynıdır. Ayrıntılar ve görev günlüğünde nelere bakılacağı: <a href="https://github.com/alplix/yarrow/blob/main/docs/linux.md">docs/linux.md</a>.</p></div></section>
+
 <section id="join" class="alt"><div class="wrap"><h2 class="px">5 adımda katılın</h2>
 <ol class="num">
 <li>Bir sayaç edinin: Yarrow yazılımlı bir <b>FNIRSI GC-03</b> (yukarıda) ya da elinizdeki bir Radioactive@Home veya GQ GMC sayacı.</li>

@@ -77,6 +77,7 @@ static int port_name(int i, char *out, size_t cap)
 }
 #else
 #include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <glob.h>
 #include <termios.h>
@@ -220,15 +221,39 @@ yser_t *yser_find(char *path_out, size_t cap)
         yser_close(s);
     }
 #else
+    /* each port open failure is reported once (the search repeats every 15 seconds): EACCES means the
+     * BOINC client's user is not in the device's group (usually dialout) */
+    static struct { char path[64]; int err; } seen[64];
+    static int n_seen;
     static const char *pats[] = {"/dev/ttyACM*", "/dev/cu.usbmodem*", NULL};
     for (int k = 0; pats[k]; k++) {
         glob_t g;
         if (glob(pats[k], 0, NULL, &g) != 0)
             continue;
         for (size_t i = 0; i < g.gl_pathc; i++) {
+            errno = 0;
             yser_t *s = yser_open(g.gl_pathv[i]);
-            if (!s)
+            if (!s) {
+                int err = errno ? errno : EIO;
+                int known = 0;
+                for (int j = 0; j < n_seen; j++)
+                    if (seen[j].err == err && strcmp(seen[j].path, g.gl_pathv[i]) == 0) {
+                        known = 1;
+                        break;
+                    }
+                if (!known && n_seen < 64) {
+                    snprintf(seen[n_seen].path, sizeof seen[n_seen].path, "%.63s", g.gl_pathv[i]);
+                    seen[n_seen].err = err;
+                    n_seen++;
+                    if (err == EACCES)
+                        fprintf(stderr, "yser: %s: permission denied; the BOINC client's user may not open it. Install the udev "
+                                        "rule from %s (or add that user to the device's group, usually dialout) and plug the "
+                                        "counter in again\n", g.gl_pathv[i], "https://yarrow.athena.org.tr/linux");
+                    else
+                        fprintf(stderr, "yser: %s: %s (errno %d)\n", g.gl_pathv[i], strerror(err), err);
+                }
                 continue;
+            }
             yser_command(s, "LIVE 0", reply, sizeof reply, 300);
             if (yser_command(s, "INFO", reply, sizeof reply, 600) == 0 && strstr(reply, "yarrow=")) {
                 snprintf(path_out, cap, "%s", g.gl_pathv[i]);

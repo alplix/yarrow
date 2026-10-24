@@ -123,8 +123,10 @@ void yhost_name(char *out, size_t cap)
 #else /* POSIX */
 
 #include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/ioctl.h>
 #include <time.h>
 #include <unistd.h>
@@ -177,8 +179,71 @@ static void posix_close(void *ctx)
     free(p);
 }
 
+/* the USB ids of /dev/hidrawN from sysfs: readable by everyone, also when the node itself may not be opened */
+static int sysfs_ids(const char *node, unsigned *vid, unsigned *pid)
+{
+    static const char *up[] = {"../", "../../", "../../../", NULL};
+    for (int i = 0; up[i]; i++) {
+        char pv[300], pp[300];
+        snprintf(pv, sizeof pv, "/sys/class/hidraw/%s/device/%sidVendor", node, up[i]);
+        snprintf(pp, sizeof pp, "/sys/class/hidraw/%s/device/%sidProduct", node, up[i]);
+        FILE *fv = fopen(pv, "r"), *fp = fopen(pp, "r");
+        int ok = fv && fp && fscanf(fv, "%x", vid) == 1 && fscanf(fp, "%x", pid) == 1;
+        if (fv)
+            fclose(fv);
+        if (fp)
+            fclose(fp);
+        if (ok)
+            return 1;
+    }
+    return 0;
+}
+
+/* each hidraw device that was opened but did not match is reported once, with its identity: this is what
+ * a volunteer needs when a detector is present but not accepted (wrong VID:PID, different name) */
+static void yhid_see(const char *path, unsigned vid, unsigned pid, const char *name)
+{
+    static struct { char path[64]; } seen[64];
+    static int n;
+    for (int i = 0; i < n; i++)
+        if (strcmp(seen[i].path, path) == 0)
+            return;
+    if (n < 64) {
+        snprintf(seen[n].path, sizeof seen[n].path, "%.63s", path);
+        n++;
+    }
+    if (name[0])
+        fprintf(stderr, "yhid: %s: %04x:%04x \"%s\"\n", path, vid, pid, name);
+    else
+        fprintf(stderr, "yhid: %s: %04x:%04x\n", path, vid, pid);
+}
+
+/* Each hidraw problem is reported once (not again on every scan, the monitor looks for a detector every
+ * 15 seconds): a volunteer debugging "no detector found" then sees what the app actually saw. */
+static void yhid_note(const char *path, int err)
+{
+    static struct { char path[64]; int err; } seen[64];
+    static int n;
+    for (int i = 0; i < n; i++)
+        if (seen[i].err == err && strcmp(seen[i].path, path) == 0)
+            return;
+    if (n < 64) {
+        snprintf(seen[n].path, sizeof seen[n].path, "%.63s", path);
+        seen[n].err = err;
+        n++;
+    }
+    if (err == EACCES)
+        fprintf(stderr, "yhid: %s: this is the counter the monitor looks for, but the BOINC client's user may not open it. "
+                        "Install the udev rule from %s, then unplug the counter and plug it in again.\n", path, "https://yarrow.athena.org.tr/linux");
+    else if (err == ENOENT || err == ENODEV)
+        fprintf(stderr, "yhid: %s: the device went away\n", path);
+    else
+        fprintf(stderr, "yhid: %s: %s (errno %d)\n", path, strerror(err), err);
+}
+
 int yhid_open(uint16_t vid, uint16_t pid, const char *name_part, yhid_t *out)
 {
+    unsigned found = 0;                    /* hidraw nodes present this scan */
     DIR *d = opendir("/dev");
     if (!d)
         return -1;
@@ -186,14 +251,22 @@ int yhid_open(uint16_t vid, uint16_t pid, const char *name_part, yhid_t *out)
     while ((e = readdir(d)) != NULL) {
         if (strncmp(e->d_name, "hidraw", 6) != 0)
             continue;
+        found++;
         char path[300];
         snprintf(path, sizeof path, "/dev/%s", e->d_name);
         int fd = open(path, O_RDWR | O_CLOEXEC);
-        if (fd < 0)
+        if (fd < 0) {
+            int err = errno;
+            unsigned sv = 0, sp = 0;
+            /* a keyboard or mouse the BOINC user may not open is normal and not worth a line; our counter is */
+            if (err != EACCES || (sysfs_ids(e->d_name, &sv, &sp) && sv == vid && sp == pid))
+                yhid_note(path, err);
             continue;
+        }
         struct yhidraw_devinfo info;
         char name[96] = "";
-        if (ioctl(fd, HIDIOCGRAWINFO, &info) == 0 && (uint16_t)info.vendor == vid && (uint16_t)info.product == pid) {
+        int got = ioctl(fd, HIDIOCGRAWINFO, &info) == 0;
+        if (got && (uint16_t)info.vendor == vid && (uint16_t)info.product == pid) {
             ioctl(fd, HIDIOCGRAWNAME(sizeof name - 1), name);
             if (!name_part || strstr(name, name_part)) {
                 posix_hid_t *p = malloc(sizeof *p);
@@ -209,11 +282,44 @@ int yhid_open(uint16_t vid, uint16_t pid, const char *name_part, yhid_t *out)
                     closedir(d);
                     return 0;
                 }
+                close(fd);
+                closedir(d);
+                return -1;
             }
+            yhid_see(path, (unsigned)(uint16_t)info.vendor, (unsigned)(uint16_t)info.product, name);
+        } else {
+            yhid_see(path, got ? (unsigned)(uint16_t)info.vendor : 0, got ? (unsigned)(uint16_t)info.product : 0, "");
         }
         close(fd);
     }
     closedir(d);
+    /* a one-line summary whenever the number of hidraw devices differs from the last scan of the same
+     * VID:PID, so a plugged-in device is visible in the log without repeating lines every 15 seconds */
+    static struct { uint16_t vid, pid; unsigned found; } rep[8];
+    int have = 0;
+    for (int i = 0; i < 8; i++)
+        if (rep[i].vid == vid && rep[i].pid == pid)
+            have = rep[i].found == found;
+    if (!have) {
+        fprintf(stderr, "yhid: %u hidraw device(s) present, none matched %04x:%04x this scan\n", found, vid, pid);
+        int free_slot = -1;
+        for (int i = 0; i < 8; i++)
+            if (rep[i].vid == (uint16_t)vid && rep[i].pid == (uint16_t)pid) {
+                free_slot = i;
+                break;
+            }
+        if (free_slot < 0)
+            for (int i = 0; i < 8; i++)
+                if (rep[i].vid == 0 && rep[i].pid == 0) {
+                    free_slot = i;
+                    break;
+                }
+        if (free_slot >= 0) {
+            rep[free_slot].vid = (uint16_t)vid;
+            rep[free_slot].pid = (uint16_t)pid;
+            rep[free_slot].found = found;
+        }
+    }
     return -1;
 }
 #else

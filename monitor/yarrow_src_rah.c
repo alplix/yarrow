@@ -117,13 +117,20 @@ ysrc_t *yrah_make(const yhid_t *hid, const yrah_env_t *env, ydev_t *dev)
     r->base.next_wait_ms = rah_wait;
     r->base.close = rah_close;
     /* it must behave like the counter: the timer runs in milliseconds and the pulse count never goes down */
-    uint32_t t1, p1, t2, p2;
+    uint32_t t1 = 0, p1 = 0, t2 = 0, p2 = 0;
     int ok = read_raw(r, &t1, &p1) == 0;
     if (ok) {
         env->sleep_ms(300);
         ok = read_raw(r, &t2, &p2) == 0 && t2 - t1 >= 200 && t2 - t1 <= 600 && p2 >= p1 && p2 - p1 < 100000;
     }
     if (!ok) {
+        static int told;
+        if (!told) {                  /* once, not on every scan: what a volunteer needs to tell us when a counter is not accepted */
+            told = 1;
+            fprintf(stderr, "rah: a device with the Radioactive@Home id answered, but it does not behave like the counter "
+                            "(second read %s, timer +%u ms, pulses +%u); not used\n",
+                    t2 || p2 ? "ok" : "failed", (unsigned)(t2 - t1), (unsigned)(p2 - p1));
+        }
         free(r);
         return NULL;                  /* another device with the same shared USB id: leave the HID handle to the caller */
     }

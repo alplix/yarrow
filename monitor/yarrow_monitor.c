@@ -115,7 +115,7 @@ int main(int argc, char **argv)
                 if (yser_now() - searching_since > 300) {      /* nothing plugged in: do not hold a CPU for it */
                     flush(1);
                     save_state();
-                    glue_no_detector("No detector found. Plug it in, switch it on (a Yarrow detector on its main screen).");
+                    glue_no_detector("No detector found. Plug it in and switch it on (a Yarrow detector on its main screen). On Linux and Raspberry Pi the BOINC client also needs permission to open it: see https://yarrow.athena.org.tr/linux");
                     searching_since = yser_now();
                 }
                 continue;
