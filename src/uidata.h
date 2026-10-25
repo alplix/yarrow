@@ -114,6 +114,9 @@ typedef struct {
     uint32_t cal[4];
 
     /* calibration wizard */
+    /* dead-time wizard: 0 explain, 1 ready for step dt_step, 2 counting it, 3 result */
+    uint8_t dt_phase, dt_step;
+    uint32_t dt_counts, dt_seconds, dt_result_us, dt_unc_us;
     uint8_t cw_phase;       /* 0 enter the reference, 1 measuring, 2 result */
     bool cw_saturated;
     uint32_t cw_ref_nsvh, cw_counts, cw_seconds, cw_unc_x10, cw_new_x100;

@@ -956,6 +956,58 @@ static void test_health(void)
     printf("health: ok\n");
 }
 
+static void test_deadtime_wizard(void)
+{
+    fresh();
+    to_stage5();
+    while (app_screen(&app) != SCR_MAIN)
+        send(EV_BACK);
+    send(EV_OK);
+    send(EV_LEFT); /* the menu wraps: the last entry */
+    send(EV_OK);
+    CHECK(app_screen(&app) == SCR_DEADTIME && app.ui.dt_phase == 0, "the menu opens the dead-time wizard (screen %d)", app_screen(&app));
+    send(EV_OK);
+    CHECK(app.ui.dt_phase == 1 && app.ui.dt_step == 0, "step 1 is ready");
+    /* a tube with 90 us of dead time (non-paralysable) in front of two sources */
+    const double tau = 90e-6;
+    const double lam[4] = {1500 + 1.5, 1500 + 1300 + 1.5, 1300 + 1.5, 1.5};
+    for (int i = 0; i < 4; i++) {
+        t_cps = lam[i] / (1.0 + lam[i] * tau);
+        send(EV_OK);
+        CHECK(app.ui.dt_phase == 2, "step %d is counting", i + 1);
+        send(EV_OK);
+        CHECK(app.ui.dt_phase == 2, "step %d: too early to finish by hand", i + 1);
+        run_s(125);
+        CHECK(app.ui.dt_phase == (i < 3 ? 1 : 3), "step %d finishes by itself (phase %d)", i + 1, app.ui.dt_phase);
+    }
+    CHECK(app_screen(&app) == SCR_DEADTIME && app.ui.dt_result_us >= 80 && app.ui.dt_result_us <= 100,
+          "the result is near the true 90 us (%u +- %u)", (unsigned)app.ui.dt_result_us, (unsigned)app.ui.dt_unc_us);
+    send(EV_OK);
+    CHECK(app.ui.cal[1] == app.ui.dt_result_us && app_screen(&app) != SCR_DEADTIME, "applied: calibration holds %u us", (unsigned)app.ui.cal[1]);
+    app_shutdown(&app);
+    reboot();
+    CHECK(app.ui.cal[1] >= 80 && app.ui.cal[1] <= 100, "and it is still there after a restart (%u)", (unsigned)app.ui.cal[1]);
+    /* the sources too weak: no result, nothing changes */
+    uint32_t before = app.ui.cal[1];
+    to_stage5();
+    t_cps = 5;
+    while (app_screen(&app) != SCR_MAIN)
+        send(EV_BACK);
+    send(EV_OK);
+    send(EV_LEFT);
+    send(EV_OK);
+    send(EV_OK);
+    for (int i = 0; i < 4; i++) {
+        send(EV_OK);
+        run_s(125);
+    }
+    CHECK(app.ui.dt_phase == 3 && app.ui.dt_result_us == 0, "weak sources: no result (%u)", (unsigned)app.ui.dt_result_us);
+    send(EV_OK);
+    CHECK(app.ui.cal[1] == before, "and nothing was changed");
+    t_cps = 0.17;
+    printf("dead-time wizard: ok\n");
+}
+
 static void test_protocol(void)
 {
     fresh();
@@ -1096,6 +1148,7 @@ int main(void)
     test_screensaver();
     test_station_mode();
     test_health();
+    test_deadtime_wizard();
     test_clock_follows_rtc();
     test_display_power_and_shutdown();
     printf(failures ? "\n%d check(s) FAILED\n" : "\nall app checks passed\n", failures);

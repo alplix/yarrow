@@ -53,6 +53,33 @@ int main(void)
     cal_tick(&z, 4, 90);
     CHECK(cal_sensitivity_x100(&z, 0) == 0, "zero reference gives zero");
 
+    /* dead time by the two-source method: a tube with a true 90 us (non-paralysable), two sources */
+    for (int k = 0; k < 3; k++) {
+        double ta[3] = {1500, 400, 3000}, tb[3] = {1300, 350, 2500}, bgc[3] = {1.5, 1.0, 2.0};
+        double tau = 90e-6;
+        int t = k == 1 ? 1800 : 200;
+        dt_meas_t m;
+        double lam[4] = {ta[k] + bgc[k], ta[k] + tb[k] + bgc[k], tb[k] + bgc[k], bgc[k]};
+        for (int i = 0; i < 4; i++) {
+            double obs = lam[i] / (1.0 + lam[i] * tau);
+            m.seconds[i] = (uint32_t)t;
+            m.counts[i] = poisson(obs * t);
+        }
+        uint32_t unc;
+        uint32_t got = cal_deadtime_us(&m, &unc);
+        double lim = 3.0 * unc + 3.0;
+        printf("dead time, sources %.0f/%.0f cps: %u +- %u us\n", ta[k], tb[k], got, unc);
+        if (k == 1)
+            CHECK(got == 0 || fabs((double)got - 90.0) <= lim, "weak sources: no answer or an honest one (%u +- %u)", got, unc);
+        else
+            CHECK(got != 0 && fabs((double)got - 90.0) <= lim, "dead time %u +- %u us, true 90", got, unc);
+    }
+    {
+        dt_meas_t m = {{1000, 2000, 1000, 10}, {100, 100, 100, 100}};
+        uint32_t unc;
+        CHECK(cal_deadtime_us(&m, &unc) == 0, "no dead-time loss at all: no answer");
+    }
+
     printf(failures ? "\n%d check(s) FAILED\n" : "\nall calibration checks passed\n", failures);
     return failures ? 1 : 0;
 }

@@ -26,4 +26,15 @@ uint32_t cal_uncertainty_x10(const cal_acc_t *c);
  * 0 when there is nothing to compute from. */
 uint32_t cal_sensitivity_x100(const cal_acc_t *c, uint32_t ref_nsvh);
 
+/* Dead time from the two-source method: four counts of the same length of time, with source A alone, A and B together,
+ * B alone, and neither (the background). */
+typedef struct {
+    uint32_t counts[4];  /* raw pulses: A, A+B, B, background */
+    uint32_t seconds[4];
+} dt_meas_t;
+
+/* Dead time in microseconds, 0 when the four counts cannot tell it (the sources are too weak, so the difference of the
+ * counts is not clearly more than their noise). *unc_us gets the statistical uncertainty. */
+uint32_t cal_deadtime_us(const dt_meas_t *m, uint32_t *unc_us);
+
 #endif

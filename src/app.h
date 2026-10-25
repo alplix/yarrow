@@ -113,6 +113,7 @@ typedef struct {
     uint32_t sample_counts, sample_seconds;
     /* calibration wizard and sessions */
     cal_acc_t cw;
+    dt_meas_t dt;
     uint64_t sess_prev_total;
     /* scan */
     uint32_t scan_base_x10;

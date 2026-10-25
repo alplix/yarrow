@@ -898,6 +898,65 @@ static void scr_calwiz(const ui_data_t *d, const ui_state_t *s, bool full)
     }
 }
 
+/* ---- dead-time wizard: technical, so English in every language ---- */
+
+static void scr_deadtime(const ui_data_t *d, const ui_state_t *s, bool full)
+{
+    (void)s;
+    const theme_t *t = ui_theme;
+    char v[48];
+    if (full) {
+        ui_clear();
+        ui_header(&spr_tube, t->warn, "Dead time");
+    }
+    status(d);
+    static const char *const what[4] = {"Source A alone", "Sources A and B together", "Source B alone", "No source at all"};
+    if (d->dt_phase == 0) {
+        ui_text_wrap(&font_12_regular, UI_MARGIN, 64, 216,
+                     "Needs two sources of similar strength, each giving at least 500 counts per second, and a tube "
+                     "that stays in place. Four counts of two minutes each: A, A+B, B, and none.", t->ink, t->bg, 6);
+        ui_text_wrap(&font_12_regular, UI_MARGIN, 190, 216, "Without two such sources the result is not trustworthy and the wizard says so.", t->dim, t->bg, 3);
+        ui_footer("[<] " S_BACK, "[OK] " S_BEGIN);
+    } else if (d->dt_phase == 1 || d->dt_phase == 2) {
+        int st = d->dt_step > 3 ? 3 : d->dt_step;
+        char step[4] = {(char)('1' + st), '/', '4', 0};
+        display_fill_rect(UI_MARGIN, 60, 216, 24, t->bg);
+        int cw = ui_chip(UI_MARGIN, 62, step, t->acc);
+        ui_text(&font_14_medium, UI_MARGIN + cw + 8, 63, what[st], t->ink, t->bg);
+        if (d->dt_phase == 1) {
+            display_fill_rect(UI_MARGIN, 98, 216, 100, t->bg);
+            ui_text_wrap(&font_12_regular, UI_MARGIN, 100, 216, "Place the source or sources named above in front of the tube, then start. Do not move anything while it counts.", t->dim, t->bg, 4);
+            ui_footer("[<] " S_BACK, "[OK] " S_BEGIN);
+        } else {
+            fmt_u(v, d->dt_counts);
+            big_number(98, v, S_CW_COUNTS, t->ink);
+            int n = fmt_duration(v, d->dt_seconds);
+            n = add(v, n, " / 2:00");
+            ui_label(&font_14_medium, UI_MARGIN, 148, 216, v, t->ink, t->bg, 2);
+            ui_meter(UI_MARGIN, 176, 216, (int)(d->dt_seconds * 20 / 120), false, t->warn);
+            ui_footer("[<] " S_CANCEL, d->dt_seconds >= 60 ? "[OK] " S_FINISH : 0);
+        }
+    } else {
+        if (d->dt_result_us) {
+            int n = fmt_u(v, d->cal[1]);
+            add(v, n, " us");
+            ui_row(92, S_CW_OLD, v, false);
+            n = fmt_u(v, d->dt_result_us);
+            add(v, n, " us");
+            ui_row(124, S_CW_NEW, v, false);
+            n = add(v, 0, "+-");
+            n += fmt_u(v + n, d->dt_unc_us);
+            add(v, n, " us");
+            ui_row(156, S_CW_UNC, v, false);
+            ui_footer("[<] " S_DISCARD, "[OK] " S_APPLY);
+        } else {
+            ui_text_wrap(&font_14_medium, UI_MARGIN, 90, 216, "No usable result.", t->bad, t->bg, 2);
+            ui_text_wrap(&font_12_regular, UI_MARGIN, 124, 216, "The sources were too weak, or one moved. The difference between the counts was not clearly larger than their noise.", t->dim, t->bg, 6);
+            ui_footer("[<] " S_BACK, 0);
+        }
+    }
+}
+
 static void scr_session(const ui_data_t *d, const ui_state_t *s, bool full)
 {
     const theme_t *t = ui_theme;
@@ -1051,6 +1110,7 @@ void screens2_draw(screen_id_t id, const ui_data_t *d, const ui_state_t *s, bool
     case SCR_CALWIZ:     scr_calwiz(d, s, full); break;
     case SCR_SESSION:    scr_session(d, s, full); break;
     case SCR_HEALTH:     scr_health(d, s, full); break;
+    case SCR_DEADTIME:   scr_deadtime(d, s, full); break;
     default: break;
     }
 }

@@ -32,6 +32,8 @@ static const uint32_t budget_presets[6] = {1000, 10000, 50000, 100000, 500000, 1
 #define OFF_MS 90000u
 #define STATION_OFF_MS 30000u       /* station mode: the screen goes dark sooner */
 #define STATION_SILENCE_MS 600000u /* station mode: no word from the host for this long with the port open: USB starts again */
+#define DT_STEP_S 120u             /* dead-time wizard: each of the four counts runs this long */
+#define DT_STEP_MIN_S 60u          /* and may be ended by hand after this long */
 #define BOOT_STABLE_S 60u          /* a run this long forgets the crashes in a row */
 #define TREND_STEP_S 17u      /* 36 points over about ten minutes */
 #define FIELD_STEP_S 2u
@@ -313,6 +315,26 @@ static void apply_calibration(app_t *a)
 {
     a->meas.cfg.cpm_per_usvh_x100 = a->ui.cal[0];
     a->meas.cfg.dead_time_us = a->ui.cal[1];
+}
+
+static void chirp(app_t *a, uint32_t hz);
+
+/* A step of the dead-time wizard is done: keep its count, go on to the next, or work out the result. */
+static void deadtime_finish_step(app_t *a)
+{
+    ui_data_t *u = &a->ui;
+    a->dt.counts[u->dt_step] = u->dt_counts;
+    a->dt.seconds[u->dt_step] = u->dt_seconds;
+    chirp(a, 2400);
+    if (++u->dt_step < 4) {
+        u->dt_phase = 1;
+    } else {
+        uint32_t unc = 0;
+        u->dt_result_us = cal_deadtime_us(&a->dt, &unc);
+        u->dt_unc_us = unc;
+        u->dt_phase = 3;
+    }
+    invalidate(a);
 }
 
 static void save_calibration(app_t *a)
@@ -773,14 +795,14 @@ static void run_second(app_t *a, uint32_t now_ms)
     if (r.level_changed) {
         a->alarm_muted = false;
         a->alarm_dismissed = false;
-        if (a->alarm.level > 0 && cur(a) != SCR_ALARM && cur(a) != SCR_CALWIZ) {
+        if (a->alarm.level > 0 && cur(a) != SCR_ALARM && cur(a) != SCR_CALWIZ && cur(a) != SCR_DEADTIME) {
             push(a, SCR_ALARM);
             a->last_input_ms = now_ms; /* wake the screen */
         }
         if (a->alarm.level == 0 && cur(a) == SCR_ALARM)
             pop(a);
     }
-    if (cur(a) == SCR_CALWIZ) { /* calibrating next to a source: the source is meant to be there, stay quiet */
+    if (cur(a) == SCR_CALWIZ || cur(a) == SCR_DEADTIME) { /* calibrating next to a source: the source is meant to be there, stay quiet */
         a->alarm_muted = true;
         a->alarm_dismissed = true;
     }
@@ -872,6 +894,14 @@ static void run_second(app_t *a, uint32_t now_ms)
         u->cw_new_x100 = cal_sensitivity_x100(&a->cw, u->cw_ref_nsvh);
         if (before < 1000 && a->cw.counts >= 1000)
             chirp(a, 2400);
+    }
+
+    /* dead-time wizard: raw pulses of the step in hand */
+    if (cur(a) == SCR_DEADTIME && u->dt_phase == 2) {
+        u->dt_counts += a->hv_on ? pulses : 0;
+        u->dt_seconds++;
+        if (u->dt_seconds >= DT_STEP_S)
+            deadtime_finish_step(a);
     }
 
     sess_tick(a, dose, rate);
@@ -988,7 +1018,7 @@ static void backlight_apply(app_t *a)
         H(a)->backlight(a->dimmed ? 1 : a->settings.brightness);
 }
 
-#define MENU_ENTRIES 16
+#define MENU_ENTRIES 17
 
 static void open_menu_entry(app_t *a, int idx)
 {
@@ -1045,6 +1075,10 @@ static void open_menu_entry(app_t *a, int idx)
         u->cw_ref_nsvh = u->rate_nsvh < 50 ? 50 : u->rate_nsvh;
         break;
     case 15: push(a, SCR_ABOUT); break;
+    case 16:
+        push(a, SCR_DEADTIME);
+        u->dt_phase = 0;
+        break;
     default: break;
     }
 }
@@ -1370,6 +1404,52 @@ static void on_event(app_t *a, input_event_t ev)
             } else if (ev == EV_BACK) {
                 u->cw_phase = 0;
                 invalidate(a);
+            }
+        }
+        break;
+    }
+
+    case SCR_DEADTIME: {
+        ui_data_t *u = &a->ui;
+        if (u->dt_phase == 0) {
+            if (ev == EV_OK) {
+                u->dt_phase = 1;
+                u->dt_step = 0;
+                memset(&a->dt, 0, sizeof a->dt);
+                invalidate(a);
+            } else if (ev == EV_BACK) {
+                pop(a);
+            }
+        } else if (u->dt_phase == 1) {
+            if (ev == EV_OK) {
+                u->dt_phase = 2;
+                u->dt_counts = 0;
+                u->dt_seconds = 0;
+                invalidate(a);
+            } else if (ev == EV_BACK) {
+                u->dt_phase = 0;
+                invalidate(a);
+            }
+        } else if (u->dt_phase == 2) {
+            if (ev == EV_OK && u->dt_seconds >= DT_STEP_MIN_S) {
+                deadtime_finish_step(a);
+            } else if (ev == EV_BACK) { /* do this step again */
+                u->dt_phase = 1;
+                invalidate(a);
+            }
+        } else {
+            if (ev == EV_OK) {
+                if (u->dt_result_us) {
+                    u->cal[1] = u->dt_result_us;
+                    save_calibration(a);
+                    u->dt_phase = 0;
+                    pop(a);
+                } else {
+                    chirp(a, 500);
+                }
+            } else if (ev == EV_BACK) {
+                u->dt_phase = 0;
+                pop(a);
             }
         }
         break;
@@ -1744,6 +1824,7 @@ void app_poll(app_t *a, uint32_t now_ms)
     /* the screen: an alarm keeps it awake, so does a measurement somebody is watching, otherwise it dims and then
      * switches off */
     bool attended = (cur(a) == SCR_CALWIZ && a->ui.cw_phase == 1) ||
+                    (cur(a) == SCR_DEADTIME && a->ui.dt_phase >= 1 && a->ui.dt_phase <= 2) ||
                     (cur(a) == SCR_SAMPLE && (a->ui.sample_phase == 1 || a->ui.sample_phase == 2));
     if (attended)
         a->last_input_ms = now_ms;
