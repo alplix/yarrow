@@ -22,6 +22,7 @@ characters.
 | `CAL` | `OK sens=<x100> dead=<µs> e=<%> h=<%>` |
 | `CAL <sens> <dead> <e> <h>` | sets the calibration, `OK`, or `ERR range` / `ERR args` |
 | `SET THEME <n>` | choose a theme (0–20) |
+| `HEALTH` | `OK boots=<n> wdt=<n> fault=<n> usb_restarts=<n> reason=<power_on\|pin\|watchdog\|window_watchdog\|software\|low_power\|fault> streak=<n> fault_pc=<address> uptime=<s> stage=<n> suspect=<mask>`: how the device has been running |
 
 `<unix>` is Unix time in seconds (UTC). Sensitivity is counts per minute for 1 µSv/h times 100.
 

@@ -23,6 +23,16 @@ The new value is `corrected counts per minute / reference in µSv/h`, where the 
 second by second, so a strong source is handled correctly. If the tube is too busy (over 90 % dead) the wizard refuses
 and asks you to move the source away.
 
+## Dead time
+
+The *Dead-time wizard* (last entry of the menu) measures the tube's dead time with two sources of similar strength, each
+giving at least 500 counts per second at the tube. It counts four times for two minutes: source A alone, A and B
+together, B alone, and no source. The dead time follows from how much fewer counts A and B give together than apart
+(`τ ≈ (n₁ + n₂ − n₁₂ − n_b) / (n₁₂² − n₁² − n₂²)`, with the higher-order terms and the background included). The
+result comes with its statistical uncertainty; when the difference is not clearly larger than the noise (sources too
+weak, or one moved) the wizard says that there is no usable result and changes nothing. OK applies the value to the
+calibration. Nothing moves between the four counts: put the sources in the same places each time.
+
 ## Fields
 
 The electric and magnetic factors scale the readings to match a reference meter. The raw values are a first estimate

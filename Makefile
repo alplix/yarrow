@@ -9,8 +9,8 @@ SIZE    = arm-none-eabi-size
 # Language of the device text: make YLANG=en (lang/<code>.h). Every language gets its own firmware file, because the
 # fonts differ and take most of the space.
 YLANG ?= tr
-# Chinese, Japanese and Korean carry big fonts: a 128 KB application and a log window that starts later
-ifneq ($(filter $(YLANG),zh ja ko),)
+# Chinese, Japanese, Korean, Russian, Ukrainian and Vietnamese carry big fonts: a 128 KB application and a log window that starts later
+ifneq ($(filter $(YLANG),zh ja ko ru uk vi),)
 LAYOUT_CFLAGS = -DYARROW_BIG_IMAGE
 FLASH_LEN = 128K
 IMAGE_MAX = 0x20000

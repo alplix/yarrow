@@ -641,7 +641,7 @@ static void scr_about(const ui_data_t *d, const ui_state_t *s, bool full)
         for (int x = 0; x < UI_W; x += 8)
             display_fill_rect(x, 152, 4, 4, t->dim);
         font_draw_centered(&font_28_medium, 168, "YARROW", t->ink, t->bg, 6);
-        font_draw_centered(&font_12_regular, 206, "GC-03 · v0.1.2", t->dim, t->bg, 0);
+        font_draw_centered(&font_12_regular, 206, "GC-03 · v0.2.0", t->dim, t->bg, 0);
         font_draw_centered(&font_14_medium, 228, "yarrow.athena.org.tr", t->acc, t->bg, 0);
         font_draw_centered(&font_12_regular, 248, "github.com/alplix/yarrow", t->dim, t->bg, 0);
     }

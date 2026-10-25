@@ -63,12 +63,24 @@ static int gmc_poll(ysrc_t *s, uint32_t interval, ysample_t *out)
 {
     gmc_t *g = (gmc_t *)s;
     uint8_t b[2];
-    if (g->io.read(g->io.ctx, b, 2, 2500) != 2)
+    int n = g->io.read(g->io.ctx, b, 2, 2500);
+    if (n != 2) {
+        note("the counter sent %d bytes in 2.5 seconds after <HEARTBEAT1>> instead of a count every second", n);
         return -1;                                   /* the stream stopped */
-    double a = g->env.now();
+    }
     unsigned v = (unsigned)b[0] << 8 | b[1];
-    if (v & 0xc000u)
-        return -1;                                   /* the reserved bits are never set: the framing is lost */
+    if (v & 0xc000u) {                               /* the reserved bits are never set: the framing is lost, or a stray byte came first */
+        uint8_t extra;
+        unsigned w = (unsigned)b[1] << 8;
+        if (g->io.read(g->io.ctx, &extra, 1, 1500) == 1 && !((w | extra) & 0xc000u)) {
+            note("heartbeat framing was off by one byte (%02x %02x %02x), realigned", b[0], b[1], extra);
+            v = w | extra;
+        } else {
+            note("heartbeat word %04x has reserved bits set", v);
+            return -1;
+        }
+    }
+    double a = g->env.now();
     g->pulses += v & 0x3fffu;
     /* the arrivals must be a second apart: a longer gap is a lost second, a shorter one is a burst after the host stalled and
      * the arrival times no longer tell when the seconds ended. Either way the stream count restarts, which drops the bin. */

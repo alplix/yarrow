@@ -47,7 +47,7 @@ firmware. Built with Tauri (Rust and TypeScript); to build it: `cd hub/app && ca
 - An averaging window that follows the rate: long and quiet at background, quick when the rate really changes, without leaning high or low
 - Tube dead-time correction
 - Three alarm levels with fixed thresholds you set yourself, hysteresis, an event log and an alarm that never fires from a handful of counts
-- Dose budget, sample test (background against sample), sessions for trips, walks and surveys, a calibration wizard
+- Dose budget, sample test (background against sample), sessions for trips, walks and surveys, a calibration wizard and a two-source dead-time wizard
 
 **Fields**
 - Electric and magnetic field readings with trends

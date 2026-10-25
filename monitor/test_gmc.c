@@ -125,7 +125,7 @@ static int f_read(void *ctx, void *buf, size_t n, int ms)
     size_t got = 0;
     while (got < n && qpos < qn)
         o[got++] = queue[qpos++];
-    if (got == n || !beating)
+    if (got == n || !beating || n - got < 2)   /* a heartbeat is two bytes: a shorter read finds nothing */
         return (int)got;
     /* the next heartbeat: the pulses counted in the second that just ended */
     for (;;) {

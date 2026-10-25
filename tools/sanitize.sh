@@ -10,7 +10,7 @@ while IFS= read -r line; do
     cmd=${line#$'\t'}
     cmd=${cmd//\$(BUILD)/build}
     cmd=${cmd//\$(MON_SRCS)/monitor/yarrow_lock.c monitor/yarrow_src.c monitor/yarrow_src_yarrow.c monitor/yarrow_src_rah.c monitor/yarrow_src_gmc.c monitor/yarrow_hid.c}
-    cmd=${cmd//\$(MON)/monitor/yarrow_bin.c monitor/yarrow_trickle.c}
+    cmd=${cmd//\$(MON)/monitor/yarrow_bin.c monitor/yarrow_trickle.c monitor/yarrow_backfill.c src/ylog.c src/ylc.c}
     cmd=${cmd//\$(HIDLIBS)/}
     out=$(echo "$cmd" | sed -n 's/.* -o \(build\/tests\/[a-z_0-9]*\)$/\1/p')
     [ -n "$out" ] || continue

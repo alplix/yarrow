@@ -38,9 +38,22 @@ Turn the knob on the main screen to move through: **Radiation**, **Live trend**,
 | Self test | checks the parts one by one |
 | PC link | status of the USB link |
 | Themes | 21 colour themes |
-| Settings | theme, brightness, alarm sound, vibration, time zone, clock |
-| Calibration, Calibration wizard | see [calibration.md](calibration.md) |
-| About | version and links; names a start-up stage that is held back and retries it with OK |
+| Settings | theme, brightness, alarm sound, vibration, time zone, clock, screensaver, station mode |
+| Calibration, Calibration wizard, Dead-time wizard | see [calibration.md](calibration.md) |
+| About | version and links; names a start-up stage that is held back and retries it with OK; the right key opens the health report |
+
+## Screensaver, station mode and health
+
+- **Screensaver** (Settings): when nothing is touched, the screen shows a large clock and the radiation level at the lowest
+  brightness instead of switching off. The first key press only wakes the screen. An alarm still takes over the screen.
+- **Station mode** (Settings), for a device that stays plugged in as a measuring station: the screen goes dark after 30
+  seconds, and when a program has the USB port open but has not said a word for ten minutes, the device restarts its USB
+  link (at most once in ten minutes).
+- **Health report** (About, right key; also the serial `HEALTH` command): how many times the device started, how many
+  restarts the watchdog caused, crashes and where the last one happened, how the current run started, USB restarts and the
+  start-up stage. A device that crashed or hung used to switch itself off without a word; now it starts again, and
+  only three crashes in a row (within a minute of each start) switch it off, so a fault that cannot be cured does not
+  drain the battery in a loop.
 
 ## Alarms
 
