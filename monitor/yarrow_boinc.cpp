@@ -124,6 +124,9 @@ void glue_done(int status)
 
 void glue_wait_for_prefs(const char *why) { boinc_temporary_exit(3600, why, true); }
 
-void glue_no_detector(const char *why) { boinc_temporary_exit(6 * 3600, why, true); }
+/* no detector for five minutes: ask again in half an hour. (It was six hours: a counter plugged in again after a pause then waited
+ * most of a day for its task to wake up, and a task that is only waiting costs nothing.) */
+void glue_no_detector(const char *why) { boinc_temporary_exit(1800, why, true); }
+void glue_other_monitor(const char *why) { boinc_temporary_exit(6 * 3600, why, true); }
 
 }

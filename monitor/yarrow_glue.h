@@ -30,6 +30,8 @@ void glue_wait_for_prefs(const char *why);
 /* No detector has been found for a while: BOINC puts the task aside for six hours so it takes no CPU; the command-line host
  * simply keeps looking. */
 void glue_no_detector(const char *why);
+/* A second monitor on the same computer: it waits long, one is enough. */
+void glue_other_monitor(const char *why);
 
 #ifdef __cplusplus
 }

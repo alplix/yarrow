@@ -93,3 +93,4 @@ void glue_wait_for_prefs(const char *why)
 }
 
 void glue_no_detector(const char *why) { (void)why; }
+void glue_other_monitor(const char *why) { (void)why; }

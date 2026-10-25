@@ -71,7 +71,7 @@ int main(int argc, char **argv)
     }
     if (!ylock_acquire(glue_lock_path())) {
         glue_log("another Yarrow monitor is already running on this computer");
-        glue_no_detector("Another Yarrow monitor is already running on this computer; one is enough.");
+        glue_other_monitor("Another Yarrow monitor is already running on this computer; one is enough.");
         glue_done(1);
         return 1;
     }
