@@ -18,6 +18,7 @@
 
 #include <ctype.h>
 #include <math.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,6 +34,25 @@ typedef struct {
     uint32_t seconds;                /* heartbeats received since the stream was last whole */
     double last_a;                   /* arrival of the previous heartbeat */
 } gmc_t;
+
+/* What went wrong with a serial port is written to stderr once per distinct message: the search repeats every 15 seconds, and
+ * a volunteer whose counter is not recognised can then send the task's stderr.txt, which says at which step it stopped. */
+static void note(const char *fmt, ...)
+{
+    static char seen[24][200];
+    static int n;
+    char line[200];
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(line, sizeof line, fmt, ap);
+    va_end(ap);
+    for (int i = 0; i < n; i++)
+        if (strcmp(seen[i], line) == 0)
+            return;
+    if (n < 24)
+        snprintf(seen[n++], sizeof seen[0], "%s", line);
+    fprintf(stderr, "ygmc: %s\n", line);
+}
 
 static int cmd(const ygmc_io_t *io, const char *text)
 {
@@ -138,11 +158,24 @@ ysrc_t *ygmc_make(const ygmc_io_t *io, const ygmc_env_t *env, ydev_t *dev)
     memset(ser, 0, sizeof ser);
     if (env->drain)
         env->drain(io->ctx);
-    if (cmd(io, "<GETVER>>") != 0 || io->read(io->ctx, ver, 14, 800) != 14 || memcmp(ver, "GMC-", 4) != 0)
+    if (cmd(io, "<GETVER>>") != 0) {
+        note("a serial port did not take <GETVER>>");
         return NULL;
+    }
+    int got = io->read(io->ctx, ver, 14, 800);
+    if (got != 14) {
+        note("a serial port answered <GETVER>> with %d bytes instead of 14 (not a GQ GMC counter, or the baud rate is wrong)", got);
+        return NULL;
+    }
+    if (memcmp(ver, "GMC-", 4) != 0) {
+        note("a serial port answered <GETVER>> with %02x %02x %02x %02x ..., which does not start with GMC-", ver[0], ver[1], ver[2], ver[3]);
+        return NULL;
+    }
     for (int i = 0; i < 14; i++)
-        if (ver[i] < 0x20 || ver[i] > 0x7e)
+        if (ver[i] < 0x20 || ver[i] > 0x7e) {
+            note("%.4s: the version answer holds a byte that is not text (position %d)", (const char *)ver, i);
             return NULL;
+        }
     if (env->drain)
         env->drain(io->ctx);
     if (cmd(io, "<GETSERIAL>>") != 0 || io->read(io->ctx, ser, 7, 800) != 7)
@@ -150,11 +183,23 @@ ysrc_t *ygmc_make(const ygmc_io_t *io, const ygmc_env_t *env, ydev_t *dev)
     if (env->drain)
         env->drain(io->ctx);
     size_t want = memcmp(ver, "GMC-500", 7) == 0 ? 512 : 256;
-    if (cmd(io, "<GETCFG>>") != 0 || io->read(io->ctx, cfg, want, 1500) != (int)want)
+    if (cmd(io, "<GETCFG>>") != 0) {
+        note("%.14s: <GETCFG>> could not be sent", (const char *)ver);
         return NULL;
+    }
+    got = io->read(io->ctx, cfg, want, 1500);
+    if (got != (int)want) {
+        note("%.14s: <GETCFG>> returned %d of %d bytes", (const char *)ver, got, (int)want);
+        return NULL;
+    }
     uint32_t sens = ygmc_sensitivity(cfg, want);
-    if (!sens)
-        return NULL;                                  /* no usable calibration: the dose rate cannot be told */
+    if (!sens) {                                      /* no usable calibration: the dose rate cannot be told */
+        char hex[80] = "";
+        for (int i = 8; i < 26 && (size_t)i < want; i++)
+            snprintf(hex + strlen(hex), sizeof hex - strlen(hex), "%02x ", cfg[i]);
+        note("%.14s: the configuration page has no usable calibration point (bytes 8 to 25: %s)", (const char *)ver, hex);
+        return NULL;
+    }
     if (env->drain)
         env->drain(io->ctx);
     gmc_t *g = calloc(1, sizeof *g);
@@ -168,6 +213,7 @@ ysrc_t *ygmc_make(const ygmc_io_t *io, const ygmc_env_t *env, ydev_t *dev)
     g->base.next_wait_ms = gmc_wait;
     g->base.close = gmc_close;
     if (cmd(io, "<HEARTBEAT1>>") != 0) {
+        note("%.14s: <HEARTBEAT1>> could not be sent", (const char *)ver);
         free(g);
         return NULL;
     }
@@ -182,5 +228,6 @@ ysrc_t *ygmc_make(const ygmc_io_t *io, const ygmc_env_t *env, ydev_t *dev)
     dev->fw[k] = 0;
     dev->sens_x100 = sens;
     dev->dead_us = GMC_DEAD_US;
+    note("found %.14s, calibration %.2f counts per minute for 1 uSv/h", (const char *)ver, sens / 100.0);
     return &g->base;
 }

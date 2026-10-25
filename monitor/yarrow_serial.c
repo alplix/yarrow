@@ -29,7 +29,10 @@ yser_t *yser_open(const char *path)
     dcb.StopBits = ONESTOPBIT;
     dcb.fDtrControl = DTR_CONTROL_ENABLE;      /* the device streams only to a host that has the port open */
     SetCommState(h, &dcb);
-    COMMTIMEOUTS to = {20, 0, 0, 0, 0};
+    /* a read waits at most 20 ms for a byte and returns at once when one is there. The earlier setting (20 ms between two bytes
+     * and nothing else) never times out when the port is silent: the search for a detector blocked for good on the first
+     * COM port that did not answer, for instance the USB serial chip of a GQ GMC counter. */
+    COMMTIMEOUTS to = {MAXDWORD, MAXDWORD, 20, 0, 0};
     SetCommTimeouts(h, &to);
     yser_t *s = malloc(sizeof *s);
     if (!s) {

@@ -2,6 +2,7 @@
 #include "yarrow_serial.h"
 #include "yarrow_src.h"
 
+#include <stdio.h>
 #include <string.h>
 
 static int io_write(void *ctx, const void *p, size_t n) { return yser_write((yser_t *)ctx, p, n); }
@@ -20,8 +21,19 @@ static ysrc_t *ysrc_gmc_find(ydev_t *dev)
     for (int i = 0; i < n; i++) {
         for (int b = 0; b < 2; b++) {
             yser_t *s = yser_open_baud(ports[i], bauds[b]);
-            if (!s)
-                break;                                    /* the port does not exist or is in use */
+            if (!s) {                                     /* the port does not exist or is in use */
+                static char told[16][64];
+                static int n_told;
+                int known = 0;
+                for (int k = 0; k < n_told; k++)
+                    if (strcmp(told[k], ports[i]) == 0)
+                        known = 1;
+                if (!known && n_told < 16) {
+                    snprintf(told[n_told++], sizeof told[0], "%s", ports[i]);
+                    fprintf(stderr, "ygmc: %s could not be opened (another program may be using it, or it is not for this user)\n", ports[i]);
+                }
+                break;
+            }
             ygmc_io_t io = {s, io_write, io_read, io_close};
             ygmc_env_t env = {yhost_wall, io_drain, host};
             ysrc_t *src = ygmc_make(&io, &env, dev);
