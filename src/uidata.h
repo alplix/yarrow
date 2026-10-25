@@ -102,6 +102,10 @@ typedef struct {
     uint8_t selftest_fail;  /* bit i set: check i failed */
     uint8_t stage;          /* start-up ladder step reached, 1..5 */
     uint8_t suspect;        /* bit n: start-up stage n is held back (failed twice in a row) */
+    bool saver, station;    /* settings: the screensaver, the station mode */
+    /* health report: starts, watchdog resets, crashes, USB restarts, where the last crash was, how this run started */
+    uint32_t h_boots, h_wdt, h_fault, h_usb_restarts, h_fault_pc, uptime_s;
+    uint8_t h_reason, h_streak;
     uint8_t scan_field;     /* 0 electric, 1 magnetic */
 
     /* clock editor: year, month, day, hour, minute */

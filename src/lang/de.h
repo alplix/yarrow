@@ -227,7 +227,9 @@
     "Die LED blinkt bei jeder Zählung. Ausschalten spart etwas Strom.", "Die LED leuchtet, während der Akku geladen wird.", \
     "Farbe der Zähl- und Lad-LED. Das Thema folgt der Akzentfarbe des Bildschirms.", \
     "Soll das Gerät bei USB-Strom einschalten? Wenn nicht, halten Sie den Ein-/Aus-Taster gedrückt.", \
-    "Welche Zeitzone die Uhr anzeigt.", "Zeit und Datum manuell einstellen."}
+    "Welche Zeitzone die Uhr anzeigt.", "Zeit und Datum manuell einstellen.", \
+    "Zeigt im Leerlauf eine große Uhr und den Strahlungspegel, statt den Bildschirm auszuschalten.", \
+    "Dauerbetrieb: Display nach 30 s dunkel, USB-Neustart bei Hängen."}
 /* sessions */
 #define S_T_SESSIONS   "Sitzungen"
 #define S_SESS_NEW     "Neue Sitzung starten"
@@ -327,6 +329,8 @@
 #define S_STAGE_WORD   "Stufe "
 #define S_HELD_BACK    "Zurückgehalten"
 #define S_RETRY        "Nochmal"
+#define S_SAVER        "Bildschirmschoner"
+#define S_STATION      "Stationsbetrieb"
 #define S_AXIS_10MIN   "-10 min"
 #define S_AXIS_60S     "-60 s"
 #define S_T_LAST7      "Letzte 7 Tage"

@@ -280,8 +280,38 @@ static void cmd_caps(proto_t *p)
     put_s(b, n, "\n");
     out(p, b);
     out(p, "C PING INFO TIME LIVE LOGINFO LOGPAGE EVENTS CAL SET\n");
-    out(p, "C COUNTS UID BAT STATUS CAPS\n");
+    out(p, "C COUNTS UID BAT STATUS CAPS HEALTH\n");
     out(p, "END\n");
+}
+
+/* How the device is doing: starts, watchdog resets, crashes, how this run started, USB restarts, the start-up stage. */
+static void cmd_health(proto_t *p)
+{
+    static const char *const names[8] = {"unknown", "power_on", "pin", "watchdog", "window_watchdog", "software", "low_power", "fault"};
+    app_t *a = p->app;
+    char b[200];
+    int n = put_s(b, 0, "OK boots=");
+    n = put_u(b, n, a->health_boots);
+    n = put_s(b, n, " wdt=");
+    n = put_u(b, n, a->health_wdt);
+    n = put_s(b, n, " fault=");
+    n = put_u(b, n, a->health_fault);
+    n = put_s(b, n, " usb_restarts=");
+    n = put_u(b, n, a->health_usb_restarts);
+    n = put_s(b, n, " reason=");
+    n = put_s(b, n, names[a->boot.reason < 8 ? a->boot.reason : 0]);
+    n = put_s(b, n, " streak=");
+    n = put_u(b, n, a->boot.streak);
+    n = put_s(b, n, " fault_pc=");
+    n = put_u(b, n, a->health_pc);
+    n = put_s(b, n, " uptime=");
+    n = put_u(b, n, a->seconds_run);
+    n = put_s(b, n, " stage=");
+    n = put_u(b, n, a->stage);
+    n = put_s(b, n, " suspect=");
+    n = put_u(b, n, a->suspect_mask);
+    put_s(b, n, "\n");
+    out(p, b);
 }
 
 static void cmd_loginfo(proto_t *p)
@@ -458,6 +488,8 @@ static void run_line(proto_t *p, const char *line)
         cmd_status(p);
     } else if (starts(line, "CAPS")) {
         cmd_caps(p);
+    } else if (starts(line, "HEALTH")) {
+        cmd_health(p);
     } else if (starts(line, "UID")) {
         cmd_uid(p);
     } else if (starts(line, "LOGINFO")) {
@@ -529,8 +561,10 @@ void proto_poll(proto_t *p)
         return;
     uint8_t buf[64];
     int n;
-    while ((n = h->serial_read(buf, sizeof buf)) > 0)
+    while ((n = h->serial_read(buf, sizeof buf)) > 0) {
+        p->app->usb_rx_ms = p->app->now_ms;           /* the host is talking: station mode will not restart USB */
         proto_feed(p, buf, (uint32_t)n);
+    }
 }
 
 void proto_tick(proto_t *p, uint32_t now_s)

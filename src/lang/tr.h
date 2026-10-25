@@ -229,7 +229,9 @@
     "Her sayımda LED yanıp söner. Kapatmak biraz pil kazandırır.", "Kablo takılıyken şarj olurken LED yanar.", \
     "Sayım ve şarj LED'inin rengi. Tema seçiliyse ekranın vurgu rengini izler.", \
     "Kapalıyken USB güç gelince cihaz kendiliğinden açılsın mı. Kapalıysa açmak için güç tuşunu basılı tut.", \
-    "Saat hangi bölgeye göre gösterilsin (Türkiye UTC+3).", "Saati ve tarihi elle ayarla."}
+    "Saat hangi bölgeye göre gösterilsin (Türkiye UTC+3).", "Saati ve tarihi elle ayarla.", \
+    "Boşta kalınca ekranı kapatmak yerine büyük saat ve radyasyon seviyesini gösterir.", \
+    "Hep takılı: ekran 30 sn sonra kararır, USB donarsa yeniden açılır."}
 /* oturumlar */
 #define S_T_SESSIONS   "Oturumlar"
 #define S_SESS_NEW     "Yeni oturum başlat"
@@ -330,6 +332,8 @@
 #define S_STAGE_WORD   "aşama "
 #define S_HELD_BACK    "Tutuldu"
 #define S_RETRY        "Tekrar"
+#define S_SAVER        "Ekran koruyucu"
+#define S_STATION      "İstasyon modu"
 #define S_AXIS_10MIN   "-10 dk"
 #define S_AXIS_60S     "-60 sn"
 #define S_T_LAST7      "Son 7 gün"

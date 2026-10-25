@@ -9,6 +9,7 @@
 
 const hal_t *hal_gc03_init(void);
 void hal_gc03_start_tick(void);
+void hal_gc03_boot_record(void);
 
 static app_t app;
 static proto_t proto;
@@ -17,6 +18,7 @@ int main(void)
 {
     const theme_t *t = &themes[THEME_DARK];
 
+    hal_gc03_boot_record();       /* why did we start? three crashes in a row switch the device off, fewer let it run again */
     board_init();
     watchdog_start();
 

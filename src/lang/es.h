@@ -227,7 +227,9 @@
     "El LED parpadea en cada cuenta. Apagarlo ahorra algo de energía.", "El LED se enciende mientras la batería se carga.", \
     "Color del LED de conteo y carga. El tema sigue el color de acento de la pantalla.", \
     "¿Debe encenderse el dispositivo al recibir energía USB? Si no, mantenga pulsada la tecla de encendido.", \
-    "Zona horaria que muestra el reloj.", "Configurar la hora y fecha manualmente."}
+    "Zona horaria que muestra el reloj.", "Configurar la hora y fecha manualmente.", \
+    "En reposo muestra un reloj grande y el nivel de radiación en lugar de apagar la pantalla.", \
+    "Siempre conectado: pantalla apagada a 30 s, USB se reinicia."}
 /* sessions */
 #define S_T_SESSIONS   "Sesiones"
 #define S_SESS_NEW     "Iniciar nueva sesión"
@@ -327,6 +329,8 @@
 #define S_STAGE_WORD   "Etapa "
 #define S_HELD_BACK    "Retenido"
 #define S_RETRY        "Reintentar"
+#define S_SAVER        "Salvapantallas"
+#define S_STATION      "Modo estación"
 #define S_AXIS_10MIN   "-10 min"
 #define S_AXIS_60S     "-60 s"
 #define S_T_LAST7      "Últimos 7 días"

@@ -11,10 +11,11 @@ enum {
     K_EVT0 = 0x40, /* 16 slots */
     K_SESS0 = 0x60, /* 8 slots */
     K_SESSHEAD = 0x70,
-    K_SESSACT = 0x71
+    K_SESSACT = 0x71,
+    K_HEALTH = 0x72
 };
 #define EVT_SLOTS 16
-#define SETTINGS_ROWS 12
+#define SETTINGS_ROWS 14
 
 /* Flash sectors wear out with every erase. The settings store fills up and is compacted into the other sector every
  * few kilobytes written, so the counters are saved rarely: a clean power-off saves everything anyway, only a pulled
@@ -29,6 +30,9 @@ static const uint32_t budget_presets[6] = {1000, 10000, 50000, 100000, 500000, 1
 #define STABLE_MS 10000u      /* a stage must run this long before the next one is tried */
 #define DIM_MS 20000u
 #define OFF_MS 90000u
+#define STATION_OFF_MS 30000u       /* station mode: the screen goes dark sooner */
+#define STATION_SILENCE_MS 600000u /* station mode: no word from the host for this long with the port open: USB starts again */
+#define BOOT_STABLE_S 60u          /* a run this long forgets the crashes in a row */
 #define TREND_STEP_S 17u      /* 36 points over about ten minutes */
 #define FIELD_STEP_S 2u
 
@@ -155,6 +159,8 @@ static void load_settings(app_t *a)
     s->count_vibe = false;
     s->led_color = 0;
     s->usb_start = true;
+    s->saver = false;
+    s->station = false;
     s->tz_hours = 3;
     s->profile = 2;
     a->th[0] = 500; a->th[1] = 10000; a->th[2] = 100000;
@@ -163,7 +169,8 @@ static void load_settings(app_t *a)
         return;
 
     uint8_t b[KV_MAX_VALUE];
-    if (kv_get(&a->kv, K_SETTINGS, b, sizeof b) >= 6) {
+    int sn = kv_get(&a->kv, K_SETTINGS, b, sizeof b);
+    if (sn >= 6) {
         s->theme = b[0] < THEME_COUNT ? b[0] : THEME_DARK;
         s->brightness = b[1] >= 1 && b[1] <= 5 ? b[1] : 4;
         s->sound = (b[2] & 1) != 0;
@@ -176,6 +183,10 @@ static void load_settings(app_t *a)
         s->usb_start = b[6] == 0; /* stored as 'off' so older records start on USB power */
         s->tz_hours = (int8_t)b[3];
         s->profile = b[4] < 5 ? b[4] : 2;
+        if (sn >= 8) {
+            s->saver = (b[7] & 1) != 0;
+            s->station = (b[7] & 2) != 0;
+        }
     }
     if (kv_get(&a->kv, K_THRESH, b, sizeof b) == 12) {
         uint32_t t0 = rl32(b), t1 = rl32(b + 4), t2 = rl32(b + 8);
@@ -236,8 +247,42 @@ static void save_settings(app_t *a)
     uint8_t b[8] = {a->settings.theme, a->settings.brightness,
                     (uint8_t)((a->settings.sound ? 1 : 0) | (a->settings.vibration ? 2 : 0) | (a->settings.led_pulse ? 0 : 4) |
                               (a->settings.led_charge ? 0 : 8) | (a->settings.click ? 16 : 0) | (a->settings.count_vibe ? 32 : 0)),
-                    (uint8_t)a->settings.tz_hours, a->settings.profile, a->settings.led_color, (uint8_t)(a->settings.usb_start ? 0 : 1), 0};
+                    (uint8_t)a->settings.tz_hours, a->settings.profile, a->settings.led_color, (uint8_t)(a->settings.usb_start ? 0 : 1),
+                    (uint8_t)((a->settings.saver ? 1 : 0) | (a->settings.station ? 2 : 0))};
     kv_set(&a->kv, K_SETTINGS, b, 8);
+}
+
+static void health_save(app_t *a)
+{
+    if (!a->kv_ok)
+        return;
+    uint8_t b[20];
+    le32(b, a->health_boots); le32(b + 4, a->health_wdt); le32(b + 8, a->health_fault);
+    le32(b + 12, a->health_usb_restarts); le32(b + 16, a->health_pc);
+    kv_set(&a->kv, K_HEALTH, b, 20);
+}
+
+/* Counts this start: how often the device started, how often a watchdog or a fault caused it, and where the last fault was.
+ * Kept across power cycles; the hal knows why this run started and what the crash left in RAM. */
+static void health_boot(app_t *a)
+{
+    uint8_t b[KV_MAX_VALUE];
+    if (a->kv_ok && kv_get(&a->kv, K_HEALTH, b, sizeof b) == 20) {
+        a->health_boots = rl32(b); a->health_wdt = rl32(b + 4); a->health_fault = rl32(b + 8);
+        a->health_usb_restarts = rl32(b + 12); a->health_pc = rl32(b + 16);
+    }
+    memset(&a->boot, 0, sizeof a->boot);
+    if (a->hal->boot_info)
+        a->hal->boot_info(&a->boot);
+    a->boot_stable_sent = false;
+    a->health_boots++;
+    if (a->boot.reason == BOOT_WATCHDOG || a->boot.reason == BOOT_WINDOW_WATCHDOG)
+        a->health_wdt++;
+    if (a->boot.reason == BOOT_FAULT) {
+        a->health_fault++;
+        a->health_pc = a->boot.fault_pc;
+    }
+    health_save(a);
 }
 
 static void save_thresholds(app_t *a)
@@ -892,6 +937,16 @@ static void run_second(app_t *a, uint32_t now_ms)
     u->profile = a->settings.profile;
     u->stage = a->stage;
     u->suspect = a->suspect_mask;
+    u->saver = a->settings.saver;
+    u->station = a->settings.station;
+    u->h_boots = a->health_boots;
+    u->h_wdt = a->health_wdt;
+    u->h_fault = a->health_fault;
+    u->h_usb_restarts = a->health_usb_restarts;
+    u->h_fault_pc = a->health_pc;
+    u->h_reason = a->boot.reason;
+    u->h_streak = a->boot.streak;
+    u->uptime_s = a->seconds_run;
     u->budget_active = a->alarm.budget_active;
     u->budget_nsv = (uint32_t)a->alarm.budget_nsv;
     u->budget_used_nsv = (uint32_t)(dose - a->alarm.budget_start);
@@ -1184,6 +1239,8 @@ static void on_event(app_t *a, input_event_t ev)
             case 9: a->settings.usb_start = !a->settings.usb_start; break;
             case 10: a->settings.tz_hours = (int8_t)(a->settings.tz_hours >= 14 ? -12 : a->settings.tz_hours + 1); break;
             case 11: open_clock_editor(a); break;
+            case 12: a->settings.saver = !a->settings.saver; break;
+            case 13: a->settings.station = !a->settings.station; break;
             default: break;
             }
             save_settings(a);
@@ -1495,7 +1552,9 @@ static void on_event(app_t *a, input_event_t ev)
         break;
 
     case SCR_ABOUT:
-        if (ev == EV_OK && a->kv_ok) { /* try the suspect start-up steps again */
+        if (right) {
+            push(a, SCR_HEALTH);
+        } else if (ev == EV_OK && a->kv_ok) { /* try the suspect start-up steps again */
             a->suspect_mask = 0;
             kv_put32(a, K_STAGE, a->verified);
         } else if (ev == EV_BACK) {
@@ -1556,6 +1615,7 @@ void app_init(app_t *a, const hal_t *hal, uint32_t now_ms)
 
     sess_load(a);
     a->sess_prev_total = total_dose(a);
+    health_boot(a);
 
     ui_data_t *u = &a->ui;
     u->selftest_total = 7;
@@ -1599,6 +1659,7 @@ void app_poll(app_t *a, uint32_t now_ms)
 {
     const hal_t *h = a->hal;
     h->watchdog_kick();
+    a->now_ms = now_ms;
 
     if (a->shutting_down) {
         app_shutdown(a);
@@ -1617,6 +1678,12 @@ void app_poll(app_t *a, uint32_t now_ms)
             h->display_enable(true);
             backlight_apply(a);
             invalidate(a);
+            continue;
+        }
+        if (cur(a) == SCR_SAVER && ev != EV_POWER_LONG) { /* the screensaver: the first event only wakes the screen */
+            pop(a);
+            a->dimmed = false;
+            backlight_apply(a);
             continue;
         }
         if (a->dimmed) {
@@ -1690,13 +1757,42 @@ void app_poll(app_t *a, uint32_t now_ms)
             invalidate(a);
         }
     } else if (a->display_on && feat_sensors(a)) {
-        if (now_ms - a->last_input_ms > OFF_MS) {
+        uint32_t off_ms = a->settings.station ? STATION_OFF_MS : OFF_MS;
+        if (a->settings.saver && !a->settings.station) {
+            /* the screensaver takes the place of switching off: a clock and the radiation level at the lowest brightness */
+            if (cur(a) != SCR_SAVER && now_ms - a->last_input_ms > DIM_MS) {
+                push(a, SCR_SAVER);
+                a->dimmed = true;
+                backlight_apply(a);
+            }
+        } else if (now_ms - a->last_input_ms > off_ms) {
             a->display_on = false;
             h->display_enable(false);
         } else if (!a->dimmed && now_ms - a->last_input_ms > DIM_MS && a->settings.brightness > 1) {
             a->dimmed = true;
             backlight_apply(a);
         }
+    }
+
+    /* station mode: a host that has the port open and says nothing for ten minutes (a monitor asks every second) has lost the
+     * device or is hung: the USB port starts again, which makes the host enumerate it afresh */
+    if (a->settings.station && h->usb_restart && a->usb_started && h->usb_connected && h->usb_connected()) {
+        if (a->usb_rx_ms == 0)
+            a->usb_rx_ms = now_ms;
+        if (now_ms - a->usb_rx_ms > STATION_SILENCE_MS && now_ms - a->usb_restart_ms > STATION_SILENCE_MS) {
+            h->usb_restart();
+            a->usb_restart_ms = now_ms;
+            a->usb_rx_ms = now_ms;
+            a->health_usb_restarts++;
+            health_save(a);
+        }
+    }
+
+    /* a run that stays up for a minute has not crashed: the crashes in a row are forgotten */
+    if (!a->boot_stable_sent && a->seconds_run >= BOOT_STABLE_S) {
+        a->boot_stable_sent = true;
+        if (h->boot_stable)
+            h->boot_stable();
     }
 
     sound_poll(a, now_ms);

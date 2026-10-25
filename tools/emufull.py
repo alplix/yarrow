@@ -168,7 +168,11 @@ def main():
     print(f"TIM5 ARR {r.get(TIM5_ARR)}, CCR3 {r.get(TIM5_CCR3)}, CR1 {r.get(TIM5_CR1)}, EXTI IMR {r.get(EXTI_IMR)}")
 
     # lowest address the stack has reached
-    area = bytes(mu.mem_read(ebss, sp - 64 - ebss))
+    # the 32 retained bytes at the top of the device's RAM are written at start-up and are not stack: count them as untouched
+    area = bytearray(mu.mem_read(ebss, sp - 64 - ebss))
+    off = sym["_retained"] - ebss
+    if 0 <= off <= len(area) - 32:
+        area[off:off + 32] = PATTERN * 8
     low = 0
     while low + 4 <= len(area) and area[low:low + 4] == PATTERN:
         low += 4

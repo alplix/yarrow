@@ -227,7 +227,9 @@
     "LED miga przy każdym odliczeniu. Wyłączenie oszczędza energię.", "LED świeci podczas ładowania baterii.", \
     "Kolor LED licznika i ładowania. Temat podąża za kolorem akcentu ekranu.", \
     "Czy urządzenie ma się włączać po podłączeniu zasilania USB. Jeśli nie, przytrzymaj klawisz zasilania.", \
-    "Jaka strefa czasowa jest wyświetlana na zegarze.", "Ustaw czas i datę ręcznie."}
+    "Jaka strefa czasowa jest wyświetlana na zegarze.", "Ustaw czas i datę ręcznie.", \
+    "Gdy urządzenie bezczynne, pokazuje duży zegar i poziom promieniowania zamiast wyłączać ekran.", \
+    "Stale podłączone: ekran gaśnie po 30 s, USB restart po zawieszeniu."}
 /* sessions */
 #define S_T_SESSIONS   "Sesje"
 #define S_SESS_NEW     "Rozpocznij nową sesję"
@@ -327,6 +329,8 @@
 #define S_STAGE_WORD   "Etap "
 #define S_HELD_BACK    "Wstrzymano"
 #define S_RETRY        "Ponów"
+#define S_SAVER        "Wygaszacz ekranu"
+#define S_STATION      "Tryb stacji"
 #define S_AXIS_10MIN   "-10 min"
 #define S_AXIS_60S     "-60 s"
 #define S_T_LAST7      "Ostatnie 7 dni"

@@ -98,7 +98,8 @@ static void h_bl(uint8_t l) { backlight_level = l; }
 static void h_disp(bool on) { display_enabled = on; }
 static void h_off(void) { power_offs++; }
 static void h_wd(void) {}
-static bool h_usbc(void) { return false; }
+static bool t_port_open;
+static bool h_usbc(void) { return t_port_open; }
 
 static char ser_in[512], ser_out[16384];
 static int ser_in_n, ser_in_p, ser_out_n;
@@ -131,8 +132,14 @@ static void h_ledcolor(uint8_t m) { led_mask_now = m; }
 
 static void h_chipid(uint32_t id[3]) { id[0] = 0x11223344u; id[1] = 0x55667788u; id[2] = 0x99AABBCCu; }
 
+static boot_info_t t_boot;
+static int t_boot_stable, t_usb_restarts;
+static void h_bootinfo(boot_info_t *o) { *o = t_boot; }
+static void h_bootstable(void) { t_boot_stable++; }
+static void h_usbrestart(void) { t_usb_restarts++; }
+
 static hal_t hal = {h_rtc, h_rtc_set, pop_ev, h_pulses, h_mv, h_usb, h_chg, h_e, h_h, h_hvv, h_hvs, h_hvx, h_beep, h_vib, h_led,
-                    h_bl, h_disp, h_off, h_wd, &log_dev, &kv_dev, h_usbc, h_sr, h_sw, h_usbstart, h_statusled, h_pulseled, h_cclick, h_cvibe, h_bootusb, h_keydown, h_ledcolor, h_chipid};
+                    h_bl, h_disp, h_off, h_wd, &log_dev, &kv_dev, h_usbc, h_sr, h_sw, h_usbstart, h_statusled, h_pulseled, h_cclick, h_cvibe, h_bootusb, h_keydown, h_ledcolor, h_chipid, h_bootinfo, h_bootstable, h_usbrestart};
 
 static app_t app;
 static uint32_t now_ms;
@@ -829,6 +836,126 @@ static void test_protocol_fuzz(void)
         CHECK(sens >= 1 && sens <= 100000 && dead <= 100000, "calibration out of range after the fuzz: %lu %lu", sens, dead);
 }
 
+/* ---- the screensaver, the station mode, the health report ---- */
+
+static void test_screensaver(void)
+{
+    fresh();
+    to_stage5();
+    CHECK(app_screen(&app) != SCR_SAVER && !app.settings.saver, "no screensaver by default");
+    app.settings.saver = true;
+    run_s(25);
+    CHECK(app_screen(&app) == SCR_SAVER && app.display_on, "idle with the screensaver on: it shows (screen %d)", app_screen(&app));
+    CHECK(backlight_level == 1, "the screensaver is dim (backlight %d)", backlight_level);
+    run_s(900);
+    CHECK(app_screen(&app) == SCR_SAVER && app.display_on, "a quarter of an hour later it is still there, the display never switches off");
+    send(EV_RIGHT);
+    CHECK(app_screen(&app) != SCR_SAVER && app.display_on, "a key press wakes the screen and is not acted on (screen %d)", app_screen(&app));
+    CHECK(backlight_level == app.settings.brightness, "brightness is back (%d)", backlight_level);
+    send(EV_RIGHT);
+    CHECK(app_screen(&app) != SCR_SAVER, "the second press works as usual");
+    run_s(25);
+    CHECK(app_screen(&app) == SCR_SAVER, "it comes back after the idle time");
+    /* the setting is saved and read back */
+    app_shutdown(&app);
+    reboot();
+    CHECK(app.settings.saver, "the screensaver setting survives a restart");
+    /* off: the screen switches off as before */
+    app.settings.saver = false;
+    send(EV_RIGHT);
+    run_s(100);
+    for (int k = 0; k < 3 && app.display_on; k++)       /* a chance level change of the simulated background wakes the screen */
+        run_s(100);
+    CHECK(!app.display_on, "without the screensaver the screen switches off (screen %d, saver %d, idle %u ms, dimmed %d)", app_screen(&app), app.settings.saver, (unsigned)(now_ms - app.last_input_ms), app.dimmed);
+    printf("screensaver: ok\n");
+}
+
+static void test_station_mode(void)
+{
+    fresh();
+    to_stage5();
+    app.settings.station = true;
+    app.usb_started = true;
+    t_port_open = true;
+    send(EV_RIGHT);
+    run_s(22);
+    CHECK(app.display_on, "station mode: the screen is still on after 22 s");
+    run_s(12);
+    CHECK(!app.display_on, "station mode: the screen is dark after 30 s");
+    /* a host that keeps asking: no restart */
+    t_usb_restarts = 0;
+    for (int i = 0; i < 40; i++) {
+        strcpy(ser_in, "PING\n");
+        ser_in_n = 5;
+        ser_in_p = 0;
+        proto_init(&proto, &app);
+        run_s(30);
+        proto_poll(&proto);
+    }
+    CHECK(t_usb_restarts == 0, "a host that keeps asking does not make USB restart (%d)", t_usb_restarts);
+    /* a host that has the port open and goes silent: USB restarts, once, and again only ten minutes later */
+    run_s(660);
+    CHECK(t_usb_restarts == 1, "ten minutes of silence restart USB once (%d)", t_usb_restarts);
+    run_s(300);
+    CHECK(t_usb_restarts == 1, "not again within ten minutes (%d)", t_usb_restarts);
+    run_s(400);
+    CHECK(t_usb_restarts == 2, "and again after ten more (%d)", t_usb_restarts);
+    CHECK(app.health_usb_restarts == 2, "the restarts are counted in the health report");
+    /* port closed: nothing to restart */
+    t_port_open = false;
+    t_usb_restarts = 0;
+    run_s(1500);
+    CHECK(t_usb_restarts == 0, "no host, no restart (%d)", t_usb_restarts);
+    /* not in the normal mode */
+    app.settings.station = false;
+    t_port_open = true;
+    run_s(1500);
+    CHECK(t_usb_restarts == 0, "without station mode USB is left alone (%d)", t_usb_restarts);
+    t_port_open = false;
+    printf("station mode: ok\n");
+}
+
+static void test_health(void)
+{
+    memset(&t_boot, 0, sizeof t_boot);
+    t_boot.reason = BOOT_POWER_ON;
+    t_boot_stable = 0;
+    fresh();
+    run_s(65);
+    proto_init(&proto, &app);
+    CHECK(app.health_boots == 1 && app.health_wdt == 0 && app.health_fault == 0, "first start: %u starts", (unsigned)app.health_boots);
+    CHECK(t_boot_stable == 1, "after a minute the crashes in a row are forgotten (%d calls)", t_boot_stable);
+    const char *r = ask("HEALTH\n");
+    CHECK(strncmp(r, "OK boots=1 wdt=0 fault=0 usb_restarts=0 reason=power_on streak=0", 61) == 0, "health reply: %s", r);
+    CHECK(strstr(ask("CAPS\n"), "HEALTH") != NULL, "caps names HEALTH");
+    /* a watchdog restart and a crash are counted and survive the next start */
+    t_boot.reason = BOOT_WATCHDOG;
+    t_boot.streak = 1;
+    reboot();
+    CHECK(app.health_boots == 2 && app.health_wdt == 1, "watchdog restart counted (%u, %u)", (unsigned)app.health_boots, (unsigned)app.health_wdt);
+    t_boot.reason = BOOT_FAULT;
+    t_boot.streak = 2;
+    t_boot.fault_pc = 0x08012AB4u;
+    reboot();
+    CHECK(app.health_fault == 1 && app.health_pc == 0x08012AB4u, "crash counted with its address (%u, %u)", (unsigned)app.health_fault, (unsigned)app.health_pc);
+    t_boot.reason = BOOT_POWER_ON;
+    t_boot.streak = 0;
+    reboot();
+    CHECK(app.health_boots == 4 && app.health_wdt == 1 && app.health_fault == 1, "the counts stay over a normal start (%u)", (unsigned)app.health_boots);
+    proto_init(&proto, &app);
+    r = ask("HEALTH\n");
+    CHECK(strstr(r, "wdt=1 fault=1") != NULL && strstr(r, "reason=power_on") != NULL && strstr(r, "fault_pc=134294196") != NULL, "health reply after restarts: %s", r);
+    /* the report screen opens from About with the right key */
+    app.sp = 0;
+    app.stack[1] = SCR_ABOUT;
+    app.sp = 1;
+    send(EV_RIGHT);
+    CHECK(app_screen(&app) == SCR_HEALTH, "About, right key: the health report (screen %d)", app_screen(&app));
+    send(EV_BACK);
+    CHECK(app_screen(&app) == SCR_ABOUT, "back to About");
+    printf("health: ok\n");
+}
+
 static void test_protocol(void)
 {
     fresh();
@@ -966,6 +1093,9 @@ int main(void)
     test_clock_and_calibration();
     test_protocol();
     test_protocol_fuzz();
+    test_screensaver();
+    test_station_mode();
+    test_health();
     test_clock_follows_rtc();
     test_display_power_and_shutdown();
     printf(failures ? "\n%d check(s) FAILED\n" : "\nall app checks passed\n", failures);

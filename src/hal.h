@@ -17,6 +17,20 @@ typedef enum {
     EV_POWER_LONG, /* long press of the power key */
 } input_event_t;
 
+/* Why the device started, and what the last crash left behind. */
+typedef enum {
+    BOOT_UNKNOWN = 0, BOOT_POWER_ON, BOOT_PIN, BOOT_WATCHDOG, BOOT_WINDOW_WATCHDOG, BOOT_SOFTWARE, BOOT_LOW_POWER, BOOT_FAULT
+} boot_reason_t;
+
+typedef struct {
+    uint8_t reason;        /* boot_reason_t */
+    uint8_t streak;        /* crashes (watchdog or fault) in a row without a stable run between them; three switch the device off */
+    uint16_t reserved;
+    uint32_t fault_pc;     /* where the last fault happened (0 if none since power on) */
+    uint32_t fault_cfsr;   /* the fault status register of the Cortex-M3 at that moment */
+    uint32_t n_fault, n_wdt; /* faults and watchdog resets since power on */
+} boot_info_t;
+
 typedef struct {
     /* time: unix seconds, 0 while the clock has never been set */
     uint32_t (*rtc_now)(void);
@@ -64,6 +78,9 @@ typedef struct {
     bool (*power_key_down)(void);        /* the power key is held now (raw, no debounce) */
     void (*led_color)(uint8_t mask);     /* colour of the count flash and the charge light: 1 red, 2 green, 4 blue, mixed by adding */
     void (*chip_id)(uint32_t id[3]);     /* the chip's 96-bit unique id; only a hash of it ever leaves the device (may be NULL) */
+    void (*boot_info)(boot_info_t *out); /* why this run started, what the last crash left (may be NULL) */
+    void (*boot_stable)(void);           /* this run has been stable: the crashes in a row are forgotten (may be NULL) */
+    void (*usb_restart)(void);           /* the USB port disconnects and enumerates again (may be NULL) */
 } hal_t;
 
 #endif

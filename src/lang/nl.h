@@ -227,7 +227,9 @@
     "De LED knippert bij elke telling. Uitschakelen bespaart stroom.", "De LED licht op tijdens het opladen van de batterij.", \
     "Kleur van de telling- en laad-LED. Het thema volgt de accentkleur van het scherm.", \
     "Schakelt het apparaat automatisch in bij USB-stroom? Zo niet, houd dan de aan/uit-toets ingedrukt.", \
-    "Welke tijdzone de klok weergeeft.", "Tijd en datum handmatig instellen."}
+    "Welke tijdzone de klok weergeeft.", "Tijd en datum handmatig instellen.", \
+    "Toont bij inactiviteit een grote klok en het stralingsniveau in plaats van het scherm uit te zetten.", \
+    "Altijd aangesloten: scherm uit na 30 s, USB herstart bij vastlopen."}
 /* sessions */
 #define S_T_SESSIONS   "Sessies"
 #define S_SESS_NEW     "Nieuwe sessie starten"
@@ -327,6 +329,8 @@
 #define S_STAGE_WORD   "fase "
 #define S_HELD_BACK    "Tegengehouden"
 #define S_RETRY        "Opnieuw"
+#define S_SAVER        "Schermbeveiliging"
+#define S_STATION      "Stationsmodus"
 #define S_AXIS_10MIN   "-10 min"
 #define S_AXIS_60S     "-60 s"
 #define S_T_LAST7      "Laatste 7 dagen"

@@ -9,6 +9,7 @@
  *   EVENTS                        OK <count>, "E <start> <duration> <peak nSv/h> <level>" lines, END
  *   CAL | CAL <sens> <dead> <e> <h>   read or set the calibration
  *   SET THEME <n>                 choose a theme
+ *   HEALTH                        OK boots=.. wdt=.. fault=.. usb_restarts=.. reason=.. streak=.. fault_pc=.. uptime=.. stage=.. suspect=..
  */
 #ifndef YARROW_PROTO_H
 #define YARROW_PROTO_H

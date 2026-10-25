@@ -18,11 +18,24 @@ SYST_CSR = 0xE000E010
 GPIOA_IDR, GPIOA_BSRR, GPIOB_BSRR = 0x40010808, 0x40010810, 0x40010C10
 
 
-def run(image, budget, csr=0):
+RETAINED = 0x20000000 + 31 * 1024 - 32   # the 32 bytes at the top of RAM that a crash leaves for the next start (gc03.ld)
+
+
+def retained(streak, reason=3):
+    w = [0x59525731, streak, reason, 0, 0, 0, 0]
+    c = 0xA5A5A5A5
+    for x in w:
+        c ^= x
+    return struct.pack('<8I', *w, c)
+
+
+def run(image, budget, csr=0, ram=None):
     mu = Uc(UC_ARCH_ARM, UC_MODE_THUMB | UC_MODE_MCLASS)
     mu.mem_map(0x08000000, 0x40000)
     mu.mem_write(BASE, bytes(image))
     mu.mem_map(0x20000000, 0x10000)
+    if ram:
+        mu.mem_write(RETAINED, ram)
     mu.mem_map(0x40000000, 0x30000)
     mu.mem_map(0xE0000000, 0x100000)
     state = {"backlight": False, "power_off": False, "regs": {}}
@@ -82,12 +95,18 @@ def main():
         ("only first 0x300 bytes written", erased(0x300), crc, 0, False, True),
         ("one flipped bit in the middle", flipped, crc, 0, False, True),
         ("header magic damaged", bad_magic, crc, 0, False, True),
-        ("previous run ended in a watchdog reset", good, crc, 1 << 29, False, True),
+        # a watchdog reset or a fault is not the end any more: the device starts again, three in a row switch it off
+        ("previous run ended in a watchdog reset (the first): it starts again", good, 80_000_000, 1 << 29, True, False),
+        ("a watchdog reset after one crash in a row: it starts again", good, 80_000_000, 1 << 29, True, False, retained(1)),
+        ("a watchdog reset after two crashes in a row: the third switches it off", good, crc, 1 << 29, False, True, retained(2)),
+        ("a fault restart after two crashes in a row: the third switches it off", good, crc, 1 << 28, False, True, retained(2, 7)),
+        ("a power-on after three crashes in a row starts normally", good, 80_000_000, 1 << 27, True, False, retained(3)),
     ]
 
     failed = 0
-    for name, image, budget, csr, want_backlight, want_off in cases:
-        r = run(image, budget, csr)
+    for case in cases:
+        name, image, budget, csr, want_backlight, want_off = case[:6]
+        r = run(image, budget, csr, case[6] if len(case) > 6 else None)
         ok = r["backlight"] == want_backlight and r["power_off"] == want_off and "error" not in r
         print(("PASS" if ok else "FAIL"), name, f"(backlight={r['backlight']}, power_off={r['power_off']})")
         failed += not ok

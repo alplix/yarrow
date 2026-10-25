@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 extern uint32_t _sidata, _sdata, _edata, _sbss, _ebss, _stack_top;
+extern volatile uint32_t _retained[8];
 extern int main(void);
 
 #define BOOT __attribute__((section(".boot")))
@@ -22,8 +23,39 @@ BOOT __attribute__((noreturn)) static void power_off_now(void)
     for (;;) {}
 }
 
-/* Any exception that is not expected ends here instead of leaving the device latched on. */
-BOOT __attribute__((noreturn)) static void fault_handler(void) { power_off_now(); }
+/* Any exception that is not expected ends here. It writes where it happened into the 32 retained bytes at the top of RAM
+ * (words: 0 magic, 1 crashes in a row, 2 last reason, 3 fault address, 4 fault status, 5 faults, 6 watchdog resets, 7 check) and
+ * restarts the chip; the next start (hal_gc03.c, hal_gc03_boot_record) switches the device off only after three crashes in a
+ * row. Before, every fault switched the device off at once, silently: an unattended counter just went dark. */
+#define RET_MAGIC 0x59525731u
+BOOT __attribute__((used, noreturn)) void yarrow_fault_c(const uint32_t *frame)
+{
+    volatile uint32_t *r = _retained;
+    if (r[0] != RET_MAGIC) {
+        for (int i = 1; i < 7; i++)
+            r[i] = 0;
+        r[0] = RET_MAGIC;
+    }
+    r[2] = 7;                                      /* BOOT_FAULT */
+    r[3] = frame[6];                               /* the stacked program counter */
+    r[4] = *(volatile uint32_t *)0xE000ED28u;      /* CFSR */
+    r[5]++;
+    uint32_t c = 0xA5A5A5A5u;
+    for (int i = 0; i < 7; i++)
+        c ^= r[i];
+    r[7] = c;
+    *(volatile uint32_t *)0xE000ED0Cu = 0x05FA0004u; /* SYSRESETREQ */
+    for (;;) {}
+}
+
+BOOT __attribute__((naked, noreturn)) static void fault_handler(void)
+{
+    __asm__ volatile("tst lr, #4\n\t"
+                     "ite eq\n\t"
+                     "mrseq r0, msp\n\t"
+                     "mrsne r0, psp\n\t"
+                     "b yarrow_fault_c\n\t");
+}
 
 BOOT static int image_ok(void)
 {
@@ -76,11 +108,7 @@ BOOT void reset_handler(void)
     if (!image_ok())
         power_off_now();
 
-    /* A watchdog reset means the last run hung: do not run again, switch off. */
-    if (RCC_CSR & (1u << 29)) {
-        RCC_CSR |= 1u << 24; /* clear the reset flags */
-        power_off_now();
-    }
+    /* The reset flags are read and acted on in main (hal_gc03_boot_record): a hung run no longer ends here, in the first 1 KB. */
 
     /* The bootloader hands over with its own vector table in place. */
     *(volatile uint32_t *)0xE000ED08 = IMAGE_BASE;

@@ -525,6 +525,32 @@ static void scr_menu(const ui_data_t *d, const ui_state_t *s, bool full)
 /* ---- the rest of the screens live in screens2.c ---- */
 void screens2_draw(screen_id_t id, const ui_data_t *d, const ui_state_t *s, bool full);
 
+/* ---- screensaver: a large clock and the radiation level, at the lowest brightness ---- */
+
+static void scr_saver(const ui_data_t *d, const ui_state_t *s, bool full)
+{
+    (void)s;
+    const theme_t *t = ui_theme;
+    if (full)
+        ui_clear();
+    char buf[32], unit[12];
+    clock_text(d, buf);
+    display_fill_rect(0, 50, UI_W, 62, t->bg);
+    font_draw_centered(&font_48_medium, 56, buf, t->ink, t->bg, 2);
+    fmt_date(buf, d->now, d->tz_offset_s);
+    display_fill_rect(0, 124, UI_W, 22, t->bg);
+    font_draw_centered(&font_14_medium, 128, buf, t->dim, t->bg, 0);
+
+    dose_unit_t u;
+    fmt_dose_rate(buf, d->rate_nsvh, &u);
+    unit_text(u, unit);
+    uint16_t c = level_color(d->level);
+    display_fill_rect(0, 172, UI_W, 110, t->bg);
+    font_draw_centered(&font_48_medium, 178, buf, c, t->bg, 0);
+    font_draw_centered(&font_14_medium, 236, unit, t->dim, t->bg, 0);
+    font_draw_centered(&font_14_medium, 262, level_name(d->level), c, t->bg, 0);
+}
+
 void screen_draw(screen_id_t id, const ui_data_t *d, const ui_state_t *s, bool full)
 {
     switch (id) {
@@ -537,6 +563,7 @@ void screen_draw(screen_id_t id, const ui_data_t *d, const ui_state_t *s, bool f
     case SCR_ALARM:   scr_alarm(d, s, full); break;
     case SCR_MODE:    scr_mode(d, s, full); break;
     case SCR_MENU:    scr_menu(d, s, full); break;
+    case SCR_SAVER:   scr_saver(d, s, full); break;
     default:          screens2_draw(id, d, s, full); break;
     }
 }

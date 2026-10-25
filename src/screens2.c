@@ -103,12 +103,12 @@ static void scr_settings(const ui_data_t *d, const ui_state_t *s, bool full)
     }
     status(d);
     static const char *const themes_n[THEME_COUNT] = THEME_NAMES;
-    const char *labels[12] = {S_THEME, S_BRIGHTNESS, S_SOUND, S_VIBRATION, S_CLICK, S_COUNT_VIBE, S_LED_PULSE, S_LED_CHARGE, S_LED_COLOR, S_USB_START, S_TIME_ZONE, S_CLOCK_DATE};
-    static const char *const desc[12] = SETTINGS_DESC;
+    const char *labels[14] = {S_THEME, S_BRIGHTNESS, S_SOUND, S_VIBRATION, S_CLICK, S_COUNT_VIBE, S_LED_PULSE, S_LED_CHARGE, S_LED_COLOR, S_USB_START, S_TIME_ZONE, S_CLOCK_DATE, S_SAVER, S_STATION};
+    static const char *const desc[14] = SETTINGS_DESC;
     for (int r = 0; r < 6; r++) {
         int i = s->scroll + r;
         int y = 60 + r * 30;
-        if (i >= 12) {
+        if (i >= 14) {
             display_fill_rect(0, y, UI_W, 28, t->bg);
             continue;
         }
@@ -157,14 +157,18 @@ static void scr_settings(const ui_data_t *d, const ui_state_t *s, bool full)
             int n = add(v, 0, "UTC+");
             fmt_u(v + n, (uint32_t)(h < 0 ? -h : h));
             ui_text_right(&font_14_medium, right, y + 5, v, sel ? t->bg : t->acc, bg);
-        } else {
+        } else if (i == 11) {
             char v[16];
             fmt_clock(v, d->now, d->tz_offset_s);
             ui_text_right(&font_14_medium, right, y + 5, v, sel ? t->bg : t->acc, bg);
+        } else if (i == 12) {
+            toggle(right, y + 7, d->saver);
+        } else {
+            toggle(right, y + 7, d->station);
         }
     }
     display_fill_rect(UI_MARGIN, 244, UI_W - 2 * UI_MARGIN, 40, t->panel);
-    ui_text_wrap(&font_12_regular, UI_MARGIN + 8, 250, UI_W - 2 * UI_MARGIN - 16, desc[s->sel % 12], t->ink, t->panel, 3);
+    ui_text_wrap(&font_12_regular, UI_MARGIN + 8, 250, UI_W - 2 * UI_MARGIN - 16, desc[s->sel % 14], t->ink, t->panel, 3);
     ui_footer("[<] " S_BACK, "[OK] " S_CHANGE);
 }
 
@@ -658,7 +662,7 @@ static void scr_about(const ui_data_t *d, const ui_state_t *s, bool full)
     } else {
         font_draw_centered(&font_12_regular, 266, S_OPEN_SOURCE, t->dim, t->bg, 0);
     }
-    ui_footer("[<] " S_BACK, d->suspect ? "[OK] " S_RETRY : 0);
+    ui_footer("[<] " S_BACK, d->suspect ? "[OK] " S_RETRY : "[>] Health");
 }
 
 /* ---- clock and date editor ---- */
@@ -976,6 +980,54 @@ static void scr_session(const ui_data_t *d, const ui_state_t *s, bool full)
     }
 }
 
+/* ---- health report: for the person who has to find out why a counter went quiet; technical, so English in every language ---- */
+
+static void health_row(int y, const char *label, const char *value, uint16_t color)
+{
+    const theme_t *t = ui_theme;
+    display_fill_rect(0, y, UI_W, 24, t->bg);
+    ui_text(&font_14_medium, UI_MARGIN, y + 3, label, t->dim, t->bg);
+    ui_text_right(&font_14_medium, UI_W - UI_MARGIN, y + 3, value, color, t->bg);
+}
+
+static void scr_health(const ui_data_t *d, const ui_state_t *s, bool full)
+{
+    (void)s;
+    const theme_t *t = ui_theme;
+    if (full) {
+        ui_clear();
+        ui_header(&spr_gear, t->acc, "Health");
+    }
+    status(d);
+    static const char *const reasons[8] = {"unknown", "power on", "reset pin", "watchdog", "window watchdog", "software", "low power", "crash"};
+    char v[24];
+    int y = 58;
+    fmt_u(v, d->h_boots);
+    health_row(y, "Starts", v, t->ink); y += 26;
+    health_row(y, "This start", reasons[d->h_reason < 8 ? d->h_reason : 0], (d->h_reason == 3 || d->h_reason == 7) ? t->warn : t->ink); y += 26;
+    fmt_u(v, d->h_wdt);
+    health_row(y, "Watchdog resets", v, d->h_wdt ? t->warn : t->ink); y += 26;
+    fmt_u(v, d->h_fault);
+    health_row(y, "Crashes", v, d->h_fault ? t->warn : t->ink); y += 26;
+    fmt_u(v, d->h_usb_restarts);
+    health_row(y, "USB restarts", v, t->ink); y += 26;
+    fmt_duration(v, d->uptime_s);
+    health_row(y, "Running", v, t->ink); y += 26;
+    int n = add(v, 0, "stage ");
+    n += fmt_u(v + n, d->stage);
+    add(v, n, "/5");
+    health_row(y, "Start-up", v, d->suspect ? t->warn : t->ink); y += 26;
+    if (d->h_fault_pc) {
+        static const char hex[] = "0123456789ABCDEF";
+        v[0] = '0'; v[1] = 'x';
+        for (int k = 0; k < 8; k++)
+            v[2 + k] = hex[(d->h_fault_pc >> (28 - 4 * k)) & 15];
+        v[10] = 0;
+        health_row(y, "Last crash at", v, t->dim);
+    }
+    ui_footer("[<] " S_BACK, 0);
+}
+
 void screens2_draw(screen_id_t id, const ui_data_t *d, const ui_state_t *s, bool full)
 {
     switch (id) {
@@ -998,6 +1050,7 @@ void screens2_draw(screen_id_t id, const ui_data_t *d, const ui_state_t *s, bool
     case SCR_CHARGE:     scr_charge(d, s, full); break;
     case SCR_CALWIZ:     scr_calwiz(d, s, full); break;
     case SCR_SESSION:    scr_session(d, s, full); break;
+    case SCR_HEALTH:     scr_health(d, s, full); break;
     default: break;
     }
 }

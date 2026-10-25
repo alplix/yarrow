@@ -656,11 +656,97 @@ static void h_chip_id(uint32_t id[3])
     id[2] = u[2];
 }
 
+/* ---- why did we start, what did the last crash leave ---- */
+extern volatile uint32_t _retained[8];
+#define RET_MAGIC 0x59525731u
+static boot_info_t g_boot;
+
+static void ret_seal(volatile uint32_t *r)
+{
+    uint32_t c = 0xA5A5A5A5u;
+    for (int i = 0; i < 7; i++)
+        c ^= r[i];
+    r[7] = c;
+}
+
+/* Reads the reset flags and the 32 bytes the fault handler (startup.c) leaves at the top of RAM. A watchdog reset or a fault is
+ * no longer the end of the run: the device starts again, and only the third crash in a row switches it off (the old rule was
+ * "switch off at the first", which silently turned an unattended counter off). Called first thing in main. */
+void hal_gc03_boot_record(void)
+{
+    volatile uint32_t *r = _retained;
+    uint32_t csr = RCC_CSR;
+    RCC_CSR |= 1u << 24;                                   /* clear the flags */
+    uint32_t c = 0xA5A5A5A5u;
+    for (int i = 0; i < 7; i++)
+        c ^= r[i];
+    bool valid = r[0] == RET_MAGIC && r[7] == c;
+    uint8_t reason;
+    if (csr & (1u << 27)) {                                /* power on */
+        reason = BOOT_POWER_ON;
+        valid = false;
+    } else if (csr & (1u << 28)) {                         /* software reset: ours, from the fault handler */
+        reason = (valid && r[2] == BOOT_FAULT) ? BOOT_FAULT : BOOT_SOFTWARE;
+    } else if (csr & (1u << 29)) {
+        reason = BOOT_WATCHDOG;
+    } else if (csr & (1u << 30)) {
+        reason = BOOT_WINDOW_WATCHDOG;
+    } else if (csr & (1u << 31)) {
+        reason = BOOT_LOW_POWER;
+    } else if (csr & (1u << 26)) {
+        reason = BOOT_PIN;
+    } else {
+        reason = BOOT_UNKNOWN;
+    }
+    if (!valid) {
+        for (int i = 1; i < 7; i++)
+            r[i] = 0;
+        r[0] = RET_MAGIC;
+    }
+    if (reason == BOOT_WATCHDOG || reason == BOOT_WINDOW_WATCHDOG) {
+        r[1]++;
+        r[6]++;
+    } else if (reason == BOOT_FAULT) {
+        r[1]++;
+    } else if (reason == BOOT_POWER_ON) {
+        r[1] = 0;
+    }
+    r[2] = reason;
+    ret_seal(r);
+    if (r[1] >= 3) {                                       /* three crashes in a row: stop trying */
+        RCC_APB2ENR |= 1u << 2;
+        GPIO_CRH(GPIOA) = (GPIO_CRH(GPIOA) & ~(0xFu << 8)) | (0x3u << 8);
+        GPIO_BSRR(GPIOA) = 1u << (10 + 16);
+        for (;;) {}
+    }
+    g_boot.reason = reason;
+    g_boot.streak = (uint8_t)r[1];
+    g_boot.fault_pc = r[3];
+    g_boot.fault_cfsr = r[4];
+    g_boot.n_fault = r[5];
+    g_boot.n_wdt = r[6];
+}
+
+static void h_boot_info(boot_info_t *out) { *out = g_boot; }
+
+static void h_boot_stable(void)
+{
+    volatile uint32_t *r = _retained;
+    if (r[1]) {
+        r[1] = 0;
+        ret_seal(r);
+        g_boot.streak = 0;
+    }
+}
+
+static void h_usb_restart(void) { usb_gc03_init(); }
+
 static const hal_t gc03 = {
     h_rtc_now, h_rtc_set, h_poll_event, h_tube_pulses, h_battery_mv, h_usb_present, h_charging, h_efield_vm_x10,
     h_hfield_ut_x100, h_hv_factory_valid, h_hv_start, h_hv_stop, h_beep, h_vibrate, h_alert_led, h_backlight,
     h_display_enable, h_power_off, h_watchdog_kick, &log_window, &kv_window, h_usb_connected, h_serial_read, h_serial_write, usb_gc03_init,
     h_status_led, h_pulse_led_enable, h_count_click_enable, h_count_vibe_enable, h_started_by_usb, h_power_key_down, h_led_color, h_chip_id,
+    h_boot_info, h_boot_stable, h_usb_restart,
 };
 
 /* bring-up marker: empty in the firmware, a test image can override it to show how far start-up got */

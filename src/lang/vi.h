@@ -227,7 +227,9 @@
     "LED nhấp nháy mỗi lần đếm. Tắt nó giúp tiết kiệm điện.", "LED sáng khi pin đang sạc.", \
     "Màu của LED đếm và sạc. Chủ đề theo màu nhấn của màn hình.", \
     "Thiết bị tự bật khi có nguồn USB không? Nếu không, giữ nút nguồn để khởi động.", \
-    "Múi giờ hiển thị trên đồng hồ.", "Thiết lập thời gian và ngày thủ công."}
+    "Múi giờ hiển thị trên đồng hồ.", "Thiết lập thời gian và ngày thủ công.", \
+    "Khi rảnh, hiện đồng hồ lớn và mức bức xạ thay vì tắt màn hình.", \
+    "Luôn cắm điện: tắt màn hình sau 30 giây, USB tự khởi động lại khi treo."}
 /* sessions */
 #define S_T_SESSIONS   "Phiên làm việc"
 #define S_SESS_NEW     "Bắt đầu phiên mới"
@@ -327,6 +329,8 @@
 #define S_STAGE_WORD   "Giai đoạn "
 #define S_HELD_BACK    "Bị giữ lại"
 #define S_RETRY        "Thử lại"
+#define S_SAVER        "Bảo vệ màn hình"
+#define S_STATION      "Chế độ trạm"
 #define S_AXIS_10MIN   "-10 phút"
 #define S_AXIS_60S     "-60 giây"
 #define S_T_LAST7      "7 ngày qua"

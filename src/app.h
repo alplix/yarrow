@@ -26,6 +26,8 @@ typedef struct {
     bool click, count_vibe;     /* a click from the buzzer and a buzz of the motor on every pulse */
     uint8_t led_color;          /* 0 follows the theme, 1 red, 2 green, 3 blue, 4 yellow, 5 cyan, 6 magenta, 7 white */
     bool usb_start;             /* a cable alone switches the device on */
+    bool saver;                 /* when idle: a large clock and the radiation level instead of switching the screen off */
+    bool station;               /* stays plugged in: the screen goes dark soon, USB restarts itself when the host stops asking */
     int8_t tz_hours;
     uint8_t profile;    /* log profile 0..4 */
 } app_settings_t;
@@ -49,6 +51,12 @@ typedef struct {
     bool log_ok;
     bool hv_on;
     bool usb_started;
+
+    /* health: how this run started, how often the device restarted or crashed (kept across power cycles) */
+    boot_info_t boot;
+    uint32_t now_ms, usb_rx_ms, usb_restart_ms;
+    uint32_t health_boots, health_wdt, health_fault, health_usb_restarts, health_pc;
+    bool boot_stable_sent;
 
     /* time */
     uint32_t next_second_ms;

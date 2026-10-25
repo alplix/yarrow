@@ -227,7 +227,9 @@
     "The LED flashes on every count. Switching it off saves a little power.", "The LED lights while the battery charges.", \
     "Colour of the count and charge LED. Theme follows the accent colour of the screen.", \
     "Should the device switch itself on when USB power arrives. If not, hold the power key to start it.", \
-    "Which time zone the clock shows.", "Set the time and date by hand."}
+    "Which time zone the clock shows.", "Set the time and date by hand.", \
+    "When idle, shows a large clock and the radiation level instead of switching the screen off.", \
+    "Left plugged in: screen dark after 30 s, USB restarts itself if it hangs."}
 /* sessions */
 #define S_T_SESSIONS   "Sessions"
 #define S_SESS_NEW     "Start a new session"
@@ -327,6 +329,8 @@
 #define S_STAGE_WORD   "stage "
 #define S_HELD_BACK    "Held back"
 #define S_RETRY        "Retry"
+#define S_SAVER        "Screensaver"
+#define S_STATION      "Station mode"
 #define S_AXIS_10MIN   "-10 min"
 #define S_AXIS_60S     "-60 s"
 #define S_T_LAST7      "Last 7 days"

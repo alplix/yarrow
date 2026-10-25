@@ -221,6 +221,9 @@ int main(int argc, char **argv)
         {"themes", SCR_THEMES, {7, 0, 0, 0}, 0},
         {"about", SCR_ABOUT, {0, 0, 0, 0}, 0},
         {"about_held", SCR_ABOUT, {0, 0, 0, 0}, 3},
+        {"saver", SCR_SAVER, {0, 0, 0, 0}, 0},
+        {"health", SCR_HEALTH, {0, 0, 0, 0}, 4},
+        {"settings_end", SCR_SETTINGS, {13, 8, 0, 0}, 5},
         {"menu_end", SCR_MENU, {11, 6, 0, 0}, 0},
         {"charge", SCR_CHARGE, {0, 0, 0, 0}, 0},
     };
@@ -233,6 +236,13 @@ int main(int argc, char **argv)
             d.theme = (uint8_t)t;
             if (shots[i].variant == 3)
                 d.suspect = 0x20;                  /* stage 5 (USB) held back */
+            if (shots[i].variant == 4) {                /* a device that had a bad day */
+                d.h_boots = 12; d.h_wdt = 1; d.h_fault = 1; d.h_usb_restarts = 2; d.h_fault_pc = 0x08012AB4u;
+                d.h_reason = 3; d.uptime_s = 7350; d.stage = 5;
+            }
+            if (shots[i].variant == 5) {
+                d.saver = true; d.station = false;
+            }
             memset(fb, 0, sizeof fb);
             if (shots[i].variant == 2) {
                 ui_boot_draw(ui_theme);

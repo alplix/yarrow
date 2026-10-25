@@ -43,7 +43,9 @@ SECTIONS
   } > RAM
 
   _image_end = LOADADDR(.data) + SIZEOF(.data);
-  _stack_top = ORIGIN(RAM) + LENGTH(RAM);
+  /* 32 bytes at the top of RAM that no start-up clears: what a crash leaves for the next start (hal_gc03.c, startup.c) */
+  PROVIDE(_retained = ORIGIN(RAM) + LENGTH(RAM) - 32);
+  _stack_top = _retained;
 
   /DISCARD/ : { *(.ARM.exidx*) *(.comment) }
 }

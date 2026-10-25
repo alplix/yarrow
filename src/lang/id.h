@@ -227,7 +227,9 @@
     "LED berkedip pada setiap hitungan. Mematikannya menghemat daya.", "LED menyala saat baterai sedang mengisi daya.", \
     "Warna LED hitungan dan pengisian daya. Tema mengikuti warna aksen layar.", \
     "Apakah perangkat menyala otomatis saat daya USB tiba. Jika tidak, tahan tombol daya untuk menyalakannya.", \
-    "Zona waktu yang ditampilkan jam.", "Atur waktu dan tanggal secara manual."}
+    "Zona waktu yang ditampilkan jam.", "Atur waktu dan tanggal secara manual.", \
+    "Saat diam, menampilkan jam besar dan tingkat radiasi alih-alih mematikan layar.", \
+    "Selalu tersambung: layar mati 30 detik, USB restart jika macet."}
 /* sessions */
 #define S_T_SESSIONS   "Sesi"
 #define S_SESS_NEW     "Mulai sesi baru"
@@ -327,6 +329,8 @@
 #define S_STAGE_WORD   "Tahap "
 #define S_HELD_BACK    "Ditahan"
 #define S_RETRY        "Ulangi"
+#define S_SAVER        "Screensaver"
+#define S_STATION      "Mode stasiun"
 #define S_AXIS_10MIN   "-10 mnt"
 #define S_AXIS_60S     "-60 dtk"
 #define S_T_LAST7      "7 hari terakhir"

@@ -227,7 +227,9 @@
     "O LED pisca em cada contagem. Desligá-lo economiza energia.", "O LED acende enquanto a bateria carrega.", \
     "Cor do LED de contagem e carga. O tema segue a cor de destaque da tela.", \
     "O dispositivo deve ligar ao receber energia USB? Se não, segure a tecla de energia para iniciar.", \
-    "Qual fuso horário o relógio exibe.", "Definir hora e data manualmente."}
+    "Qual fuso horário o relógio exibe.", "Definir hora e data manualmente.", \
+    "Em repouso mostra um relógio grande e o nível de radiação em vez de apagar a tela.", \
+    "Sempre ligado: tela apagada após 30 s; o USB reinicia se travar."}
 /* sessions */
 #define S_T_SESSIONS   "Sessões"
 #define S_SESS_NEW     "Iniciar nova sessão"
@@ -327,6 +329,8 @@
 #define S_STAGE_WORD   "estágio "
 #define S_HELD_BACK    "Retido"
 #define S_RETRY        "Repetir"
+#define S_SAVER        "Protetor de tela"
+#define S_STATION      "Modo estação"
 #define S_AXIS_10MIN   "-10 min"
 #define S_AXIS_60S     "-60 s"
 #define S_T_LAST7      "Últimos 7 dias"

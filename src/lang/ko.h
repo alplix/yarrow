@@ -227,7 +227,9 @@
     "카운트 시 LED 깜박임. 끄면 전력 절약.", "배터리 충전 시 LED 점등.", \
     "카운트/충전 LED 색상. 테마는 화면 강조색을 따름.", \
     "USB 전원 도착 시 자동 켜짐 여부. 아니면 전원 버튼을 길게 누름.", \
-    "시계 표시 시간대 설정.", "시간 및 날짜 수동 설정."}
+    "시계 표시 시간대 설정.", "시간 및 날짜 수동 설정.", \
+    "대기 중에 화면을 끄는 대신 큰 시계와 방사선 수준을 표시합니다.", \
+    "항상 연결용: 30초 뒤 화면 꺼짐, USB가 멈추면 자동 재시작합니다."}
 /* sessions */
 #define S_T_SESSIONS   "세션"
 #define S_SESS_NEW     "새 세션 시작"
@@ -327,6 +329,8 @@
 #define S_STAGE_WORD   "단계 "
 #define S_HELD_BACK    "보류됨"
 #define S_RETRY        "재시도"
+#define S_SAVER        "화면 보호기"
+#define S_STATION      "스테이션 모드"
 #define S_AXIS_10MIN   "-10 분"
 #define S_AXIS_60S     "-60 초"
 #define S_T_LAST7      "최근 7일"

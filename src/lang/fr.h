@@ -227,7 +227,9 @@
     "La LED clignote à chaque compte. La désactiver économise de l'énergie.", "La LED s'allume pendant la charge de la batterie.", \
     "Couleur de la LED de comptage et de charge. Le thème suit la couleur d'accent de l'écran.", \
     "L'appareil doit-il s'allumer avec l'alimentation USB ? Sinon, maintenez la touche d'alimentation.", \
-    "Zone horaire affichée par l'horloge.", "Régler l'heure et la date manuellement."}
+    "Zone horaire affichée par l'horloge.", "Régler l'heure et la date manuellement.", \
+    "Affiche une grande horloge et le niveau de rayonnement au repos, au lieu d'éteindre l'écran.", \
+    "Toujours branché : écran noir après 30 s, USB relancé s'il bloque."}
 /* sessions */
 #define S_T_SESSIONS   "Sessions"
 #define S_SESS_NEW     "Démarrer une nouvelle session"
@@ -327,6 +329,8 @@
 #define S_STAGE_WORD   "Stade "
 #define S_HELD_BACK    "Retenu"
 #define S_RETRY        "Réessayer"
+#define S_SAVER        "Économiseur d'écran"
+#define S_STATION      "Mode station"
 #define S_AXIS_10MIN   "-10 min"
 #define S_AXIS_60S     "-60 s"
 #define S_T_LAST7      "7 derniers jours"

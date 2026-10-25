@@ -227,7 +227,9 @@
     "LED在每次计数时闪烁。关闭它可节省少量电量。", "电池充电时，LED会亮起。", \
     "计数和充电LED的颜色。主题遵循屏幕的强调色。", \
     "USB电源到达时设备是否自动开启。如果否，请按住电源键启动。", \
-    "时钟显示的时区。", "手动设置时间和日期。"}
+    "时钟显示的时区。", "手动设置时间和日期。", \
+    "空闲时显示大时钟和辐射水平，而不是关闭屏幕。", \
+    "用于一直插电的设备：屏幕 30 秒后变暗，USB 无响应时自动重启。"}
 /* sessions */
 #define S_T_SESSIONS   "会话"
 #define S_SESS_NEW     "开始新会话"
@@ -327,6 +329,8 @@
 #define S_STAGE_WORD   "阶段 "
 #define S_HELD_BACK    "已搁置"
 #define S_RETRY        "重试"
+#define S_SAVER        "屏幕保护"
+#define S_STATION      "站点模式"
 #define S_AXIS_10MIN   "-10 分"
 #define S_AXIS_60S     "-60 秒"
 #define S_T_LAST7      "过去7天"

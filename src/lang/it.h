@@ -227,7 +227,9 @@
     "L'LED lampeggia ad ogni conteggio. Spegnerlo risparmia un po' di energia.", "L'LED si accende mentre la batteria si carica.", \
     "Colore dell'LED di conteggio e carica. Il tema segue il colore d'accento dello schermo.", \
     "Il dispositivo si accende quando arriva l'alimentazione USB? Se no, tieni premuto il tasto di accensione.", \
-    "Quale fuso orario mostra l'orologio.", "Imposta ora e data manualmente."}
+    "Quale fuso orario mostra l'orologio.", "Imposta ora e data manualmente.", \
+    "A riposo mostra un grande orologio e il livello di radiazione invece di spegnere lo schermo.", \
+    "Sempre collegato: schermo spento dopo 30 s, USB si riavvia."}
 /* sessions */
 #define S_T_SESSIONS   "Sessioni"
 #define S_SESS_NEW     "Avvia nuova sessione"
@@ -327,6 +329,8 @@
 #define S_STAGE_WORD   "Stadio "
 #define S_HELD_BACK    "Trattenuto"
 #define S_RETRY        "Riprova"
+#define S_SAVER        "Salvaschermo"
+#define S_STATION      "Modalità stazione"
 #define S_AXIS_10MIN   "-10 min"
 #define S_AXIS_60S     "-60 s"
 #define S_T_LAST7      "Ultimi 7 giorni"
