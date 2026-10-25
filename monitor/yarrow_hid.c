@@ -169,7 +169,11 @@ static uint16_t sysfs_bcd(const char *node)
 static int posix_get_feature(void *ctx, uint8_t *buf, size_t len)
 {
     posix_hid_t *p = ctx;
-    return ioctl(p->fd, HIDIOCGFEATURE(len), buf);
+    int r, tries = 0;
+    do {
+        r = ioctl(p->fd, HIDIOCGFEATURE(len), buf);
+    } while (r < 0 && errno == EINTR && ++tries < 5);          /* a signal can interrupt the request: ask again */
+    return r;
 }
 
 static void posix_close(void *ctx)

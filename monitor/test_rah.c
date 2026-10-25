@@ -21,7 +21,8 @@ static int fake_mode;                /* 0 normal, 1 timer does not run in millis
 static unsigned calls;
 
 static double fake_now(void) { wall += 0.001; return wall; }
-static void fake_sleep(int ms) { wall += ms / 1000.0; }
+static double sleep_scale = 1.0;      /* how long a wait really takes: 1 as asked, 0.17 when a signal cuts it short */
+static void fake_sleep(int ms) { wall += ms / 1000.0 * sleep_scale; }
 
 static uint32_t pulses_until(double x)
 {
@@ -178,6 +179,30 @@ static void other_device_is_refused(void)
     fake_mode = 0;
 }
 
+/* the check compares the counter's timer with the time that really passed: a wait that takes longer than asked (a busy
+ * computer) is fine, and so is one that a signal shortened as long as it was not almost nothing (on Linux the BOINC library's
+ * timer signal cut 300 ms to 50 ms, and every Radioactive@Home counter was refused) */
+static void wait_not_exact(void)
+{
+    static const double scale[3] = {3.0, 0.5, 0.05};
+    static const int accepted[3] = {1, 1, 0};
+    for (int k = 0; k < 3; k++) {
+        make_pulses(0.5);
+        wall = BASE + 10;
+        dev_start = wall;
+        fake_mode = 0;
+        sleep_scale = scale[k];
+        yhid_t h = hid();
+        yrah_env_t e = env("pc-one");
+        ydev_t dev;
+        ysrc_t *src = yrah_make(&h, &e, &dev);
+        CHECK((src != NULL) == accepted[k], "a wait of %.0f%% of 300 ms: counter %s", scale[k] * 100, src ? "accepted" : "refused");
+        if (src)
+            src->close(src);
+    }
+    sleep_scale = 1.0;
+}
+
 static void identity(void)
 {
     make_pulses(0.5);
@@ -204,6 +229,7 @@ int main(void)
     bins_match_truth();
     late_readings_make_no_bin();
     other_device_is_refused();
+    wait_not_exact();
     identity();
     if (fails) {
         printf("%d checks failed\n", fails);

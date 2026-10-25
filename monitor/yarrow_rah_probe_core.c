@@ -7,6 +7,7 @@
 #include "yarrow_rah_probe.h"
 #include "yarrow_src.h"
 
+#include <errno.h>
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -20,8 +21,11 @@ static void nap(int ms) { Sleep((DWORD)ms); }
 #else
 static void nap(int ms)
 {
-    struct timespec ts = {ms / 1000, (long)(ms % 1000) * 1000000L};
-    nanosleep(&ts, NULL);
+    /* a signal ends nanosleep early (the BOINC library fires a timer signal many times a second, so a 300 ms wait took 50 ms):
+     * go on with what is left of the time */
+    struct timespec ts = {ms / 1000, (long)(ms % 1000) * 1000000L}, rem;
+    while (nanosleep(&ts, &rem) == -1 && errno == EINTR)
+        ts = rem;
 }
 #endif
 

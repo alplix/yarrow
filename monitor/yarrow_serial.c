@@ -122,7 +122,7 @@ void yser_close(yser_t *s)
 static int rd(yser_t *s, char *c)
 {
     struct pollfd p = {s->fd, POLLIN, 0};
-    return poll(&p, 1, 20) > 0 && read(s->fd, c, 1) == 1;
+    return poll(&p, 1, 20) > 0 && read(s->fd, c, 1) == 1;      /* a signal only shortens the 20 ms: the caller asks again */
 }
 
 static int wr(yser_t *s, const char *p, size_t n) { return write(s->fd, p, n) == (ssize_t)n; }
@@ -136,8 +136,11 @@ double yser_now(void)
 
 void yser_sleep_ms(int ms)
 {
-    struct timespec ts = {ms / 1000, (long)(ms % 1000) * 1000000L};
-    nanosleep(&ts, NULL);
+    /* a signal ends nanosleep early (the BOINC library fires a timer signal many times a second, so a 300 ms wait took 50 ms):
+     * go on with what is left of the time */
+    struct timespec ts = {ms / 1000, (long)(ms % 1000) * 1000000L}, rem;
+    while (nanosleep(&ts, &rem) == -1 && errno == EINTR)
+        ts = rem;
 }
 #endif
 
@@ -348,9 +351,14 @@ int yser_read(yser_t *s, void *buf, size_t n, int timeout_ms)
         if (left <= 0)
             break;
         struct pollfd p = {s->fd, POLLIN, 0};
-        if (poll(&p, 1, (int)(left * 1000) + 1) <= 0)
+        int pr = poll(&p, 1, (int)(left * 1000) + 1);
+        if (pr < 0 && errno == EINTR)
+            continue;                  /* a signal (the BOINC library fires them all the time) is not the end of the data */
+        if (pr <= 0)
             break;
         ssize_t r = read(s->fd, (char *)buf + got, n - got);
+        if (r < 0 && (errno == EINTR || errno == EAGAIN))
+            continue;
         if (r <= 0)
             break;
         got += (size_t)r;
