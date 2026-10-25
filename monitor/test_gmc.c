@@ -218,6 +218,13 @@ static void calibration_and_identity(void)
     put_cal(2, 5, 9999.0f);
     start(BASE + 100);
     CHECK(ygmc_make(&i, &e, &dev) == NULL, "no usable calibration: the counter is not used");
+    {   /* the configuration page of a real GMC-300Re 4.54 (bytes 8 to 25, as reported by a volunteer): little endian floats */
+        static const uint8_t real[18] = {0x00, 0x3c, 0x14, 0xae, 0xc7, 0x3e, 0x00, 0xf0, 0x14, 0xae, 0xc7, 0x3f, 0x03, 0xe8, 0x00, 0x00, 0xd0, 0x40};
+        uint8_t page[256];
+        memset(page, 0, sizeof page);
+        memcpy(page + 8, real, sizeof real);
+        CHECK(ygmc_sensitivity(page, sizeof page) == 15385, "the page of a real GMC-300Re 4.54 gives 153.85 cpm per uSv/h (%u)", ygmc_sensitivity(page, sizeof page));
+    }
     reset_device();
     not_gmc = 1;
     start(BASE + 100);

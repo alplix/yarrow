@@ -135,7 +135,19 @@ static double be_float(const uint8_t *p)
     return f;
 }
 
-/* The device's own calibration: counts per minute for 1 uSv/h, times 100; 0 when the page holds nothing usable. */
+static double le_float(const uint8_t *p)
+{
+    uint32_t u = (uint32_t)p[3] << 24 | (uint32_t)p[2] << 16 | (uint32_t)p[1] << 8 | p[0];
+    float f;
+    memcpy(&f, &u, 4);
+    return f;
+}
+
+/* The device's own calibration: counts per minute for 1 uSv/h, times 100; 0 when the page holds nothing usable.
+ * The counts are big endian everywhere; the dose rate next to them is a float whose byte order depends on the model: a real
+ * GMC-300Re 4.54 stores it little endian (60 cpm = 0.39 uSv/h is 00 3c 14 ae c7 3e), the other models as documented, big endian.
+ * Both readings are tried; only one of them gives a counts-per-dose ratio a Geiger tube can have, the other is a number like
+ * 1e-26. */
 uint32_t ygmc_sensitivity(const uint8_t *cfg, size_t n)
 {
     static const int cpm_at[3] = {0x08, 0x0e, 0x14};
@@ -144,9 +156,11 @@ uint32_t ygmc_sensitivity(const uint8_t *cfg, size_t n)
         if ((size_t)o + 6 > n)
             break;
         double cpm = (double)((unsigned)cfg[o] << 8 | cfg[o + 1]);
-        double sv = be_float(cfg + o + 2);
-        if (cpm > 0 && sv > 0 && sv < 1e6 && cpm / sv >= 10 && cpm / sv <= 2000)
-            return (uint32_t)floor(cpm / sv * 100 + 0.5);       /* 10 .. 2000 counts per minute per uSv/h */
+        for (int le = 0; le < 2; le++) {
+            double sv = le ? le_float(cfg + o + 2) : be_float(cfg + o + 2);
+            if (cpm > 0 && sv > 0 && sv < 1e6 && cpm / sv >= 10 && cpm / sv <= 2000)
+                return (uint32_t)floor(cpm / sv * 100 + 0.5);   /* 10 .. 2000 counts per minute per uSv/h */
+        }
     }
     return 0;
 }

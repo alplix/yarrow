@@ -2,8 +2,12 @@
 #include "yarrow_serial.h"
 #include "yarrow_src.h"
 
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 static int io_write(void *ctx, const void *p, size_t n) { return yser_write((yser_t *)ctx, p, n); }
 static int io_read(void *ctx, void *buf, size_t n, int ms) { return yser_read((yser_t *)ctx, buf, n, ms); }
@@ -22,6 +26,14 @@ static ysrc_t *ysrc_gmc_find(ydev_t *dev)
         for (int b = 0; b < 2; b++) {
             yser_t *s = yser_open_baud(ports[i], bauds[b]);
             if (!s) {                                     /* the port does not exist or is in use */
+#ifdef _WIN32
+                DWORD why = GetLastError();
+                if (why == ERROR_FILE_NOT_FOUND || why == ERROR_PATH_NOT_FOUND)
+                    break;                                /* COM1 to COM64 are tried blindly: most of them are not there */
+#else
+                if (errno == ENOENT || errno == ENODEV)
+                    break;
+#endif
                 static char told[16][64];
                 static int n_told;
                 int known = 0;
