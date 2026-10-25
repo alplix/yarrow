@@ -10,10 +10,10 @@ fi
 bad=0
 for l in "${langs[@]}"; do
   echo "=== $l"
-  python tools/langcheck.py "$l" | tail -3 | grep -v "0 problem" && bad=1
-  $MAKE sim YLANG=$l 2>&1 | grep -E "LAYOUT|DIFFERS|NOT STILL" | sort -u && bad=1
+  out=$(python tools/langcheck.py "$l" | tail -3 | grep -v "0 problem"); [ -n "$out" ] && { echo "$out"; bad=1; }
+  out=$($MAKE sim YLANG=$l 2>&1 | grep -E "LAYOUT|DIFFERS|NOT STILL" | sort -u); [ -n "$out" ] && { echo "$out"; bad=1; }
   $MAKE release YLANG=$l 2>&1 | grep -E "error|crc32"
-  $MAKE test YLANG=$l 2>&1 | grep -E "FAIL|stack:" && true
+  out=$($MAKE test YLANG=$l 2>&1 | grep -E "FAIL|stack:"); echo "$out"; echo "$out" | grep -q FAIL && bad=1
 done
 echo "finished, problems: $bad"
 exit $bad
