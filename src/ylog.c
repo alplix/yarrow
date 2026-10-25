@@ -370,8 +370,12 @@ typedef struct {
 
 static bool stats_visit(void *user, uint32_t time, uint32_t interval, bool valid, uint32_t value)
 {
-    (void)interval; (void)valid; (void)value;
+    (void)interval; (void)value;
     stats_ctx *c = user;
+    /* samples taken before the clock was set carry the clock's start-up date, not a date: they must not stretch "days of
+     * records" (a new device showed 381 days) or give the oldest record a date from before it existed */
+    if (!valid)
+        return true;
     if (c->first) {
         c->s->oldest_time = time;
         c->first = false;
