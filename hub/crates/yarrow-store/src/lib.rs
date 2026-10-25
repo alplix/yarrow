@@ -111,7 +111,7 @@ impl Store {
         let mut n = 0;
         {
             let mut st = tx.prepare_cached("INSERT OR IGNORE INTO sample (device, t, iv, value) VALUES (?1,?2,?3,?4)")?;
-            for s in samples.iter().filter(|s| s.time_valid) {
+            for s in samples.iter().filter(|s| s.is_dated()) {
                 n += st.execute(params![device, s.time, s.interval, s.value])?;
             }
         }
@@ -224,7 +224,7 @@ mod tests {
         let p = dir.path().join("hub.db");
         {
             let mut s = Store::open(&p).unwrap();
-            s.insert_samples("a", &[Sample { time: 1_700_000_000, interval: 60, time_valid: true, value: 4 }]).unwrap();
+            s.insert_samples("a", &[Sample { time: 1_800_000_000, interval: 60, time_valid: true, value: 4 }]).unwrap();
         }
         assert_eq!(Store::open(&p).unwrap().sample_count("a").unwrap(), 1);
     }

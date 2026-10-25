@@ -325,6 +325,8 @@
 
 /* words and formats that used to sit in the C sources */
 #define S_STAGE_WORD   "stage "
+#define S_HELD_BACK    "Held back"
+#define S_RETRY        "Retry"
 #define S_AXIS_10MIN   "-10 min"
 #define S_AXIS_60S     "-60 s"
 #define S_T_LAST7      "Last 7 days"

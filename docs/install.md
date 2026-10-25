@@ -18,8 +18,10 @@ stock firmware can be put back at any time with the same steps.
 5. Press the power key to start.
 
 The first start shows the flower and the name, a loading bar, then the main screen. The footer reads *stage 1/5* and
-moves on to 5 within about a minute: Yarrow switches its parts on one at a time, and a part that failed to run stably
-last time is held back and reported.
+moves on to 5 within about a minute: Yarrow switches its parts on one at a time (USB is the last). A part that was cut
+off twice in a row, by a crash or by the power being taken away (a cable pulled, a battery that ran out), is held back:
+the footer then stays below 5/5, and Menu, About names the held-back stage and offers *OK, retry*. Switching the device
+off with the power key never holds anything back.
 
 If the file was copied incompletely the device simply switches itself off at start-up. Repeat the copy.
 

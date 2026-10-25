@@ -8,6 +8,9 @@ const PAGE_MAGIC: [u8; 2] = [0x59, 0x4C];
 const SEG_MAGIC: u8 = 0xA7;
 const FLAG_TIME_VALID: u8 = 1;
 
+/// No real clock reads earlier than this (2026-10-01, before Yarrow existed); see `YARROW_MIN_TIME` in the firmware.
+pub const MIN_TIME: u32 = 1_790_812_800;
+
 /// One counted interval of the log.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Sample {
@@ -19,6 +22,14 @@ pub struct Sample {
     pub time_valid: bool,
     /// Pulses counted in the interval.
     pub value: u32,
+}
+
+impl Sample {
+    /// True when the time is a date: the clock had been set, and the time is not one from before the first release (the
+    /// stock firmware's factory clock was read as a valid time by early firmware, and dated samples 381 days back).
+    pub fn is_dated(&self) -> bool {
+        self.time_valid && self.time >= MIN_TIME
+    }
 }
 
 fn xor_check(b: &[u8], salt: u8) -> u8 {

@@ -40,7 +40,7 @@ Turn the knob on the main screen to move through: **Radiation**, **Live trend**,
 | Themes | 21 colour themes |
 | Settings | theme, brightness, alarm sound, vibration, time zone, clock |
 | Calibration, Calibration wizard | see [calibration.md](calibration.md) |
-| About | version and links |
+| About | version and links; names a start-up stage that is held back and retries it with OK |
 
 ## Alarms
 

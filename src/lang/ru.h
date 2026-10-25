@@ -325,6 +325,8 @@
 
 /* words and formats that used to sit in the C sources */
 #define S_STAGE_WORD   "Стадия "
+#define S_HELD_BACK    "Отключено"
+#define S_RETRY        "Повтор"
 #define S_AXIS_10MIN   "-10 мин"
 #define S_AXIS_60S     "-60 с"
 #define S_T_LAST7      "Последние 7 дней"

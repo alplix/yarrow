@@ -220,6 +220,7 @@ int main(int argc, char **argv)
         {"scan", SCR_SCAN, {0, 0, 0, 0}, 0},
         {"themes", SCR_THEMES, {7, 0, 0, 0}, 0},
         {"about", SCR_ABOUT, {0, 0, 0, 0}, 0},
+        {"about_held", SCR_ABOUT, {0, 0, 0, 0}, 3},
         {"menu_end", SCR_MENU, {11, 6, 0, 0}, 0},
         {"charge", SCR_CHARGE, {0, 0, 0, 0}, 0},
     };
@@ -230,6 +231,8 @@ int main(int argc, char **argv)
         for (unsigned i = 0; i < sizeof shots / sizeof *shots; i++) {
             ui_data_t d = data();
             d.theme = (uint8_t)t;
+            if (shots[i].variant == 3)
+                d.suspect = 0x20;                  /* stage 5 (USB) held back */
             memset(fb, 0, sizeof fb);
             if (shots[i].variant == 2) {
                 ui_boot_draw(ui_theme);

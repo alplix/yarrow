@@ -101,6 +101,7 @@ typedef struct {
     uint8_t selftest_done, selftest_total;
     uint8_t selftest_fail;  /* bit i set: check i failed */
     uint8_t stage;          /* start-up ladder step reached, 1..5 */
+    uint8_t suspect;        /* bit n: start-up stage n is held back (failed twice in a row) */
     uint8_t scan_field;     /* 0 electric, 1 magnetic */
 
     /* clock editor: year, month, day, hour, minute */

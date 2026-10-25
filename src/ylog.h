@@ -16,6 +16,11 @@
 #define YLOG_MAX_PAGE 1024
 #endif
 
+/* No real clock reads earlier than this (2026-10-01, before Yarrow existed). The device's clock keeps whatever the stock
+ * firmware or the factory left in it until someone sets it, and a time from before Yarrow existed is such a leftover, not a date:
+ * samples with an earlier time are not dated (time_valid false) and do not count in the statistics. */
+#define YARROW_MIN_TIME 1790812800u
+
 typedef struct {
     uint32_t page_size;   /* erase unit, multiple of 2 */
     uint32_t page_count;  /* pages in the log region */

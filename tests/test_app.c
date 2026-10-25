@@ -190,13 +190,15 @@ static void test_ladder(void)
     CHECK(app.stage == 5 || app.stage == app.verified + 1 || app.stage == app.verified, "boot after success: stage %d", app.stage);
     uint8_t verified_before = app.verified;
 
-    /* a stage that never became stable (power cut or crash during stage v+1) is remembered and not retried */
+    /* a stage that never became stable once (a cable pulled, a crash) is tried once more; two in a row hold it back */
     fresh();
     run_s(25);                    /* stage 3 started, not yet verified */
     int tried = app.stage;
     uint8_t v = app.verified;
     reboot();                     /* "crash": no shutdown, start again from the same flash */
     CHECK(app.verified == v, "verified stage changed by a crash: %d -> %d", v, app.verified);
+    CHECK(app.stage == tried && app.suspect_mask == 0, "one cut-off must not hold a stage back (stage %d, was %d, suspect %d)", app.stage, tried, app.suspect_mask);
+    reboot();                     /* the second cut-off in a row */
     CHECK(app.stage <= v + 0 || app.stage == v, "after a failed stage %d the app must run only verified features, stage %d", tried, app.stage);
     run_s(90);
     CHECK(app.stage <= v, "suspect stage was tried again by itself (stage %d, verified before %d)", app.stage, v);
@@ -211,6 +213,17 @@ static void test_ladder(void)
     run_s(60);
     CHECK(app.stage > v, "stage did not advance after clearing the suspicion (%d)", app.stage);
     (void)verified_before;
+    /* a deliberate switch-off is not a cut-off: any number of them, at any moment of the start-up, hold nothing back */
+    fresh();
+    for (int k = 0; k < 12; k++) {
+        run_s((uint32_t)(3 + k * 4));                 /* a different moment of the start-up each time */
+        app_shutdown(&app);
+        reboot();
+        CHECK(app.suspect_mask == 0, "a switch-off at %d s held stage %d back", 3 + k * 4, app.stage);
+    }
+    run_s(80);
+    CHECK(app.stage == 5, "after all those switch-offs the start-up still reaches stage 5 (%d)", app.stage);
+    CHECK(app.ui.suspect == 0 || app.suspect_mask == 0, "suspect not shown");
     printf("ladder: ok\n");
 }
 
@@ -744,6 +757,78 @@ static const char *ask(const char *cmd)
     return ser_out;
 }
 
+/* Whatever arrives on the serial port is untrusted: random and half-valid commands, numbers far outside any range, lines longer
+ * than the buffer, bytes that are not text. The device must keep answering, never crash (run under the sanitizers: tools/sanitize.sh)
+ * and must not end up with a calibration or clock that breaks the measurement. */
+static uint64_t fz = 0x9E3779B97F4A7C15ull;
+static uint32_t fz_rnd(void)
+{
+    fz ^= fz << 13;
+    fz ^= fz >> 7;
+    fz ^= fz << 17;
+    return (uint32_t)(fz >> 11);
+}
+
+static void test_protocol_fuzz(void)
+{
+    static const char *words[] = {"PING", "INFO", "TIME", "LIVE", "COUNTS", "BAT", "STATUS", "CAPS", "UID", "LOGINFO", "LOGPAGE",
+                                  "EVENTS", "CAL", "SET", "SET THEME", "SET", "LIVE 1", "LIVE 0", "TIME 1900000000", "CAL 18000 90 0 0"};
+    static const char *nums[] = {"0", "1", "-1", "65535", "65536", "2147483647", "2147483648", "4294967295", "4294967296", "99999999999999999999",
+                                 "18000", "90", "1.5", "0x10", "", "abc", "-0", "+7", "1e9"};
+    fresh();
+    to_stage5();
+    proto_init(&proto, &app);
+    unsigned replies = 0, bad = 0;
+    for (int it = 0; it < 60000; it++) {
+        char buf[500];
+        int n = 0;
+        int parts = 1 + (int)(fz_rnd() % 5);
+        for (int k = 0; k < parts && n < 460; k++) {
+            uint32_t kind = fz_rnd() % 8;
+            const char *t = kind < 3 ? words[fz_rnd() % (sizeof words / sizeof words[0])] : kind < 6 ? nums[fz_rnd() % (sizeof nums / sizeof nums[0])] : "";
+            int l = (int)strlen(t);
+            memcpy(buf + n, t, (size_t)l);
+            n += l;
+            if (kind == 6) {                       /* garbage bytes, also zero and high ones */
+                int g = 1 + (int)(fz_rnd() % 40);
+                for (int j = 0; j < g && n < 480; j++)
+                    buf[n++] = (char)fz_rnd();
+            } else if (kind == 7) {                /* a line longer than the buffer */
+                int g = 80 + (int)(fz_rnd() % 300);
+                for (int j = 0; j < g && n < 490; j++)
+                    buf[n++] = (char)('A' + fz_rnd() % 26);
+            } else {
+                buf[n++] = (fz_rnd() & 3) ? ' ' : '\t';
+            }
+        }
+        if (fz_rnd() % 5) {
+            buf[n++] = '\n';
+        }
+        if (n > 500) n = 500;
+        ser_out_n = 0;
+        ser_out[0] = 0;
+        memcpy(ser_in, buf, (size_t)n);
+        ser_in_n = n;
+        ser_in_p = 0;
+        proto_poll(&proto);
+        if (ser_out_n) {
+            replies++;
+            /* every reply starts with OK, ERR or a live line, and is made of complete lines */
+            if (!(strncmp(ser_out, "OK", 2) == 0 || strncmp(ser_out, "ERR", 3) == 0 || strncmp(ser_out, "L ", 2) == 0 || strncmp(ser_out, "E ", 2) == 0))
+                bad++;
+        }
+    }
+    printf("protocol fuzz: %u replies, %u not starting with OK or ERR\n", replies, bad);
+    CHECK(bad == 0, "%u replies of unexpected form", bad);
+    /* the device still answers after all of it, and the calibration is still one a tube can have */
+    ask("\n");                                 /* a client that lost track of the line sends a newline first */
+    CHECK(strcmp(ask("PING\n"), "OK pong\n") == 0, "ping after the fuzz: %s", ser_out);
+    CHECK(strncmp(ask("CAL\n"), "OK ", 3) == 0, "cal after the fuzz: %s", ser_out);
+    unsigned long sens = 0, dead = 0;
+    if (sscanf(ser_out, "OK %lu %lu", &sens, &dead) == 2)
+        CHECK(sens >= 1 && sens <= 100000 && dead <= 100000, "calibration out of range after the fuzz: %lu %lu", sens, dead);
+}
+
 static void test_protocol(void)
 {
     fresh();
@@ -751,7 +836,7 @@ static void test_protocol(void)
     proto_init(&proto, &app);
 
     CHECK(strcmp(ask("PING\n"), "OK pong\n") == 0, "ping: %s", ser_out);
-    CHECK(strncmp(ask("INFO\n"), "OK yarrow=0.1 stage=5", 21) == 0, "info: %s", ser_out);
+    CHECK(strncmp(ask("INFO\n"), "OK yarrow=0.1.2 stage=5", 23) == 0, "info: %s", ser_out);
     CHECK(strncmp(ask("INFO\r\n"), "OK yarrow", 9) == 0, "carriage return handling");
     CHECK(strcmp(ask("UID\n"), "OK 9367a9ef47f81d05\n") == 0, "uid hash: %s", ser_out);
     {
@@ -880,6 +965,7 @@ int main(void)
     test_threshold_edit_and_budget();
     test_clock_and_calibration();
     test_protocol();
+    test_protocol_fuzz();
     test_clock_follows_rtc();
     test_display_power_and_shutdown();
     printf(failures ? "\n%d check(s) FAILED\n" : "\nall app checks passed\n", failures);

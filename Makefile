@@ -135,7 +135,7 @@ sim: $(BUILD)/font_data.c
 # Host-side monitor for BOINC (see docs/boinc-monitor.md): the bin cutter and trickle writer are tested here;
 # `make monitor` builds the command-line host, monitor/yarrow_boinc.cpp replaces it inside the BOINC build.
 MON = monitor/yarrow_bin.c monitor/yarrow_trickle.c
-SRCS = monitor/yarrow_lock.c monitor/yarrow_src.c monitor/yarrow_src_yarrow.c monitor/yarrow_src_rah.c monitor/yarrow_src_gmc.c monitor/yarrow_hid.c
+MON_SRCS = monitor/yarrow_lock.c monitor/yarrow_src.c monitor/yarrow_src_yarrow.c monitor/yarrow_src_rah.c monitor/yarrow_src_gmc.c monitor/yarrow_hid.c
 HIDLIBS = $(if $(findstring Windows,$(OS)),-lhid -lsetupapi,)
 monitor-check:
 	mkdir -p $(BUILD)/tests
@@ -148,7 +148,7 @@ monitor-check:
 
 monitor:
 	mkdir -p $(BUILD)/monitor
-	gcc -std=c11 -O2 -Wall -Wextra -Werror -Imonitor monitor/yarrow_monitor.c monitor/yarrow_serial.c monitor/yarrow_standalone.c $(SRCS) $(MON) $(HIDLIBS) -lm -o $(BUILD)/monitor/yarrow_monitor
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -Imonitor monitor/yarrow_monitor.c monitor/yarrow_serial.c monitor/yarrow_standalone.c $(MON_SRCS) $(MON) $(HIDLIBS) -lm -o $(BUILD)/monitor/yarrow_monitor
 	gcc -std=c11 -O2 -Wall -Wextra -Werror -Imonitor monitor/yarrow_batlog.c monitor/yarrow_serial.c -o $(BUILD)/monitor/yarrow_batlog
 	gcc -std=c11 -O2 -Wall -Wextra -Werror -Imonitor monitor/yarrow_watch.c monitor/yarrow_serial.c -lm -o $(BUILD)/monitor/yarrow_watch
 

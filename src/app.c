@@ -454,12 +454,15 @@ static void sess_tick(app_t *a, uint64_t dose, uint32_t rate)
 
 /* ---- start-up ladder ---- */
 
-/* Marks the stage being tried as unfinished before it starts; cleared once it has run stably. */
-static void ladder_begin(app_t *a, uint8_t stage, uint32_t now_ms)
+/* Marks the stage being tried as unfinished before it starts; cleared once it has run stably, and by a deliberate switch-off.
+ * The first byte counts the starts of this stage that did not finish: one cut-off (a cable pulled, a battery that ran out)
+ * is not yet a verdict, two in a row hold the stage back. */
+#define LADDER_STRIKES 2
+static void ladder_begin(app_t *a, uint8_t stage, uint32_t now_ms, uint8_t strikes)
 {
     a->stage = stage;
     a->stage_since_ms = now_ms;
-    uint8_t b[2] = {1, stage};
+    uint8_t b[2] = {(uint8_t)(strikes + 1), stage};
     if (a->kv_ok)
         kv_set(&a->kv, K_BOOT, b, 2);
 }
@@ -474,18 +477,26 @@ static void ladder_init(app_t *a, uint32_t now_ms)
         a->verified = (uint8_t)(v & 0xFF);
         a->suspect_mask = (uint8_t)((v >> 8) & 0xFF);
     }
+    uint8_t retry = 0, strikes = 0;
     if (a->kv_ok && kv_get(&a->kv, K_BOOT, b, sizeof b) == 2 && b[0] != 0) {
-        /* last time a stage was started and never declared stable: it is suspect */
+        /* last time a stage was started and neither declared stable nor left by a deliberate switch-off */
         if (b[1] >= 1 && b[1] <= APP_STAGES && b[1] > a->verified) {
-            a->suspect_mask |= (uint8_t)(1u << b[1]);
-            kv_put32(a, K_STAGE, a->verified | (uint32_t)a->suspect_mask << 8);
+            if (b[0] >= LADDER_STRIKES) {          /* the second time in a row: the stage is suspect */
+                a->suspect_mask |= (uint8_t)(1u << b[1]);
+                kv_put32(a, K_STAGE, a->verified | (uint32_t)a->suspect_mask << 8);
+            } else {                               /* the first time: try it once more */
+                retry = b[1];
+                strikes = b[0];
+            }
         }
     }
     uint8_t next = a->verified >= APP_STAGES ? APP_STAGES : (uint8_t)(a->verified + 1);
     uint8_t start = a->verified ? a->verified : 1; /* run what already worked */
-    if (a->suspect_mask & (1u << next))
+    if (retry)
+        next = retry;
+    else if (a->suspect_mask & (1u << next))
         next = start; /* do not try the same failing step again by itself */
-    ladder_begin(a, next, now_ms);
+    ladder_begin(a, next, now_ms, retry ? strikes : 0);
 }
 
 static void ladder_poll(app_t *a, uint32_t now_ms)
@@ -503,7 +514,7 @@ static void ladder_poll(app_t *a, uint32_t now_ms)
         }
     }
     if (a->stage < APP_STAGES && !(a->suspect_mask & (1u << (a->stage + 1)))) {
-        ladder_begin(a, (uint8_t)(a->stage + 1), now_ms);
+        ladder_begin(a, (uint8_t)(a->stage + 1), now_ms, 0);
         invalidate(a);
     } else {
         a->stage_since_ms = now_ms; /* nothing more to try */
@@ -623,7 +634,7 @@ static void log_tick(app_t *a, uint32_t now_s, uint32_t pulses)
     a->log_acc += pulses;
     a->log_elapsed++;
     if (a->log_elapsed >= iv) {
-        bool valid = now_s > 1000000000u;
+        bool valid = now_s >= YARROW_MIN_TIME;
         ylog_add(&a->log, a->log_start, iv, valid, a->log_acc);
         a->log_start += iv;
         a->log_acc = 0;
@@ -697,7 +708,7 @@ static void run_second(app_t *a, uint32_t now_ms)
 
     /* day boundaries and per-day dose */
     uint32_t day = (uint32_t)(((int64_t)now_s + a->settings.tz_hours * 3600) / 86400);
-    if (now_s > 1000000000u) {
+    if (now_s >= YARROW_MIN_TIME) {
         if (a->day_index == 0)
             a->day_index = day;
         while (a->day_index < day) {
@@ -880,6 +891,7 @@ static void run_second(app_t *a, uint32_t now_ms)
     u->usb_start = a->settings.usb_start;
     u->profile = a->settings.profile;
     u->stage = a->stage;
+    u->suspect = a->suspect_mask;
     u->budget_active = a->alarm.budget_active;
     u->budget_nsv = (uint32_t)a->alarm.budget_nsv;
     u->budget_used_nsv = (uint32_t)(dose - a->alarm.budget_start);
@@ -1575,6 +1587,10 @@ void app_shutdown(app_t *a)
         h->hv_stop();
     a->hv_on = false;
     silence(a);
+    if (a->kv_ok && a->stage > a->verified) {   /* a deliberate switch-off is not a crash of the stage being tried */
+        uint8_t b[2] = {0, a->stage};
+        kv_set(&a->kv, K_BOOT, b, 2);
+    }
     h->display_enable(false);
     h->power_off();
 }

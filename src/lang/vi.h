@@ -325,6 +325,8 @@
 
 /* words and formats that used to sit in the C sources */
 #define S_STAGE_WORD   "Giai đoạn "
+#define S_HELD_BACK    "Bị giữ lại"
+#define S_RETRY        "Thử lại"
 #define S_AXIS_10MIN   "-10 phút"
 #define S_AXIS_60S     "-60 giây"
 #define S_T_LAST7      "7 ngày qua"

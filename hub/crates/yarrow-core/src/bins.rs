@@ -19,7 +19,7 @@ pub fn bin_counts(samples: &[Sample], bin_s: u32, first_bin: u32, n: usize) -> V
     let mut filled = vec![false; n];
     // Coarser sample streams first.
     let mut by_interval: BTreeMap<u32, Vec<&Sample>> = BTreeMap::new();
-    for s in samples.iter().filter(|s| s.time_valid && s.interval > 0 && bin_s % s.interval == 0) {
+    for s in samples.iter().filter(|s| s.is_dated() && s.interval > 0 && bin_s % s.interval == 0) {
         by_interval.entry(s.interval).or_default().push(s);
     }
     for (&iv, list) in by_interval.iter().rev() {

@@ -328,6 +328,8 @@
 
 /* words and formats that used to sit in the C sources */
 #define S_STAGE_WORD   "aşama "
+#define S_HELD_BACK    "Tutuldu"
+#define S_RETRY        "Tekrar"
 #define S_AXIS_10MIN   "-10 dk"
 #define S_AXIS_60S     "-60 sn"
 #define S_T_LAST7      "Son 7 gün"

@@ -637,13 +637,28 @@ static void scr_about(const ui_data_t *d, const ui_state_t *s, bool full)
         for (int x = 0; x < UI_W; x += 8)
             display_fill_rect(x, 152, 4, 4, t->dim);
         font_draw_centered(&font_28_medium, 168, "YARROW", t->ink, t->bg, 6);
-        font_draw_centered(&font_12_regular, 206, "GC-03 · v0.1", t->dim, t->bg, 0);
+        font_draw_centered(&font_12_regular, 206, "GC-03 · v0.1.2", t->dim, t->bg, 0);
         font_draw_centered(&font_14_medium, 228, "yarrow.athena.org.tr", t->acc, t->bg, 0);
         font_draw_centered(&font_12_regular, 248, "github.com/alplix/yarrow", t->dim, t->bg, 0);
-        font_draw_centered(&font_12_regular, 266, S_OPEN_SOURCE, t->dim, t->bg, 0);
     }
     status(d);
-    ui_footer("[<] " S_BACK, 0);
+    /* the last line: the licence, or, when a start-up stage was cut off twice in a row and is held back (USB is the last one),
+     * which one and how to try again */
+    display_fill_rect(0, 262, UI_W, 20, t->bg);
+    if (d->suspect) {
+        int hi = 5;
+        while (hi > 1 && !(d->suspect & (1u << hi)))
+            hi--;
+        char buf[40];
+        int n = add(buf, 0, S_HELD_BACK);
+        n = add(buf, n, ": ");
+        n = add(buf, n, S_STAGE_WORD);
+        fmt_u(buf + n, (uint32_t)hi);
+        font_draw_centered(&font_12_regular, 266, buf, t->warn, t->bg, 0);
+    } else {
+        font_draw_centered(&font_12_regular, 266, S_OPEN_SOURCE, t->dim, t->bg, 0);
+    }
+    ui_footer("[<] " S_BACK, d->suspect ? "[OK] " S_RETRY : 0);
 }
 
 /* ---- clock and date editor ---- */

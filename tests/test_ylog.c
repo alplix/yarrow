@@ -205,31 +205,36 @@ static void test_wrap_clean(void)
     CHECK(v.count > TRUTH_N / 4, "ring kept too little");
 }
 
-/* samples written before the clock was set (time_valid false, dated from the clock's start-up value) do not count in the
- * statistics: the oldest record is the first one with a real time */
+/* samples written before the clock was set (time_valid false) and samples dated before the first release (the factory clock the
+ * stock firmware left behind, flagged valid) do not count in the statistics: the oldest record is the first one with a real time */
 static void test_stats_ignore_unset_clock(void)
 {
+    const uint32_t real = YARROW_MIN_TIME + 5000u;
     ramflash_t f;
     rf_init(&f);
     ylog_flash_t d = rf_dev(&f);
     CHECK(ylog_open(&log_obj, &d) == 0, "open empty");
     for (uint32_t i = 0; i < 100; i++)
         CHECK(ylog_add(&log_obj, 500u + i * INTERVAL, INTERVAL, false, 20 + i % 5), "add unset-clock sample");
+    for (uint32_t i = 0; i < 100; i++)                  /* a factory date, 381 days before: flagged valid, but not a real time */
+        CHECK(ylog_add(&log_obj, real - 381u * 86400u + i * INTERVAL, INTERVAL, true, 20 + i % 5), "add factory-dated sample");
     for (uint32_t i = 0; i < 100; i++)
-        CHECK(ylog_add(&log_obj, T0 + i * INTERVAL, INTERVAL, true, 20 + i % 5), "add sample");
+        CHECK(ylog_add(&log_obj, real + i * INTERVAL, INTERVAL, true, 20 + i % 5), "add sample");
     ylog_close(&log_obj);
     ylog_stats_t st;
     static uint8_t scratch[PSIZE];
     ylog_stats(&d, scratch, &st);
-    CHECK(st.oldest_time == T0, "oldest record is the first one with a real time: %u", (unsigned)st.oldest_time);
-    CHECK(st.newest_time == T0 + 99 * INTERVAL, "newest %u", (unsigned)st.newest_time);
+    CHECK(st.oldest_time == real, "oldest record is the first one with a real time: %u", (unsigned)st.oldest_time);
+    CHECK(st.newest_time == real + 99 * INTERVAL, "newest %u", (unsigned)st.newest_time);
     rf_init(&f);
     CHECK(ylog_open(&log_obj, &d) == 0, "open empty again");
     for (uint32_t i = 0; i < 50; i++)
         ylog_add(&log_obj, 500u + i * INTERVAL, INTERVAL, false, 20);
+    for (uint32_t i = 0; i < 50; i++)
+        ylog_add(&log_obj, 1700000000u + i * INTERVAL, INTERVAL, true, 20);
     ylog_close(&log_obj);
     ylog_stats(&d, scratch, &st);
-    CHECK(st.oldest_time == 0 && st.newest_time == 0, "only unset-clock samples: no dates (%u, %u)", (unsigned)st.oldest_time, (unsigned)st.newest_time);
+    CHECK(st.oldest_time == 0 && st.newest_time == 0, "only unreal times: no dates (%u, %u)", (unsigned)st.oldest_time, (unsigned)st.newest_time);
 }
 
 static void test_sessions(bool clean)

@@ -218,7 +218,7 @@ pub async fn download_log(app: Ap<'_>, handle: AppHandle) -> Res<LogSummary> {
             Ok((samples, s.device_id.clone()))
         })?;
         let new = lock(&a.store).insert_samples(&id, &samples).map_err(err)?;
-        let valid = samples.iter().filter(|s| s.time_valid);
+        let valid = samples.iter().filter(|s| s.is_dated());
         Ok(LogSummary {
                         decoded: samples.len(),
             new,

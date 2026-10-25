@@ -325,6 +325,8 @@
 
 /* words and formats that used to sit in the C sources */
 #define S_STAGE_WORD   "段階 "
+#define S_HELD_BACK    "保留中"
+#define S_RETRY        "再試行"
 #define S_AXIS_10MIN   "-10 分"
 #define S_AXIS_60S     "-60 秒"
 #define S_T_LAST7      "過去7日間"
