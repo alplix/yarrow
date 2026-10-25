@@ -18,6 +18,17 @@ static ypending_t pending;
 static ydev_t dev;
 static ybinner_t binner;
 
+/* When the monitor last heard from the detector, and the set-up it counted under: the log fills the time in between, if the set-up is
+ * still the same. */
+static struct {
+    char uid[17];
+    unsigned sens, dead, interval;
+    uint32_t t;                   /* the detector's clock at the last good reading */
+} seen;
+
+#define SEEN_MIN_T 1790812800u    /* no real clock reads earlier (the firmware's YARROW_MIN_TIME) */
+#define BACKFILL_MAX_AGE_S (13 * 86400u) /* the server takes bins up to 14 days old */
+
 static void save_state(void);
 
 static void on_bin(void *ctx, uint32_t start, uint32_t count)
@@ -33,6 +44,11 @@ static void save_state(void)
     size_t n = 0;
     if (dev.uid[0])
         n = (size_t)snprintf(buf, 128, "D %s %s %u %u %u\n", dev.uid, dev.fw, dev.sens_x100, dev.dead_us, dev.interval);
+    if (seen.t) {
+        int k = snprintf(buf + n, 128, "S %s %u %u %u %u\n", seen.uid, seen.sens, seen.dead, seen.interval, (unsigned)seen.t);
+        if (k > 0)
+            n += (size_t)k;
+    }
     glue_checkpoint_write(buf, n + ypending_save(&pending, buf + n, sizeof buf - n));
 }
 
@@ -52,6 +68,30 @@ static void flush(int force)
         ypending_drop(&pending, k);
         last_send = yser_now();
         save_state();
+    }
+}
+
+/* The detector was away from the monitor for a while (BOINC closed, cable out, computer off) but kept counting: its log has the bins
+ * that were missed. Only when it is the same detector with the same calibration and bin length, and its clock was right. */
+static void fill_gap(ysrc_t *src, uint32_t interval)
+{
+    if (!src->backfill || !seen.t || strcmp(seen.uid, dev.uid) != 0 || seen.sens != dev.sens_x100 || seen.dead != dev.dead_us ||
+        seen.interval != interval)
+        return;
+    uint32_t now = (uint32_t)time(NULL);
+    uint32_t from = (seen.t + interval - 1) / interval * interval;
+    uint32_t until = now / interval * interval;
+    if (now > BACKFILL_MAX_AGE_S && from < (now - BACKFILL_MAX_AGE_S + interval - 1) / interval * interval)
+        from = (now - BACKFILL_MAX_AGE_S + interval - 1) / interval * interval;
+    if (from + interval > until)
+        return;
+    int n = src->backfill(src, interval, from, until, on_bin, 0);
+    char line[120];
+    if (n > 0) {
+        snprintf(line, sizeof line, "the detector's log filled %d bins that were missed while this program was not running", n);
+        glue_log(line);
+    } else if (n < 0) {
+        glue_log("the detector's log could not be used to fill the gap");
     }
 }
 
@@ -78,6 +118,13 @@ int main(int argc, char **argv)
     static char saved[YT_MAX_PENDING * 24];
     saved[glue_checkpoint_read(saved, sizeof saved - 1)] = 0;
     ypending_load(&pending, saved);
+    for (const char *ln = saved; ln && *ln; ln = strchr(ln, 10) ? strchr(ln, 10) + 1 : NULL) {
+        unsigned t = 0;
+        if (ln[0] == 'S' && sscanf(ln, "S %16s %u %u %u %u", seen.uid, &seen.sens, &seen.dead, &seen.interval, &t) == 5)
+            seen.t = t;
+        else if (ln[0] == 'S')
+            memset(&seen, 0, sizeof seen);
+    }
     if (saved[0] == 'D') {
         char uid[17] = "", fw[17] = "";
         unsigned sens = 0, dead = 0, iv = 0;
@@ -130,6 +177,7 @@ int main(int argc, char **argv)
             }
             dev = nd;
             ybin_break(&binner);
+            fill_gap(src, pr.interval);
             next_cal = yser_now() + RECAL_EVERY_S;
             last_send = yser_now();
             char line[96];
@@ -146,8 +194,16 @@ int main(int argc, char **argv)
             continue;
         }
         ybin_feed(&binner, &s);
+        if (s.t >= SEEN_MIN_T) {
+            snprintf(seen.uid, sizeof seen.uid, "%s", dev.uid);
+            seen.sens = dev.sens_x100;
+            seen.dead = dev.dead_us;
+            seen.interval = pr.interval;
+            seen.t = s.t;
+        }
         if (yser_now() >= next_cal) {
             next_cal = yser_now() + RECAL_EVERY_S;
+            save_state();                                  /* keeps the last-seen time fresh for the next start */
             if (src->housekeeping) {
                 yhk_t hk;
                 src->housekeeping(src, &dev, &s, &hk);

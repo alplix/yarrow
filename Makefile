@@ -134,21 +134,23 @@ sim: $(BUILD)/font_data.c
 
 # Host-side monitor for BOINC (see docs/boinc-monitor.md): the bin cutter and trickle writer are tested here;
 # `make monitor` builds the command-line host, monitor/yarrow_boinc.cpp replaces it inside the BOINC build.
-MON = monitor/yarrow_bin.c monitor/yarrow_trickle.c
+MON = monitor/yarrow_bin.c monitor/yarrow_trickle.c monitor/yarrow_backfill.c src/ylog.c src/ylc.c
 MON_SRCS = monitor/yarrow_lock.c monitor/yarrow_src.c monitor/yarrow_src_yarrow.c monitor/yarrow_src_rah.c monitor/yarrow_src_gmc.c monitor/yarrow_hid.c
 HIDLIBS = $(if $(findstring Windows,$(OS)),-lhid -lsetupapi,)
 monitor-check:
 	mkdir -p $(BUILD)/tests
-	gcc -std=c11 -O2 -Wall -Wextra -Werror -Imonitor monitor/test_monitor.c $(MON) -o $(BUILD)/tests/test_monitor
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -Imonitor -Isrc monitor/test_monitor.c $(MON) -o $(BUILD)/tests/test_monitor
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -Imonitor -Isrc monitor/test_backfill.c $(MON) -o $(BUILD)/tests/test_backfill
+	$(BUILD)/tests/test_backfill
 	$(BUILD)/tests/test_monitor
-	gcc -std=c11 -O2 -Wall -Wextra -Werror -Imonitor monitor/test_rah.c monitor/yarrow_src_rah.c monitor/yarrow_hid.c $(MON) $(HIDLIBS) -lm -o $(BUILD)/tests/test_rah
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -Imonitor -Isrc monitor/test_rah.c monitor/yarrow_src_rah.c monitor/yarrow_hid.c $(MON) $(HIDLIBS) -lm -o $(BUILD)/tests/test_rah
 	$(BUILD)/tests/test_rah
-	gcc -std=c11 -O2 -Wall -Wextra -Werror -Imonitor monitor/test_gmc.c monitor/yarrow_src_gmc.c $(MON) -lm -o $(BUILD)/tests/test_gmc
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -Imonitor -Isrc monitor/test_gmc.c monitor/yarrow_src_gmc.c $(MON) -lm -o $(BUILD)/tests/test_gmc
 	$(BUILD)/tests/test_gmc
 
 monitor:
 	mkdir -p $(BUILD)/monitor
-	gcc -std=c11 -O2 -Wall -Wextra -Werror -Imonitor monitor/yarrow_monitor.c monitor/yarrow_serial.c monitor/yarrow_standalone.c $(MON_SRCS) $(MON) $(HIDLIBS) -lm -o $(BUILD)/monitor/yarrow_monitor
+	gcc -std=c11 -O2 -Wall -Wextra -Werror -Imonitor -Isrc monitor/yarrow_monitor.c monitor/yarrow_serial.c monitor/yarrow_standalone.c $(MON_SRCS) $(MON) $(HIDLIBS) -lm -o $(BUILD)/monitor/yarrow_monitor
 	gcc -std=c11 -O2 -Wall -Wextra -Werror -Imonitor monitor/yarrow_batlog.c monitor/yarrow_serial.c -o $(BUILD)/monitor/yarrow_batlog
 	gcc -std=c11 -O2 -Wall -Wextra -Werror -Imonitor monitor/yarrow_watch.c monitor/yarrow_serial.c -lm -o $(BUILD)/monitor/yarrow_watch
 

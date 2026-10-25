@@ -5,8 +5,13 @@ detector live and reports it. The BOINC account is the identity; nothing is uplo
 
 ## Principles
 
-- **Live only.** The monitor reports what it counted while it was running. The device's stored log is never uploaded, so
-  a stream cannot be edited or replayed afterwards.
+- **Counted by the detector, in order.** The monitor reports what the detector counted. One gap is filled from the
+  detector's own log: the time between the last reading the monitor took and the next start (BOINC closed, cable out),
+  for the same detector with the same calibration and bin length, for at most 13 days, and only when the detector's clock
+  was right. Nothing older and nothing from another set-up is ever uploaded, and the server keeps the first count it
+  received for a bin, so a stream cannot be rewritten afterwards. A bin from the log is made only when the log covers it
+  without a hole, with real dates and without a stretch of two minutes without a single pulse (the tube voltage was off);
+  it is never estimated or padded.
 - **Counts, not dose.** Each bin carries the pulse count plus the calibration in force; the server converts.
 - **Choice of bin length.** 10 minutes (shortest), 30 minutes or 1 hour, set in the task's preferences.
 - **Nothing finer than a city.** The place is a country code and a city name picked from a list.

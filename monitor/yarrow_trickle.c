@@ -76,7 +76,7 @@ void ypending_load(ypending_t *p, const char *text)
     p->n = 0;
     unsigned s, c;
     int used;
-    if (text[0] == 'D') {                      /* identity line written by the monitor */
+    while (text[0] == 'D' || text[0] == 'S') { /* identity and last-seen lines written by the monitor */
         const char *nl = strchr(text, 10);
         if (!nl)
             return;

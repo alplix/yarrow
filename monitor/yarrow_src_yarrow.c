@@ -1,5 +1,6 @@
 /* Source for a detector running the Yarrow firmware on a USB serial port (protocol: docs/serial-protocol.md). The detector has a
  * wall clock of its own, latches its counters once per second and reports its tube voltage time, so its bins are exact. */
+#include "yarrow_backfill.h"
 #include "yarrow_glue.h"
 #include "yarrow_serial.h"
 #include "yarrow_src.h"
@@ -14,6 +15,7 @@
 typedef struct {
     ysrc_t base;
     yser_t *ser;
+    int clock_fixed;     /* the clock was wrong when the detector was found: its log times are not to be trusted */
 } yy_t;
 
 static int num(const char *s, unsigned *out)
@@ -92,6 +94,59 @@ static int yy_wait(const ysrc_t *s, uint32_t to_edge, uint32_t interval)
     return (to_edge <= 3 || to_edge >= interval - 2) ? 100 : 1000;   /* fast around the bin edges, slowly otherwise */
 }
 
+static int mem_read(void *ctx, uint32_t addr, void *buf, uint32_t n)
+{
+    memcpy(buf, (const uint8_t *)ctx + addr, n);
+    return 0;
+}
+
+#define BACKFILL_MAX_PAGES 1024
+#define BACKFILL_BUDGET_S 240.0
+
+/* The detector kept counting while the monitor was away: its log, read page by page, gives the bins that were missed. */
+static int yy_backfill(ysrc_t *s, uint32_t interval, uint32_t from, uint32_t until, ybin_emit_fn emit, void *ctx)
+{
+    yy_t *y = (yy_t *)s;
+    if (y->clock_fixed)
+        return -1;
+    char r[200];
+    unsigned pages, psz, used, oldest, newest;
+    const char *p;
+    if (yser_command(y->ser, "LOGINFO", r, sizeof r, 1500) != 0 || !(p = strstr(r, "pages=")) ||
+        sscanf(p, "pages=%u pagesize=%u used=%u oldest=%u newest=%u", &pages, &psz, &used, &oldest, &newest) != 5)
+        return -1;
+    if (!pages || pages > BACKFILL_MAX_PAGES || psz < 256 || psz > 8192 || (psz & 1))
+        return -1;
+    if (!used || newest < from + interval)
+        return 0;
+    uint8_t *img = malloc((size_t)pages * psz);
+    uint8_t *scratch = malloc(psz);
+    size_t cap = (size_t)psz * 4 / 3 + psz / 48 * 2 + 256;
+    char *buf = malloc(cap);
+    int result = -1;
+    if (img && scratch && buf) {
+        memset(img, 0xFF, (size_t)pages * psz);
+        double t0 = yser_now();
+        unsigned pg;
+        for (pg = 0; pg < pages; pg++) {
+            char cmd[24];
+            snprintf(cmd, sizeof cmd, "LOGPAGE %u", pg);
+            if (yser_lines(y->ser, cmd, buf, cap, 5000) != 0 || ybf_page_from_reply(buf, img + (size_t)pg * psz, psz) != (int)psz)
+                break;
+            if (yser_now() - t0 > BACKFILL_BUDGET_S)
+                break;
+        }
+        if (pg == pages) {
+            ylog_flash_t fl = {psz, pages, mem_read, NULL, NULL, img};
+            result = (int)ybf_bins(&fl, scratch, interval, from, until, emit, ctx);
+        }
+    }
+    free(img);
+    free(scratch);
+    free(buf);
+    return result;
+}
+
 static void yy_close(ysrc_t *s)
 {
     yy_t *y = (yy_t *)s;
@@ -100,7 +155,7 @@ static void yy_close(ysrc_t *s)
 }
 
 /* Reads identity and calibration. 0 on success. */
-static int identify(yser_t *s, ydev_t *nd)
+static int identify(yser_t *s, ydev_t *nd, int *clock_fixed)
 {
     char r[160];
     yser_command(s, "LIVE 0", r, sizeof r, 300);
@@ -124,7 +179,7 @@ static int identify(yser_t *s, ydev_t *nd)
     }
     unsigned pp, hh, tt;
     if (sscanf(probe, "OK %u %u %u", &pp, &hh, &tt) == 3)
-        fix_clock(s, tt);
+        *clock_fixed = fix_clock(s, tt);
     unsigned sens, dead;
     if (read_cal(s, &sens, &dead) != 0)
         return -1;
@@ -140,7 +195,8 @@ ysrc_t *ysrc_yarrow_find(const char *port, ydev_t *dev)
     if (!ser)
         return NULL;
     memset(dev, 0, sizeof *dev);
-    if (identify(ser, dev) != 0) {
+    int clock_fixed = 0;
+    if (identify(ser, dev, &clock_fixed) != 0) {
         yser_close(ser);
         return NULL;
     }
@@ -150,10 +206,12 @@ ysrc_t *ysrc_yarrow_find(const char *port, ydev_t *dev)
         return NULL;
     }
     y->ser = ser;
+    y->clock_fixed = clock_fixed;
     y->base.name = "Yarrow detector";
     y->base.poll = yy_poll;
     y->base.housekeeping = yy_housekeeping;
     y->base.next_wait_ms = yy_wait;
+    y->base.backfill = yy_backfill;
     y->base.close = yy_close;
     return &y->base;
 }

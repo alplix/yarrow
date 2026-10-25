@@ -27,6 +27,9 @@ struct ysrc {
     void (*housekeeping)(ysrc_t *s, const ydev_t *dev, const ysample_t *last, yhk_t *out);
     /* Seconds to wait before the next poll, given the seconds until the next bin edge. */
     int (*next_wait_ms)(const ysrc_t *s, uint32_t to_edge, uint32_t interval);
+    /* Bins from the counter's own log for the time between `from` and `until` (both multiples of interval), handed to emit in time
+     * order; the number of bins, or -1 when the log cannot be used. May be NULL. */
+    int (*backfill)(ysrc_t *s, uint32_t interval, uint32_t from, uint32_t until, ybin_emit_fn emit, void *ctx);
     void (*close)(ysrc_t *s);
 };
 
