@@ -11,7 +11,7 @@ first if you like) and reloads udev. The rule matches the USB ids of the counter
 devices also the product name, so nothing else on the computer is touched. Remove the file to undo it.
 
 Then unplug the counter and plug it in again and restart the BOINC client (`sudo systemctl restart boinc-client`). A
-running task looks for a counter every 15 seconds; a task that has already gone to sleep ("postponed for 21600 seconds")
+running task looks for a counter every 15 seconds; a task that has already gone to sleep ("postponed for 1800 seconds")
 starts again after the restart.
 
 | Counter | Device | What the rule does |

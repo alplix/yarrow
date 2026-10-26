@@ -33,7 +33,7 @@ One BOINC result stays running for as long as the BOINC client does. It looks fo
 while it is attached, and keeps the unsent bins in a checkpoint. When the detector disappears or the client closes, the
 open bin is dropped, never padded; the bins already finished are still sent.
 
-The monitor is a non-CPU-intensive (NCI) app: the server sends one task per computer and the BOINC client runs it next to a full set of CPU tasks, so it does not take a thread away from other work. Only one monitor runs per computer anyway: a lock file in the BOINC project folder keeps a second task out, which puts itself aside for six hours. The server gives every task a large work estimate, so the client does not ask for more than one.
+The monitor is a non-CPU-intensive (NCI) app: the server sends one task per computer and the BOINC client runs it next to a full set of CPU tasks, so it does not take a thread away from other work. Only one monitor runs per computer anyway: a lock file in the BOINC project folder keeps a second task out, which puts itself aside for two hours. The server gives every task a large work estimate, so the client does not ask for more than one.
 
 Settings come from the project preferences on the web site (`yarrow_interval`, `yarrow_country`, `yarrow_city`), so a
 volunteer sets them once for every computer. Source: `monitor/` (`yarrow_bin.c` cuts bins, `yarrow_trickle.c` writes
