@@ -1,14 +1,12 @@
-// Yarrow GC-03 desk dock, "Cooling tower" version: the counter stands in the top of a small cooling tower, screen up, leaning back a
-// little, the way the steam leaves a real one. The tower is a true hyperboloid, and the lattice engraved on it is made of its
-// straight lines (a hyperboloid is ruled: that is how real cooling towers are built from straight rods). The radiation symbol is on
-// the rim. Only the lowest part of the case sits in the dock, so the selector knob, the buttons, the power key and the USB-C socket
-// (all higher up) stay free.
+// Yarrow GC-03 desk dock, "Atom" version: the counter stands on its metal (tube) end, screen up, leaning back against a flat
+// open plate that draws an atom behind it: three electron orbits and the nucleus. The orbits reach out around the device, so it
+// looks like the nucleus of the atom. Only the lowest part of the case sits in the dock, so the selector knob, the buttons, the
+// power key and the USB-C socket (all higher up) stay free.
 // Free to print and share (GPL-3.0-or-later). Print as it is, base down, no supports, 0.2 mm layers, PETG or PLA, 3 walls, 15 % infill.
 //
-// Colours without a purge tower mess: three bands, two filament changes:
-//   black   from the bed to z = 8.0 mm     (the two-tier base)
-//   white   from 8.0 mm to z = 56.0 mm     (the tower)
-//   yellow  above 56.0 mm                  (the rim)
+// Colours without a purge tower mess: two bands, one filament change:
+//   black   from the bed to z = 8.0 mm     (the base)
+//   white   above 8.0 mm                   (the dock and the atom)
 // Change the numbers in the first block for another device; measure the metal end with callipers, the clearance is added for you.
 
 // ---- the device (mm)
@@ -16,45 +14,65 @@ dev_w = 58;        // width of the case across the short edge
 dev_t = 27;        // thickness of the metal end that goes into the dock
 // ---- the dock
 clr = 0.7;         // play on each side: 0.5 is snug, 1.0 is loose
-grip = 34;         // how far the device sits in the tower (keep it well under the height of the selector knob, about 38 mm)
+wall = 3.2;
+grip = 32;         // how far the device sits in the dock (keep it under the height of the selector knob, about 38 mm)
 tilt = 10;         // backwards lean in degrees
-// ---- the tower
-tower_h = 52;      // above the base
-waist_r = 38;      // radius at the narrowest point
-waist_z = 34;      // height of the waist above the base
-top_r = 42;        // radius at the top
-base_h = 8;        // two tiers, black
-rim_h = 4;         // the yellow rim
-ribs = 24;         // straight lines of each direction in the lattice
-$fn = 96;
+// ---- the atom
+orbit_a = 62;      // half the long axis of an orbit
+orbit_b = 24;      // half the short axis
+orbit_t = 4.5;     // width of the orbit strip
+centre = 76;       // height of the nucleus along the lean (the device is about 135 mm long)
+plate_t = 6;       // thickness of the plate
+nucleus_r = 7;
+// ---- the base
+base_h = 8;
+side = 8;          // base margin at the sides
+front = 9;         // base in front of the dock
+tail = 24;         // base behind the dock: balances the lean
+$fn = 72;
 
 pw = dev_w + 2 * clr;
 pt = dev_t + 2 * clr;
-k = sqrt((top_r * top_r - waist_r * waist_r) / pow(tower_h - waist_z, 2));   // slope of the straight lines
-function rad(z) = sqrt(waist_r * waist_r + k * k * pow(z - waist_z, 2));
-base_r = rad(0) + 5;
+bt = wall + pt + plate_t;
+bw = pw + 2 * wall + 2 * side;
+bd = front + bt * cos(tilt) + tail;
+rr = 6;
 
-// the point at height z on the straight line that crosses the waist at angle phi (dir = -1 or 1 for the two directions)
-function pt3(phi, dir, z) = [waist_r * cos(phi) - dir * k * (z - waist_z) * sin(phi),
-                             waist_r * sin(phi) + dir * k * (z - waist_z) * cos(phi),
-                             base_h + z];
-
-module tower() {
-    translate([0, 0, base_h - 0.01])
-        rotate_extrude() polygon(concat([[0, 0]], [for (z = [0 : 2 : tower_h]) [rad(z), z]], [[0, tower_h]]));
+module rrect(w, d, h, rad) {
+    hull() for (x = [rad, w - rad], y = [rad, d - rad]) translate([x, y, 0]) cylinder(r = rad, h = h);
 }
 
 module slab() {
     hull() {
-        cylinder(r = base_r, h = 3);
-        translate([0, 0, 3]) cylinder(r = base_r - 3, h = base_h - 3);
+        rrect(bw, bd, 3, rr);
+        translate([3, 3, 3]) rrect(bw - 6, bd - 6, base_h - 3, rr - 1);
     }
 }
 
-// the pocket leans back around the middle of its depth, so that its corners stay inside the tower wall
-module pocket() {
-    translate([0, -grip * sin(tilt) / 2, base_h + tower_h - grip]) rotate([-tilt, 0, 0]) translate([-pw / 2, -pt / 2, 0]) cube([pw, pt, grip + 60]);
+// local axes: u across, v depth, w up the lean, origin at the front-bottom edge of the dock
+module local() { translate([bw / 2, front, base_h]) rotate([-tilt, 0, 0]) children(); }
+
+module ring2d() {
+    difference() {
+        scale([orbit_a, orbit_b]) circle(1);
+        scale([orbit_a - orbit_t, orbit_b - orbit_t]) circle(1);
+    }
 }
+
+module atom2d() {
+    translate([0, centre]) {
+        for (a = [0, 60, 120]) rotate(a) ring2d();
+        circle(nucleus_r);
+    }
+    translate([-4.5, -16]) square([9, centre + 16]);        // the stem from the nucleus down into the dock
+}
+
+module block() {
+    translate([-(pw + 2 * wall) / 2, 0, -16]) rrect(pw + 2 * wall, bt, grip + 16, 4);
+    translate([0, bt, 0]) rotate([90, 0, 0]) linear_extrude(plate_t) atom2d();
+}
+
+module pocket() { translate([-pw / 2, wall, 0]) cube([pw, pt, grip + 10]); }
 
 module trefoil(r) {
     for (a = [90, 210, 330]) rotate(a - 30)
@@ -65,27 +83,11 @@ module trefoil(r) {
     circle(r * 0.16);
 }
 
-// a thin groove along one straight line, from z0 to z1
-module rod(phi, dir, z0, z1) {
-    hull() {
-        translate(pt3(phi, dir, z0)) sphere(r = 0.7, $fn = 8);
-        translate(pt3(phi, dir, z1)) sphere(r = 0.7, $fn = 8);
-    }
-}
-
-module lattice() {
-    for (i = [0 : ribs - 1], dir = [-1, 1]) rod(i * 360 / ribs, dir, 4, tower_h - rim_h - 1);
-}
-
-// engraved 0.8 mm into the top of the rim, in front of the pocket
-module rim_symbol() {
-    translate([0, -30, base_h + tower_h - 0.8]) linear_extrude(2) trefoil(5.5);
-}
+// the symbol on the front of the dock, engraved 0.8 mm
+module engrave_front() { translate([0, 0.8, 14]) rotate([90, 0, 0]) linear_extrude(2) trefoil(6); }
 
 difference() {
-    union() { slab(); tower(); }
-    pocket();
-    lattice();
-    rim_symbol();
-    translate([-100, -100, -50]) cube([200, 200, 50]);
+    union() { slab(); local() block(); }
+    local() { pocket(); engrave_front(); }
+    translate([-100, -100, -50]) cube([300, 300, 50]);
 }
