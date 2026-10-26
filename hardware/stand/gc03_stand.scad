@@ -13,7 +13,7 @@
 part = "both";     // "dock", "atom" or "both" (assembled, for looking at)
 
 // ---- the device (mm)
-dev_w = 58;        // width of the case across the short edge
+dev_w = 60.4;        // width of the case across the short edge
 dev_t = 27;        // thickness of the metal end that goes into the dock
 // ---- the dock
 clr = 0.7;         // play on each side: 0.5 is snug, 1.0 is loose
