@@ -6,7 +6,7 @@
 //
 // Colours without a purge tower mess: two bands, one filament change:
 //   black   from the bed to z = 8.0 mm     (the base)
-//   white   above 8.0 mm                   (the dock and the atom)
+//   yellow  above 8.0 mm                   (the dock and the atom; any colour that stands out from a white device)
 // Change the numbers in the first block for another device; measure the metal end with callipers, the clearance is added for you.
 
 // colour_split = 1 writes the model as two separate bodies, the base below 8 mm and everything above, 0.01 mm apart, so that the slicer
