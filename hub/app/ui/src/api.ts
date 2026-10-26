@@ -26,6 +26,7 @@ export const api = {
   connect: (port: string) => invoke<Connected>("connect", { port }),
   disconnect: () => invoke<void>("disconnect"),
   deviceInfo: () => invoke<RawInfo>("device_info"),
+  health: () => invoke<Record<string, string>>("get_health"),
   liveStart: () => invoke<void>("live_start"),
   liveStop: () => invoke<void>("live_stop"),
   downloadLog: () => invoke<LogSummary>("download_log"),

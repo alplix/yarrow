@@ -214,5 +214,19 @@
   "settings.recording_hint": "With these on, the Hub reads the device as soon as it is connected and keeps one value per minute, so the statistics fill up by themselves. Everything stays on this computer.",
   "settings.auto_live": "Read the device when connected",
   "settings.record": "Keep a per-minute record",
-  "settings.privacy": "Nothing is sent anywhere: the data lives in this program's folder on your computer."
+  "settings.privacy": "Nothing is sent anywhere: the data lives in this program's folder on your computer.",
+  "device.h_starts": "Starts",
+  "device.h_reason": "This start",
+  "device.h_wdt": "Watchdog resets",
+  "device.h_fault": "Crashes",
+  "device.h_usb": "USB restarts",
+  "device.h_uptime": "Running",
+  "device.h_reason.unknown": "unknown",
+  "device.h_reason.power_on": "power on",
+  "device.h_reason.pin": "reset pin",
+  "device.h_reason.watchdog": "watchdog",
+  "device.h_reason.window_watchdog": "window watchdog",
+  "device.h_reason.software": "software",
+  "device.h_reason.low_power": "low power",
+  "device.h_reason.fault": "crash"
 }

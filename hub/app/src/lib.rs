@@ -107,6 +107,7 @@ pub fn run() {
             device::export_csv,
             device::events,
             device::get_cal,
+            device::get_health,
             device::set_cal,
             device::set_theme,
             device::set_clock,

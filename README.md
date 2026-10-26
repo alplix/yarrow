@@ -22,7 +22,7 @@ a desktop app. Together they feed a live, open map of the natural background dos
 |---|---|---|---|
 | FNIRSI GC-03 with the Yarrow firmware | USB serial | yes | yes |
 | [Radioactive@Home USB counters](docs/radioactive-at-home.md) (boards 2.01 to 2.60, the kit, and 3.01) | USB HID, nothing to flash | yes | yes |
-| GQ GMC-300 / 320 / 500 / 600 | USB serial | yes | not yet |
+| GQ GMC-300 / 320 / 500 / 600 | USB serial | yes | yes (live, recorded while connected; no stored history) |
 
 Only raw pulse counts from the tube are accepted, never a rate the counter has smoothed itself. A new counter is one small
 driver in `monitor/yarrow_src_*.c`; see [docs/boinc-monitor.md](docs/boinc-monitor.md).

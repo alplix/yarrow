@@ -175,6 +175,16 @@ impl<T: Transport> Client<T> {
         parse_info(&self.request("INFO")?)
     }
 
+    /// How the device has been running (starts, watchdog resets, crashes, USB restarts, ...): the `HEALTH` reply as key and value.
+    /// Firmware before 0.2.0 does not know the command: an empty map.
+    pub fn health(&mut self) -> Result<BTreeMap<String, String>> {
+        match self.request("HEALTH") {
+            Ok(r) => Ok(kv_map(&r)),
+            Err(Error::Device(_)) => Ok(BTreeMap::new()),
+            Err(e) => Err(e),
+        }
+    }
+
     pub fn time(&mut self) -> Result<u32> {
         self.request("TIME")?.trim().parse().map_err(|_| Error::Protocol("bad time".into()))
     }

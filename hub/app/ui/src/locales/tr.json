@@ -214,5 +214,19 @@
   "settings.recording_hint": "Bunlar açıkken Hub cihazı bağlanır bağlanmaz okur ve dakikada bir değer saklar; istatistikler kendiliğinden dolar. Her şey bu bilgisayarda kalır.",
   "settings.auto_live": "Bağlanınca cihazı oku",
   "settings.record": "Dakikalık kayıt tut",
-  "settings.privacy": "Hiçbir yere bir şey gönderilmez: veri, bu programın bilgisayarınızdaki klasöründe durur."
+  "settings.privacy": "Hiçbir yere bir şey gönderilmez: veri, bu programın bilgisayarınızdaki klasöründe durur.",
+  "device.h_starts": "Açılış",
+  "device.h_reason": "Bu açılış",
+  "device.h_wdt": "Watchdog sıfırlama",
+  "device.h_fault": "Çökme",
+  "device.h_usb": "USB yeniden başlatma",
+  "device.h_uptime": "Çalışma süresi",
+  "device.h_reason.unknown": "bilinmiyor",
+  "device.h_reason.power_on": "güç açıldı",
+  "device.h_reason.pin": "reset pini",
+  "device.h_reason.watchdog": "watchdog",
+  "device.h_reason.window_watchdog": "pencere watchdog",
+  "device.h_reason.software": "yazılım",
+  "device.h_reason.low_power": "düşük güç",
+  "device.h_reason.fault": "çökme"
 }

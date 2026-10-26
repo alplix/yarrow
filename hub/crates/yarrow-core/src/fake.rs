@@ -83,6 +83,7 @@ impl FakeDevice {
         let o = &mut self.out;
         match (name, args.as_slice()) {
             ("PING", []) => o.push_back("OK pong".into()),
+            ("HEALTH", []) => o.push_back("OK boots=3 wdt=0 fault=0 usb_restarts=0 reason=power_on streak=0 fault_pc=0 uptime=5400 stage=5 suspect=0".into()),
             ("INFO", []) => {
                 let mut s = format!(
                     "OK yarrow={} stage=5 verified=1 time={} theme={} profile=2 pages={} pagesize={}",

@@ -60,7 +60,12 @@ pub async fn connect(app: Ap<'_>, port: String) -> Res<Connected> {
             (Box::new(yarrow_core::rah::open_counter(&port).map_err(err)?), entry)
         } else {
             let entry = yarrow_core::list_ports().map_err(err)?.into_iter().find(|p| p.name == port);
-            (Box::new(YarrowDetector::new(SerialTransport::open(&port).map_err(err)?)), entry)
+            // a port without the Yarrow USB ids may carry a GQ GMC counter: asked first, and when it is not one the Yarrow protocol is tried
+            let gmc = if entry.as_ref().is_some_and(|p| p.is_yarrow) { None } else { yarrow_core::gmc::open_counter(&port).ok() };
+            match gmc {
+                Some(d) => (Box::new(d) as Box<dyn Detector>, entry),
+                None => (Box::new(YarrowDetector::new(SerialTransport::open(&port).map_err(err)?)), entry),
+            }
         };
         let info = det.info().map_err(err)?;
         let cal = match det.tools() {
@@ -294,6 +299,12 @@ pub async fn events(app: Ap<'_>) -> Res<Vec<Event>> {
         with_tools(&a, |t, _| t.events().map_err(err))
     })
     .await
+}
+
+#[tauri::command]
+pub async fn get_health(app: Ap<'_>) -> Res<std::collections::BTreeMap<String, String>> {
+    let a = app.inner().clone();
+    blocking(move || with_tools(&a, |t, _| t.health().map_err(err))).await
 }
 
 #[tauri::command]

@@ -61,6 +61,10 @@ pub trait Tools {
     fn time(&mut self) -> Result<u32>;
     fn set_time(&mut self, unix: u32) -> Result<()>;
     fn raw_info(&mut self) -> Result<Info>;
+    /// How the device has been running; empty when the firmware cannot tell.
+    fn health(&mut self) -> Result<std::collections::BTreeMap<String, String>> {
+        Ok(Default::default())
+    }
 }
 
 /// The Yarrow firmware on a GC-03.
@@ -140,5 +144,8 @@ impl<T: Transport> Tools for YarrowDetector<T> {
     }
     fn raw_info(&mut self) -> Result<Info> {
         self.0.info()
+    }
+    fn health(&mut self) -> Result<std::collections::BTreeMap<String, String>> {
+        self.0.health()
     }
 }

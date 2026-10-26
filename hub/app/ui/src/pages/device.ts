@@ -4,6 +4,11 @@ import { ctx, guard, onConnectionChange, setConnected, toast, type Page } from "
 import { clear, h } from "../dom";
 import { fmtTime, t } from "../i18n";
 
+function fmtDuration(s: number): string {
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+  return h ? `${h} h ${m} min` : `${m} min`;
+}
+
 export function devicePage(): Page {
   const el = h("section");
   let ports: PortEntry[] = [];
@@ -74,6 +79,17 @@ export function devicePage(): Page {
         [t("device.profile"), String(raw.profile)],
         [t("device.log_pages"), `${raw.pages} × ${raw.pagesize} B`],
         [t("device.clock"), fmtTime(raw.time)],
+      );
+    }
+    const hl = c.tools ? await guard(api.health()) : undefined;
+    if (hl && hl.boots) {
+      rows.push(
+        [t("device.h_starts"), hl.boots],
+        [t("device.h_reason"), t(`device.h_reason.${hl.reason}`)],
+        [t("device.h_wdt"), hl.wdt],
+        [t("device.h_fault"), hl.fault === "0" ? "0" : `${hl.fault} (0x${Number(hl.fault_pc).toString(16).toUpperCase()})`],
+        [t("device.h_usb"), hl.usb_restarts],
+        [t("device.h_uptime"), fmtDuration(Number(hl.uptime))],
       );
     }
     rows.push([t("device.uid"), c.info.unique_id ?? t("device.uid_none")]);
