@@ -1,13 +1,14 @@
-// Yarrow GC-03 desk dock, "Fan" version: the counter stands on its metal (tube) end, screen up, leaning back against a fan-shaped
-// plate that opens up from the dock like a folding fan, with ribs around the device and the radiation symbol at the top. Only the lowest part of the case sits in the
-// dock, so the selector knob, the buttons, the power key and the USB-C socket (all higher up) stay free.
+// Yarrow GC-03 desk dock, "Bench instrument" version: the counter stands in the top of a small instrument cabinet, screen up,
+// leaning back a little, like the probe of a laboratory meter. The front of the cabinet carries a nameplate, a vent grille,
+// a dial and four screw heads (all engraved 0.8 mm). Only the lowest part of the case sits in the dock, so the selector knob,
+// the buttons, the power key and the USB-C socket (all higher up) stay free.
 // Free to print and share (GPL-3.0-or-later). Print as it is, base down, no supports, 0.2 mm layers, PETG or PLA, 3 walls,
-// 15 % infill (more in the base is better: weight keeps it from tipping).
+// 15 % infill.
 //
 // Colours without a purge tower mess: three bands, two filament changes:
 //   black   from the bed to z = 8.0 mm     (the two-tier base)
-//   white   from 8.0 mm to z = 147.0 mm    (dock and plate)
-//   yellow  above 147.0 mm                 (the top edge of the fan with the symbol)
+//   white   from 8.0 mm to z = 56.0 mm     (the cabinet)
+//   yellow  above 56.0 mm                  (the top trim)
 // Change the numbers in the first block for another device; measure the metal end with callipers, the clearance is added for you.
 
 // ---- the device (mm)
@@ -15,44 +16,25 @@ dev_w = 58;        // width of the case across the short edge
 dev_t = 27;        // thickness of the metal end that goes into the dock
 // ---- the dock
 clr = 0.7;         // play on each side: 0.5 is snug, 1.0 is loose
-wall = 3.2;
-grip = 30;         // how far the device sits in the dock (keep it well under the height of the selector knob, about 38 mm)
+grip = 34;         // how far the device sits in the cabinet (keep it well under the height of the selector knob, about 38 mm)
 tilt = 10;         // backwards lean in degrees
-front_h = 15;      // the front wall is lowered to this height with a round scoop
-// ---- the plate and the base
-fan_apex = 40;     // the ribs meet this far below the bottom of the dock
-fan_r = 208;       // radius from that point (plate top is at fan_r - fan_apex above the dock floor)
-fan_a = 24;        // half the opening angle of the fan, degrees
-plate_w = 82;      // width of the base and the dock block follow from this
-plate_t = 7;
-rim = 5;           // solid frame around the sunburst
+// ---- the cabinet
+cab_w = 98;
+cab_d = 68;
+cab_h = 52;        // above the base
 base_h = 8;        // two tiers, black
-side = 4;          // base margin at the sides
-front = 9;         // base in front of the dock
-tail = 22;         // base behind the plate: balances the lean
+margin = 3;        // base sticks out this much around the cabinet
+front_wall = 15;   // material in front of the pocket
 $fn = 64;
 
 pw = dev_w + 2 * clr;
 pt = dev_t + 2 * clr;
-bt = wall + pt + plate_t;                  // dock depth including the plate
-bw = plate_w + 2 * side;
-bd = front + bt * cos(tilt) + tail;
-rr = 6;
+bw = cab_w + 2 * margin;
+bd = cab_d + 2 * margin;
+rr = 7;
 
 module rrect(w, d, h, rad) {
     hull() for (x = [rad, w - rad], y = [rad, d - rad]) translate([x, y, 0]) cylinder(r = rad, h = h);
-}
-
-// the dock stands on its front-bottom edge at (bw/2, front, base_h) and leans back by tilt; local axes: u across, v depth, w up the lean
-module local() { translate([bw / 2, front, base_h]) rotate([-tilt, 0, 0]) children(); }
-
-// a sector opening upwards from (0, -fan_apex), with rounded corners
-module fan2d() {
-    offset(r = 4) offset(delta = -4)
-        intersection() {
-            translate([0, -fan_apex]) circle(fan_r);
-            polygon(concat([[0, -fan_apex]], [for (t = [-fan_a : 2 : fan_a]) [(fan_r + 10) * sin(t), -fan_apex + (fan_r + 10) * cos(t)]]));
-        }
 }
 
 module slab() {
@@ -62,15 +44,18 @@ module slab() {
     }
 }
 
-module block() {
-    // the dock block (from below the base up to grip + 4) and the arched plate behind the pocket
-    translate([-(pw + 2 * wall) / 2, 0, -16]) rrect(pw + 2 * wall, bt, grip + 20, 4);
-    translate([0, bt, 0]) rotate([90, 0, 0]) linear_extrude(plate_t) fan2d();
+module cabinet() {
+    // rounded corners, a 3 mm chamfer round the top edge
+    translate([margin, margin, base_h - 0.01]) hull() {
+        rrect(cab_w, cab_d, cab_h - 3, rr - 2);
+        translate([3, 3, 0]) rrect(cab_w - 6, cab_d - 6, cab_h, rr - 4);
+    }
 }
 
-module pocket() { translate([-pw / 2, wall, 0]) cube([pw, pt, grip + 10]); }
-
-module scoop() { translate([0, -1, front_h + 22]) rotate([-90, 0, 0]) cylinder(r = 22, h = wall + 2); }
+// the pocket stands on its front-bottom edge and leans back
+module pocket() {
+    translate([bw / 2, margin + front_wall, base_h + cab_h - grip]) rotate([-tilt, 0, 0]) translate([-pw / 2, 0, 0]) cube([pw, pt, grip + 90]);
+}
 
 module trefoil(r) {
     for (a = [90, 210, 330]) rotate(a - 30)
@@ -81,39 +66,41 @@ module trefoil(r) {
     circle(r * 0.16);
 }
 
-// engraved 0.8 mm into the front face of the plate (the face the device leans on): ribs from the fan's centre, two arcs, a frame
-module sunburst() {
-    med = fan_r - fan_apex - 16;                  // the symbol sits near the top edge
-    field = rim;
-    intersection() {
-        offset(delta = -field) fan2d();
-        difference() {
-            union() {
-                // ribs every 3 degrees, from above the dock
-                for (a = [-fan_a : 3 : fan_a]) translate([0, -fan_apex]) rotate(90 - a) translate([95, -0.6]) square([200, 1.2]);
-                // two arcs across the ribs
-                for (r = [130, 170]) translate([0, -fan_apex]) difference() { circle(r + 0.6); circle(r - 0.6); }
-            }
-            translate([0, med]) circle(14);
-        }
-    }
-    difference() { offset(delta = -field) fan2d(); offset(delta = -field - 1.4) fan2d(); }
-    translate([0, med]) {
-        difference() { circle(10.5); circle(9.3); }
-        trefoil(6.4);
+module screwhead(x, y) {
+    translate([x, y]) {
+        difference() { circle(3.2); circle(2.2); }
+        rotate(35) square([4.4, 0.9], center = true);
     }
 }
 
-module engrave_plate() { translate([0, wall + pt + 0.8, 0]) rotate([90, 0, 0]) linear_extrude(2.4) sunburst(); }
+// the front of the cabinet: x across from the centre, y up from the foot of the cabinet
+module front_art() {
+    // double frame: the groove between two outlines
+    difference() {
+        translate([-(cab_w - 14) / 2, 4]) square([cab_w - 14, cab_h - 8]);
+        translate([-(cab_w - 14) / 2 + 1.4, 5.4]) square([cab_w - 14 - 2.8, cab_h - 10.8]);
+    }
+    for (x = [-38, 38], y = [10, cab_h - 10]) screwhead(x, y);
+    // vent grille: six slots
+    for (i = [0 : 5]) translate([-38, 13 + i * 5.2]) square([22, 2]);
+    // nameplate with the symbol and the name
+    translate([-11, 12]) difference() { square([22, cab_h - 24]); translate([1.2, 1.2]) square([19.6, cab_h - 26.4]); }
+    translate([0, cab_h / 2 + 5]) trefoil(5.2);
+    translate([0, cab_h / 2 - 8]) text("YARROW", size = 3, font = "Liberation Sans:style=Bold", halign = "center", valign = "center");
+    // dial: rings, a pointer and ticks
+    translate([27, cab_h / 2]) {
+        difference() { circle(9); circle(7.8); }
+        difference() { circle(4.2); circle(3.2); }
+        rotate(55) translate([0, -0.5]) square([7.5, 1]);
+        for (a = [-120 : 30 : 120]) rotate(90 + a) translate([10.4, -0.4]) square([2, 0.8]);
+    }
+}
 
-// the small symbol on the front of the dock block
-module engrave_front() { translate([0, 0.8, 9]) rotate([90, 0, 0]) linear_extrude(2) trefoil(4.5); }
+module engrave_front() { translate([bw / 2, margin + 0.8, base_h]) rotate([90, 0, 0]) linear_extrude(2) front_art(); }
 
 difference() {
-    union() {
-        slab();
-        local() block();
-    }
-    local() { pocket(); scoop(); engrave_plate(); engrave_front(); }
+    union() { slab(); cabinet(); }
+    pocket();
+    engrave_front();
     translate([-1, -1, -50]) cube([bw + 2, bd + 2, 50]);
 }
