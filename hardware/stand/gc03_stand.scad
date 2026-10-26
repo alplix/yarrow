@@ -1,13 +1,13 @@
-// Yarrow GC-03 desk dock, "Sunrise" version: the counter stands on its metal (tube) end, screen up, leaning back against an arched
-// plate with a sunburst around the device and the radiation symbol in the crown. Only the lowest part of the case sits in the
+// Yarrow GC-03 desk dock, "Fan" version: the counter stands on its metal (tube) end, screen up, leaning back against a fan-shaped
+// plate that opens up from the dock like a folding fan, with ribs around the device and the radiation symbol at the top. Only the lowest part of the case sits in the
 // dock, so the selector knob, the buttons, the power key and the USB-C socket (all higher up) stay free.
 // Free to print and share (GPL-3.0-or-later). Print as it is, base down, no supports, 0.2 mm layers, PETG or PLA, 3 walls,
 // 15 % infill (more in the base is better: weight keeps it from tipping).
 //
 // Colours without a purge tower mess: three bands, two filament changes:
 //   black   from the bed to z = 8.0 mm     (the two-tier base)
-//   white   from 8.0 mm to z = 146.0 mm    (dock and plate)
-//   yellow  above 146.0 mm                 (the crown with the symbol)
+//   white   from 8.0 mm to z = 147.0 mm    (dock and plate)
+//   yellow  above 147.0 mm                 (the top edge of the fan with the symbol)
 // Change the numbers in the first block for another device; measure the metal end with callipers, the clearance is added for you.
 
 // ---- the device (mm)
@@ -20,8 +20,10 @@ grip = 30;         // how far the device sits in the dock (keep it well under th
 tilt = 10;         // backwards lean in degrees
 front_h = 15;      // the front wall is lowered to this height with a round scoop
 // ---- the plate and the base
-plate_w = 82;
-plate_h = 170;     // height along the lean (the device is about 135 mm long)
+fan_apex = 40;     // the ribs meet this far below the bottom of the dock
+fan_r = 208;       // radius from that point (plate top is at fan_r - fan_apex above the dock floor)
+fan_a = 24;        // half the opening angle of the fan, degrees
+plate_w = 82;      // width of the base and the dock block follow from this
 plate_t = 7;
 rim = 5;           // solid frame around the sunburst
 base_h = 8;        // two tiers, black
@@ -44,7 +46,14 @@ module rrect(w, d, h, rad) {
 // the dock stands on its front-bottom edge at (bw/2, front, base_h) and leans back by tilt; local axes: u across, v depth, w up the lean
 module local() { translate([bw / 2, front, base_h]) rotate([-tilt, 0, 0]) children(); }
 
-module arch2d(w, h) { hull() { translate([-w / 2, 0]) square([w, 0.01]); translate([0, h - w / 2]) circle(d = w); } }
+// a sector opening upwards from (0, -fan_apex), with rounded corners
+module fan2d() {
+    offset(r = 4) offset(delta = -4)
+        intersection() {
+            translate([0, -fan_apex]) circle(fan_r);
+            polygon(concat([[0, -fan_apex]], [for (t = [-fan_a : 2 : fan_a]) [(fan_r + 10) * sin(t), -fan_apex + (fan_r + 10) * cos(t)]]));
+        }
+}
 
 module slab() {
     hull() {
@@ -56,7 +65,7 @@ module slab() {
 module block() {
     // the dock block (from below the base up to grip + 4) and the arched plate behind the pocket
     translate([-(pw + 2 * wall) / 2, 0, -16]) rrect(pw + 2 * wall, bt, grip + 20, 4);
-    translate([0, bt, -16]) rotate([90, 0, 0]) linear_extrude(plate_t) arch2d(plate_w, plate_h + 16);
+    translate([0, bt, 0]) rotate([90, 0, 0]) linear_extrude(plate_t) fan2d();
 }
 
 module pocket() { translate([-pw / 2, wall, 0]) cube([pw, pt, grip + 10]); }
@@ -72,19 +81,24 @@ module trefoil(r) {
     circle(r * 0.16);
 }
 
-// engraved 0.8 mm into the front face of the plate (the face the device leans on)
+// engraved 0.8 mm into the front face of the plate (the face the device leans on): ribs from the fan's centre, two arcs, a frame
 module sunburst() {
-    cy = 105;                                   // the rays start behind the device
+    med = fan_r - fan_apex - 16;                  // the symbol sits near the top edge
+    field = rim;
     intersection() {
-        offset(delta = -rim) arch2d(plate_w, plate_h);
+        offset(delta = -field) fan2d();
         difference() {
-            union() for (a = [0 : 7.5 : 359]) translate([0, cy]) rotate(a) translate([14, -0.6]) square([200, 1.2]);
-            translate([0, cy]) circle(14);
+            union() {
+                // ribs every 3 degrees, from above the dock
+                for (a = [-fan_a : 3 : fan_a]) translate([0, -fan_apex]) rotate(90 - a) translate([95, -0.6]) square([200, 1.2]);
+                // two arcs across the ribs
+                for (r = [130, 170]) translate([0, -fan_apex]) difference() { circle(r + 0.6); circle(r - 0.6); }
+            }
+            translate([0, med]) circle(14);
         }
     }
-    difference() { offset(delta = -rim) arch2d(plate_w, plate_h); offset(delta = -rim - 1.4) arch2d(plate_w, plate_h); }
-    // the symbol in the crown, in a ring
-    translate([0, plate_h - 24]) {
+    difference() { offset(delta = -field) fan2d(); offset(delta = -field - 1.4) fan2d(); }
+    translate([0, med]) {
         difference() { circle(10.5); circle(9.3); }
         trefoil(6.4);
     }
