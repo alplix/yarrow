@@ -1,5 +1,5 @@
 // Yarrow GC-03 desk dock, "Bench instrument" version: the counter stands in the top of a small instrument cabinet, screen up,
-// leaning back a little, like the probe of a laboratory meter. The front of the cabinet carries a nameplate, a vent grille,
+// leaning back a little, like the probe of a laboratory meter. The front of the cabinet carries a plate with the radiation symbol, a vent grille,
 // a dial and four screw heads (all engraved 0.8 mm). Only the lowest part of the case sits in the dock, so the selector knob,
 // the buttons, the power key and the USB-C socket (all higher up) stay free.
 // Free to print and share (GPL-3.0-or-later). Print as it is, base down, no supports, 0.2 mm layers, PETG or PLA, 3 walls,
@@ -83,10 +83,9 @@ module front_art() {
     for (x = [-38, 38], y = [10, cab_h - 10]) screwhead(x, y);
     // vent grille: six slots
     for (i = [0 : 5]) translate([-38, 13 + i * 5.2]) square([22, 2]);
-    // nameplate with the symbol and the name
+    // plate with the symbol
     translate([-11, 12]) difference() { square([22, cab_h - 24]); translate([1.2, 1.2]) square([19.6, cab_h - 26.4]); }
-    translate([0, cab_h / 2 + 5]) trefoil(5.2);
-    translate([0, cab_h / 2 - 8]) text("YARROW", size = 3, font = "Liberation Sans:style=Bold", halign = "center", valign = "center");
+    translate([0, cab_h / 2]) trefoil(7);
     // dial: rings, a pointer and ticks
     translate([27, cab_h / 2]) {
         difference() { circle(9); circle(7.8); }
