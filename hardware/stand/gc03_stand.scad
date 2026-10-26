@@ -9,6 +9,10 @@
 //   white   above 8.0 mm                   (the dock and the atom)
 // Change the numbers in the first block for another device; measure the metal end with callipers, the clearance is added for you.
 
+// colour_split = 1 writes the model as two separate bodies, the base below 8 mm and everything above, 0.01 mm apart, so that the slicer
+// can split them into parts and give each its own filament (make STL with -D colour_split=1).
+colour_split = 0;
+
 // ---- the device (mm)
 dev_w = 58;        // width of the case across the short edge
 dev_t = 27;        // thickness of the metal end that goes into the dock
@@ -86,8 +90,16 @@ module trefoil(r) {
 // the symbol on the front of the dock, engraved 0.8 mm
 module engrave_front() { translate([0, 0.8, 14]) rotate([90, 0, 0]) linear_extrude(2) trefoil(6); }
 
-difference() {
-    union() { slab(); local() block(); }
-    local() { pocket(); engrave_front(); }
-    translate([-100, -100, -50]) cube([300, 300, 50]);
+module whole() {
+    difference() {
+        union() { slab(); local() block(); }
+        local() { pocket(); engrave_front(); }
+        translate([-100, -100, -50]) cube([300, 300, 50]);
+    }
+}
+
+if (colour_split == 0) whole();
+else {
+    intersection() { whole(); translate([-200, -200, -1]) cube([600, 600, base_h + 1]); }
+    intersection() { whole(); translate([-200, -200, base_h + 0.01]) cube([600, 600, 400]); }
 }
