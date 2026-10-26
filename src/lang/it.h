@@ -220,7 +220,8 @@
     "Condizione tubo, tempo morto, alta tensione.", "Controlla le parti del dispositivo singolarmente.", \
     "Collega a un computer e trasferisci i dati.", "Scegli il tema colore dello schermo.", \
     "Luminosità, suono, vibrazione e orologio.", "Imposta manualmente sensibilità e fattori di campo.", \
-    "Imposta la sensibilità con una sorgente nota.", "Versione e collegamenti progetto."}
+    "Imposta la sensibilità con una sorgente nota.", "Versione e collegamenti progetto.", \
+    "Misura il tempo morto del tubo utilizzando due sorgenti."}
 #define SETTINGS_DESC {"Scegli il tema colore dello schermo.", "Uno schermo dimmer prolunga la durata della batteria.", \
     "Gli allarmi e gli avvisi devono fare suono.", "Il dispositivo deve vibrare in caso di allarme.", \
     "Un click per ogni conteggio del tubo, come nei classici contatori Geiger.", "Il motore emette un breve ronzio ad ogni conteggio.", \
@@ -331,6 +332,27 @@
 #define S_RETRY        "Riprova"
 #define S_SAVER        "Salvaschermo"
 #define S_STATION      "Modalità stazione"
+#define S_H_TITLE       "Salute"
+#define S_H_STARTS     "Avvii"
+#define S_H_THIS       "Questo avvio"
+#define S_H_WDT        "Reset Watchdog"
+#define S_H_CRASHES    "Crash"
+#define S_H_USB        "Riavvii USB"
+#define S_H_RUNNING    "In funzione"
+#define S_H_STARTUP    "Avvio"
+#define S_H_STAGE      "stadio"
+#define S_H_LASTCRASH  "Ultimo crash a"
+#define S_M_DEADTIME   "Assistente tempo morto"
+#define S_DT_A         "Solo Sorgente A"
+#define S_DT_AB        "Sorgenti A e B insieme"
+#define S_DT_B         "Solo Sorgente B"
+#define S_DT_NONE      "Nessuna sorgente"
+#define S_DT_INTRO     "Richiede due sorgenti simili, ognuna almeno 500 conteggi/sec, e un tubo fermo. Quattro conteggi di due minuti ciascuno: A, A+B, B e nessuno."
+#define S_DT_WARN      "Senza due sorgenti simili, il risultato non è affidabile e l'assistente lo segnala."
+#define S_DT_PLACE     "Posizionare la sorgente (o sorgenti) sopra il tubo, poi avviare. Non muovere nulla durante il conteggio."
+#define S_DT_NORES     "Nessun risultato valido."
+#define S_DT_NORES_D   "Le sorgenti erano troppo deboli o una si è mossa. La differenza tra i conteggi non è stata chiaramente superiore al rumore di fondo."
+#define H_REASONS {"sconosciuto", "accensione", "spillo reset", "watchdog", "watchdog finestra", "software", "bassa potenza", "crash"}
 #define S_AXIS_10MIN   "-10 min"
 #define S_AXIS_60S     "-60 s"
 #define S_T_LAST7      "Ultimi 7 giorni"

@@ -1,7 +1,7 @@
 /* Serial command protocol (USB serial or UART). Plain text lines, one command per line, replies start with OK or ERR.
  *
  *   PING                          OK pong
- *   INFO                          OK yarrow=0.2.0 stage=.. verified=.. time=.. theme=.. profile=.. pages=.. pagesize=..
+ *   INFO                          OK yarrow=0.2.1 stage=.. verified=.. time=.. theme=.. profile=.. pages=.. pagesize=..
  *   TIME | TIME <unix>            read or set the clock
  *   LIVE 1 | LIVE 0               stream "L <unix> <nSv/h> <cpm> <E x10> <H x100> <battery %>" every second
  *   LOGINFO                       OK pages=.. pagesize=.. used=.. oldest=.. newest=..

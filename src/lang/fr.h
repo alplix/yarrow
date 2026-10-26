@@ -220,7 +220,8 @@
     "État du tube, temps mort, haute tension.", "Vérifie les composants de l'appareil un par un.", \
     "Connecter à un ordinateur et transférer les enregistrements.", "Choisir le thème de couleur de l'écran.", \
     "Luminosité, son, vibration et horloge.", "Régler la sensibilité et les facteurs de champ manuellement.", \
-    "Définit la sensibilité avec une source connue.", "Version et liens de projet."}
+    "Définit la sensibilité avec une source connue.", "Version et liens de projet.", \
+    "Mesure le temps mort du tube avec deux sources."}
 #define SETTINGS_DESC {"Choisir le thème de couleur de l'écran.", "Un écran atténué prolonge la durée de vie de la batterie.", \
     "Les alarmes et avertissements doivent-ils sonner ?", "L'appareil doit-il vibrer en cas d'alarme ?", \
     "Un clic pour chaque compte de tube, comme les Geiger classiques.", "Le moteur émet un court bourdonnement à chaque compte.", \
@@ -331,6 +332,27 @@
 #define S_RETRY        "Réessayer"
 #define S_SAVER        "Économiseur d'écran"
 #define S_STATION      "Mode station"
+#define S_H_TITLE       "Santé"
+#define S_H_STARTS     "Démarrages"
+#define S_H_THIS       "Ce démarrage"
+#define S_H_WDT        "Réinitialisations WDT"
+#define S_H_CRASHES    "Plantages"
+#define S_H_USB        "Redémarrages USB"
+#define S_H_RUNNING    "En cours"
+#define S_H_STARTUP    "Démarrage"
+#define S_H_STAGE      "étape"
+#define S_H_LASTCRASH  "Dernier plantage à"
+#define S_M_DEADTIME   "Assistant temps mort"
+#define S_DT_A         "Source A seule"
+#define S_DT_AB        "Sources A et B ensemble"
+#define S_DT_B         "Source B seule"
+#define S_DT_NONE      "Aucune source"
+#define S_DT_INTRO     "Nécessite deux sources de force similaire, chacune donnant au moins 500 comptes/seconde, et un tube fixe. Quatre mesures de deux minutes chacune : A, A+B, B et aucune."
+#define S_DT_WARN      "Sans deux sources de ce type, le résultat n'est pas fiable, comme l'indique l'assistant."
+#define S_DT_PLACE     "Placez la source ou les sources mentionnées devant le tube, puis démarrez. Ne bougez rien pendant le comptage."
+#define S_DT_NORES     "Aucun résultat utilisable."
+#define S_DT_NORES_D   "Les sources étaient trop faibles, ou l'une a bougé. La différence entre les comptes n'était pas clairement supérieure à leur bruit."
+#define H_REASONS {"inconnu", "allumage", "broche reset", "surveillance", "surveillance fenêtre", "logiciel", "faible puissance", "plantage"}
 #define S_AXIS_10MIN   "-10 min"
 #define S_AXIS_60S     "-60 s"
 #define S_T_LAST7      "7 derniers jours"

@@ -21,6 +21,7 @@ typedef struct {
 typedef struct {
     bat_stats_t stats;
     uint32_t mv_filtered_x64;   /* voltage, slow filter (about 64 s) */
+    uint32_t filter_n;          /* readings in the filter so far, up to 64 (the first minute is a plain mean) */
     uint32_t up_ticks;          /* seconds the filtered level has been above the shown one */
     bool primed;
     uint32_t level_x10;         /* shown level, 0..1000, never rises while discharging (except a slow recovery) */
@@ -29,6 +30,7 @@ typedef struct {
     uint16_t hist[BAT_HIST];    /* filtered level every 10 minutes, oldest first */
     uint32_t hist_n;
     uint32_t sample_timer;
+    uint32_t on_battery_s;      /* seconds since the last start or cable, while the level still follows the cell freely */
     uint32_t cv_ticks;          /* seconds spent at the charger's constant-voltage stage */
 } bat_t;
 

@@ -220,7 +220,8 @@
     "チューブの状態、デッドタイム、高電圧。", "デバイスの各部品を順にチェックします。", \
     "PCに接続し、記録を移動します。", "画面のカラーテーマを選択します。", \
     "明るさ、音、振動、時計。", "感度と場係数を手動で設定します。", \
-    "既知の源で感度を設定します。", "バージョンとプロジェクトリンク。"}
+    "既知の源で感度を設定します。", "バージョンとプロジェクトリンク。", \
+    "2つのソースで管のデッドタイムを測定。"}
 #define SETTINGS_DESC {"画面のカラーテーマを選択します。", "ディマー画面はバッテリー寿命を延ばします。", \
     "アラームと警告を音で鳴らすか。", "アラーム時にデバイスを振動させるか。", \
     "各管カウントごとにクリック。古典的なガイガーカウンターと同様です。", "カウントごとにモーターが短いビープ音を発します。", \
@@ -331,6 +332,27 @@
 #define S_RETRY        "再試行"
 #define S_SAVER        "スクリーンセーバー"
 #define S_STATION      "ステーションモード"
+#define S_H_TITLE       "状態"
+#define S_H_STARTS     "起動"
+#define S_H_THIS       "起動"
+#define S_H_WDT        "WDTリセット"
+#define S_H_CRASHES    "クラッシュ"
+#define S_H_USB        "USB再起動"
+#define S_H_RUNNING    "動作中"
+#define S_H_STARTUP    "起動中"
+#define S_H_STAGE      "ステージ"
+#define S_H_LASTCRASH  "最終クラッシュ時刻"
+#define S_M_DEADTIME   "デッドタイムウィザード"
+#define S_DT_A         "ソースAのみ"
+#define S_DT_AB        "ソースAとB同時"
+#define S_DT_B         "ソースBのみ"
+#define S_DT_NONE      "ソースなし"
+#define S_DT_INTRO     "同程度の線源2つ（各500 cps以上）と動かない管が必要です。2分ずつ4回計数：A、A+B、B、なし。"
+#define S_DT_WARN      "2つの源がない場合、結果は信頼できません。"
+#define S_DT_PLACE     "上記の源を管の前に置き、開始してください。計数中は何も動かさないでください。"
+#define S_DT_NORES     "使用可能な結果なし。"
+#define S_DT_NORES_D   "源が弱すぎるか、移動しました。計数の差がノイズより明確に大きくありませんでした。"
+#define H_REASONS {"不明", "電源オン", "リセットピン", "ウォッチドッグ", "ウィンドウウォッチドッグ", "ソフトウェア", "低電力", "クラッシュ"}
 #define S_AXIS_10MIN   "-10 分"
 #define S_AXIS_60S     "-60 秒"
 #define S_T_LAST7      "過去7日間"

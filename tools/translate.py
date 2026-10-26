@@ -257,4 +257,5 @@ def main():
         fit(code, lang)
 
 
-main()
+if __name__ == "__main__":
+    main()

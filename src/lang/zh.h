@@ -220,7 +220,8 @@
     "管子状态、死时间、高压。", "逐一检查设备部件。", \
     "连接电脑并传输记录。", "选择屏幕颜色主题。", \
     "亮度、声音、振动和时钟。", "手动设置灵敏度和场因子。", \
-    "使用已知源设置灵敏度。", "版本和项目链接。"}
+    "使用已知源设置灵敏度。", "版本和项目链接。", \
+    "双源测量探测器死时间。"}
 #define SETTINGS_DESC {"选择屏幕颜色主题。", "调暗屏幕可延长电池寿命。", \
     "警报和警告是否发出声音。", "警报时设备是否振动。", \
     "每次管计数都会发出点击声，类似于经典盖革计数器。", "每次计数时，电机会发出短促的嗡鸣声。", \
@@ -331,6 +332,27 @@
 #define S_RETRY        "重试"
 #define S_SAVER        "屏幕保护"
 #define S_STATION      "站点模式"
+#define S_H_TITLE       "健康"
+#define S_H_STARTS     "启动"
+#define S_H_THIS       "本次启动"
+#define S_H_WDT        "看门狗复位"
+#define S_H_CRASHES    "崩溃"
+#define S_H_USB        "USB 重启"
+#define S_H_RUNNING    "运行中"
+#define S_H_STARTUP    "启动"
+#define S_H_STAGE      "阶段"
+#define S_H_LASTCRASH  "上次崩溃"
+#define S_M_DEADTIME   "死时向导"
+#define S_DT_A         "源A单独"
+#define S_DT_AB        "A和B共存"
+#define S_DT_B         "源B单独"
+#define S_DT_NONE      "无源"
+#define S_DT_INTRO     "需要两个强度相似的源，每个至少 500 counts/s，以及一个固定管。进行四次测量，每次两分钟：A, A+B, B, 无。"
+#define S_DT_WARN      "缺少两个此类源，结果不可信。"
+#define S_DT_PLACE     "将上述源放置在管前，然后开始。计数期间请勿移动任何东西。"
+#define S_DT_NORES     "无可用结果。"
+#define S_DT_NORES_D   "源太弱，或有移动。计数差异未明显大于噪声。"
+#define H_REASONS {"未知", "开机", "复位针", "看门狗", "窗口看门狗", "软件", "低电量", "崩溃"}
 #define S_AXIS_10MIN   "-10 分"
 #define S_AXIS_60S     "-60 秒"
 #define S_T_LAST7      "过去7天"

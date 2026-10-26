@@ -641,7 +641,7 @@ static void scr_about(const ui_data_t *d, const ui_state_t *s, bool full)
         for (int x = 0; x < UI_W; x += 8)
             display_fill_rect(x, 152, 4, 4, t->dim);
         font_draw_centered(&font_28_medium, 168, "YARROW", t->ink, t->bg, 6);
-        font_draw_centered(&font_12_regular, 206, "GC-03 · v0.2.0", t->dim, t->bg, 0);
+        font_draw_centered(&font_12_regular, 206, "GC-03 · v0.2.1", t->dim, t->bg, 0);
         font_draw_centered(&font_14_medium, 228, "yarrow.athena.org.tr", t->acc, t->bg, 0);
         font_draw_centered(&font_12_regular, 248, "github.com/alplix/yarrow", t->dim, t->bg, 0);
     }
@@ -662,7 +662,7 @@ static void scr_about(const ui_data_t *d, const ui_state_t *s, bool full)
     } else {
         font_draw_centered(&font_12_regular, 266, S_OPEN_SOURCE, t->dim, t->bg, 0);
     }
-    ui_footer("[<] " S_BACK, d->suspect ? "[OK] " S_RETRY : "[>] Health");
+    ui_footer("[<] " S_BACK, d->suspect ? "[OK] " S_RETRY : "[>] " S_H_TITLE);
 }
 
 /* ---- clock and date editor ---- */
@@ -907,15 +907,13 @@ static void scr_deadtime(const ui_data_t *d, const ui_state_t *s, bool full)
     char v[48];
     if (full) {
         ui_clear();
-        ui_header(&spr_tube, t->warn, "Dead time");
+        ui_header(&spr_tube, t->warn, S_CAL_DEAD);
     }
     status(d);
-    static const char *const what[4] = {"Source A alone", "Sources A and B together", "Source B alone", "No source at all"};
+    static const char *const what[4] = {S_DT_A, S_DT_AB, S_DT_B, S_DT_NONE};
     if (d->dt_phase == 0) {
-        ui_text_wrap(&font_12_regular, UI_MARGIN, 64, 216,
-                     "Needs two sources of similar strength, each giving at least 500 counts per second, and a tube "
-                     "that stays in place. Four counts of two minutes each: A, A+B, B, and none.", t->ink, t->bg, 6);
-        ui_text_wrap(&font_12_regular, UI_MARGIN, 190, 216, "Without two such sources the result is not trustworthy and the wizard says so.", t->dim, t->bg, 3);
+        ui_text_wrap(&font_12_regular, UI_MARGIN, 64, 216, S_DT_INTRO, t->ink, t->bg, 6);
+        ui_text_wrap(&font_12_regular, UI_MARGIN, 190, 216, S_DT_WARN, t->dim, t->bg, 3);
         ui_footer("[<] " S_BACK, "[OK] " S_BEGIN);
     } else if (d->dt_phase == 1 || d->dt_phase == 2) {
         int st = d->dt_step > 3 ? 3 : d->dt_step;
@@ -925,7 +923,7 @@ static void scr_deadtime(const ui_data_t *d, const ui_state_t *s, bool full)
         ui_text(&font_14_medium, UI_MARGIN + cw + 8, 63, what[st], t->ink, t->bg);
         if (d->dt_phase == 1) {
             display_fill_rect(UI_MARGIN, 98, 216, 100, t->bg);
-            ui_text_wrap(&font_12_regular, UI_MARGIN, 100, 216, "Place the source or sources named above in front of the tube, then start. Do not move anything while it counts.", t->dim, t->bg, 4);
+            ui_text_wrap(&font_12_regular, UI_MARGIN, 100, 216, S_DT_PLACE, t->dim, t->bg, 4);
             ui_footer("[<] " S_BACK, "[OK] " S_BEGIN);
         } else {
             fmt_u(v, d->dt_counts);
@@ -939,19 +937,19 @@ static void scr_deadtime(const ui_data_t *d, const ui_state_t *s, bool full)
     } else {
         if (d->dt_result_us) {
             int n = fmt_u(v, d->cal[1]);
-            add(v, n, " us");
+            add(v, n, " µs");
             ui_row(92, S_CW_OLD, v, false);
             n = fmt_u(v, d->dt_result_us);
-            add(v, n, " us");
+            add(v, n, " µs");
             ui_row(124, S_CW_NEW, v, false);
-            n = add(v, 0, "+-");
+            n = add(v, 0, "±");
             n += fmt_u(v + n, d->dt_unc_us);
-            add(v, n, " us");
+            add(v, n, " µs");
             ui_row(156, S_CW_UNC, v, false);
             ui_footer("[<] " S_DISCARD, "[OK] " S_APPLY);
         } else {
-            ui_text_wrap(&font_14_medium, UI_MARGIN, 90, 216, "No usable result.", t->bad, t->bg, 2);
-            ui_text_wrap(&font_12_regular, UI_MARGIN, 124, 216, "The sources were too weak, or one moved. The difference between the counts was not clearly larger than their noise.", t->dim, t->bg, 6);
+            ui_text_wrap(&font_14_medium, UI_MARGIN, 90, 216, S_DT_NORES, t->bad, t->bg, 2);
+            ui_text_wrap(&font_12_regular, UI_MARGIN, 124, 216, S_DT_NORES_D, t->dim, t->bg, 6);
             ui_footer("[<] " S_BACK, 0);
         }
     }
@@ -1055,34 +1053,34 @@ static void scr_health(const ui_data_t *d, const ui_state_t *s, bool full)
     const theme_t *t = ui_theme;
     if (full) {
         ui_clear();
-        ui_header(&spr_gear, t->acc, "Health");
+        ui_header(&spr_gear, t->acc, S_H_TITLE);
     }
     status(d);
-    static const char *const reasons[8] = {"unknown", "power on", "reset pin", "watchdog", "window watchdog", "software", "low power", "crash"};
+    static const char *const reasons[8] = H_REASONS;
     char v[24];
     int y = 58;
     fmt_u(v, d->h_boots);
-    health_row(y, "Starts", v, t->ink); y += 26;
-    health_row(y, "This start", reasons[d->h_reason < 8 ? d->h_reason : 0], (d->h_reason == 3 || d->h_reason == 7) ? t->warn : t->ink); y += 26;
+    health_row(y, S_H_STARTS, v, t->ink); y += 26;
+    health_row(y, S_H_THIS, reasons[d->h_reason < 8 ? d->h_reason : 0], (d->h_reason == 3 || d->h_reason == 7) ? t->warn : t->ink); y += 26;
     fmt_u(v, d->h_wdt);
-    health_row(y, "Watchdog resets", v, d->h_wdt ? t->warn : t->ink); y += 26;
+    health_row(y, S_H_WDT, v, d->h_wdt ? t->warn : t->ink); y += 26;
     fmt_u(v, d->h_fault);
-    health_row(y, "Crashes", v, d->h_fault ? t->warn : t->ink); y += 26;
+    health_row(y, S_H_CRASHES, v, d->h_fault ? t->warn : t->ink); y += 26;
     fmt_u(v, d->h_usb_restarts);
-    health_row(y, "USB restarts", v, t->ink); y += 26;
+    health_row(y, S_H_USB, v, t->ink); y += 26;
     fmt_duration(v, d->uptime_s);
-    health_row(y, "Running", v, t->ink); y += 26;
-    int n = add(v, 0, "stage ");
+    health_row(y, S_H_RUNNING, v, t->ink); y += 26;
+    int n = add(v, 0, S_H_STAGE " ");
     n += fmt_u(v + n, d->stage);
     add(v, n, "/5");
-    health_row(y, "Start-up", v, d->suspect ? t->warn : t->ink); y += 26;
+    health_row(y, S_H_STARTUP, v, d->suspect ? t->warn : t->ink); y += 26;
     if (d->h_fault_pc) {
         static const char hex[] = "0123456789ABCDEF";
         v[0] = '0'; v[1] = 'x';
         for (int k = 0; k < 8; k++)
             v[2 + k] = hex[(d->h_fault_pc >> (28 - 4 * k)) & 15];
         v[10] = 0;
-        health_row(y, "Last crash at", v, t->dim);
+        health_row(y, S_H_LASTCRASH, v, t->dim);
     }
     ui_footer("[<] " S_BACK, 0);
 }

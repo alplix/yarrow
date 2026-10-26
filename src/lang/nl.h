@@ -220,7 +220,8 @@
     "Buizenconditie, doodtijd, hoge spanning.", "Controleert de onderdelen van het apparaat één voor één.", \
     "Verbinden met pc en gegevens overzetten.", "Kies het kleurenschema van het scherm.", \
     "Helderheid, geluid, trilling en klok.", "Stel gevoeligheid en veldfactoren handmatig in.", \
-    "Stelt de gevoeligheid in met een bekende bron.", "Versie en projectlinks."}
+    "Stelt de gevoeligheid in met een bekende bron.", "Versie en projectlinks.", \
+    "Meet de dead time van de tube met twee bronnen."}
 #define SETTINGS_DESC {"Kies het kleurenschema van het scherm.", "Een gedimd scherm verlengt de batterijduur.", \
     "Moeten alarmen en waarschuwingen een geluid maken.", "Moet het apparaat trillen bij een alarm.", \
     "Een klik bij elke buis-telling, zoals klassieke Geiger-tellers.", "De motor geeft een korte zoem bij elke telling.", \
@@ -331,6 +332,27 @@
 #define S_RETRY        "Opnieuw"
 #define S_SAVER        "Schermbeveiliging"
 #define S_STATION      "Stationsmodus"
+#define S_H_TITLE       "Gezondheid"
+#define S_H_STARTS     "Starts"
+#define S_H_THIS       "Deze start"
+#define S_H_WDT        "Watchdog resets"
+#define S_H_CRASHES    "Crashes"
+#define S_H_USB        "USB restarts"
+#define S_H_RUNNING    "Lopend"
+#define S_H_STARTUP    "Opstart"
+#define S_H_STAGE      "fase"
+#define S_H_LASTCRASH  "Laatste crash op"
+#define S_M_DEADTIME   "Dead-time wizard"
+#define S_DT_A         "Bron A alleen"
+#define S_DT_AB        "Bron A en B samen"
+#define S_DT_B         "Bron B alleen"
+#define S_DT_NONE      "Geen bron"
+#define S_DT_INTRO     "Vereist twee bronnen van vergelijkbare sterkte, elk minstens 500 tellingen per seconde, en een tube die stil blijft. Vier metingen van twee minuten elk: A, A+B, B en geen."
+#define S_DT_WARN      "Zonder twee dergelijke bronnen is het resultaat niet betrouwbaar, en de wizard meldt dit."
+#define S_DT_PLACE     "Plaats de hierboven genoemde bron(nen) voor de tube, en start. Beweeg niets tijdens het tellen."
+#define S_DT_NORES     "Geen bruikbaar resultaat."
+#define S_DT_NORES_D   "De bronnen waren te zwak, of er is één bewogen. Het verschil tussen de tellingen was niet duidelijk groter dan de ruis."
+#define H_REASONS {"onbekend", "aan", "resetnaald", "watchdog", "window watchdog", "software", "laag vermogen", "crash"}
 #define S_AXIS_10MIN   "-10 min"
 #define S_AXIS_60S     "-60 s"
 #define S_T_LAST7      "Laatste 7 dagen"

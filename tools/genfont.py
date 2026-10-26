@@ -66,7 +66,7 @@ def title_chars():
     text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
     chars = set()
     string = re.compile(r'"((?:[^"\\\n]|\\.)*)"')
-    for m in re.finditer(r"^#define\s+(S_T_\w+|S_P_\w+|S_NORMAL|S_ATTENTION|S_DANGER|S_EVACUATE|S_CLOCK_DATE)\s+(.*)$", text, flags=re.M):
+    for m in re.finditer(r"^#define\s+(S_T_\w+|S_P_\w+|S_NORMAL|S_ATTENTION|S_DANGER|S_EVACUATE|S_CLOCK_DATE|S_H_TITLE|S_CAL_DEAD)\s+(.*)$", text, flags=re.M):
         for lit in string.findall(m.group(2)):
             chars.update(lit)
     guide = re.search(r"^#define GUIDE_DATA.*?^\}", text, flags=re.M | re.S)

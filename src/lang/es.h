@@ -220,7 +220,8 @@
     "Condición del tubo, tiempo muerto, alto voltaje.", "Comprueba las partes del dispositivo una por una.", \
     "Conectar a PC y transferir registros.", "Seleccionar el tema de color de la pantalla.", \
     "Brillo, sonido, vibración y reloj.", "Ajustar sensibilidad y factores de campo manualmente.", \
-    "Ajusta la sensibilidad con una fuente conocida.", "Versión y enlaces de proyecto."}
+    "Ajusta la sensibilidad con una fuente conocida.", "Versión y enlaces de proyecto.", \
+    "Mide el tiempo muerto del tubo con dos fuentes."}
 #define SETTINGS_DESC {"Seleccionar el tema de color de la pantalla.", "Una pantalla atenuada alarga la duración de la batería.", \
     "¿Deben sonar alarmas y advertencias?", "¿Debe vibrar el dispositivo en alarma?", \
     "Un clic por cada cuenta de tubo, como los contadores Geiger clásicos.", "El motor emite un zumbido corto en cada cuenta.", \
@@ -331,6 +332,27 @@
 #define S_RETRY        "Reintentar"
 #define S_SAVER        "Salvapantallas"
 #define S_STATION      "Modo estación"
+#define S_H_TITLE       "Salud"
+#define S_H_STARTS     "Inicio"
+#define S_H_THIS       "Este inicio"
+#define S_H_WDT        "Reinicios watchdog"
+#define S_H_CRASHES    "Caídas"
+#define S_H_USB        "Reinicios USB"
+#define S_H_RUNNING    "En ejecución"
+#define S_H_STARTUP    "Arranque"
+#define S_H_STAGE      "etapa"
+#define S_H_LASTCRASH  "Última caída en"
+#define S_M_DEADTIME   "Asistente de tiempo muerto"
+#define S_DT_A         "Fuente A sola"
+#define S_DT_AB        "Fuentes A y B juntas"
+#define S_DT_B         "Fuente B sola"
+#define S_DT_NONE      "Ninguna fuente"
+#define S_DT_INTRO     "Requiere dos fuentes de intensidad similar, cada una dando al menos 500 cuentas/s, y un tubo fijo. Cuatro conteos de dos minutos cada uno: A, A+B, B y ninguna."
+#define S_DT_WARN      "Sin dos fuentes así, el resultado no es fiable y el asistente lo indica."
+#define S_DT_PLACE     "Coloque la fuente o fuentes mencionadas delante del tubo, luego inicie. No mueva nada mientras cuenta."
+#define S_DT_NORES     "Sin resultado utilizable."
+#define S_DT_NORES_D   "Las fuentes eran demasiado débiles o se movió una. La diferencia entre cuentas no fue claramente mayor que su ruido."
+#define H_REASONS {"desconocido", "encendido", "pin de reset", "watchdog", "watchdog de ventana", "software", "baja energía", "fallo"}
 #define S_AXIS_10MIN   "-10 min"
 #define S_AXIS_60S     "-60 s"
 #define S_T_LAST7      "Últimos 7 días"

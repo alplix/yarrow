@@ -484,7 +484,7 @@ static void scr_mode(const ui_data_t *d, const ui_state_t *s, bool full)
 /* same order as open_menu_entry() in app.c */
 static const char *const menu_names[MENU_N] = {S_M_GUIDE, S_M_EVENTS, S_M_BUDGET, S_M_SESSIONS, S_M_SAMPLE, S_M_SCAN, S_M_LOG,
                                                S_M_THRESH, S_M_TUBE, S_M_SELFTEST, S_M_USB, S_M_THEMES, S_M_SETTINGS, S_M_CALIB,
-                                               S_M_CALWIZ, S_M_ABOUT, "Dead-time wizard"};
+                                               S_M_CALWIZ, S_M_ABOUT, S_M_DEADTIME};
 
 static const sprite_t *const menu_icons[MENU_N] = {
     &spr_book, &spr_list, &spr_trefoil, &spr_signal, &spr_flask, &spr_magnet, &spr_disk, &spr_bolt,
@@ -518,7 +518,7 @@ static void scr_menu(const ui_data_t *d, const ui_state_t *s, bool full)
     /* what the selected entry does */
     display_fill_rect(UI_MARGIN, 232, UI_W - 2 * UI_MARGIN, 52, t->panel);
     if (s->sel >= 0 && s->sel < MENU_N)
-        ui_text_wrap(&font_12_regular, UI_MARGIN + 8, 238, UI_W - 2 * UI_MARGIN - 16, desc[s->sel] ? desc[s->sel] : "Measures the tube's dead time with two sources.", t->ink, t->panel, 3);
+        ui_text_wrap(&font_12_regular, UI_MARGIN + 8, 238, UI_W - 2 * UI_MARGIN - 16, desc[s->sel], t->ink, t->panel, 3);
     ui_footer("[<] " S_BACK, "[OK] " S_OPEN);
 }
 

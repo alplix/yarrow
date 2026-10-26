@@ -220,7 +220,8 @@
     "Tube condition, dead time, high voltage.", "Checks the parts of the device one by one.", \
     "Connect to a computer and move the records.", "Pick the colour theme of the screen.", \
     "Brightness, sound, vibration and clock.", "Set the sensitivity and field factors by hand.", \
-    "Sets the sensitivity with a known source.", "Version and project links."}
+    "Sets the sensitivity with a known source.", "Version and project links.", \
+    "Measures the tube's dead time with two sources."}
 #define SETTINGS_DESC {"Pick the colour theme of the screen.", "A dimmer screen makes the battery last longer.", \
     "Should alarms and warnings make a sound.", "Should the device vibrate on an alarm.", \
     "A click on every tube count, like the classic Geiger counters.", "The motor gives a short buzz on every count.", \
@@ -331,6 +332,27 @@
 #define S_RETRY        "Retry"
 #define S_SAVER        "Screensaver"
 #define S_STATION      "Station mode"
+#define S_H_TITLE       "Health"
+#define S_H_STARTS     "Starts"
+#define S_H_THIS       "This start"
+#define S_H_WDT        "Watchdog resets"
+#define S_H_CRASHES    "Crashes"
+#define S_H_USB        "USB restarts"
+#define S_H_RUNNING    "Running"
+#define S_H_STARTUP    "Start-up"
+#define S_H_STAGE      "stage"
+#define S_H_LASTCRASH  "Last crash at"
+#define S_M_DEADTIME   "Dead-time wizard"
+#define S_DT_A         "Source A alone"
+#define S_DT_AB        "Sources A and B together"
+#define S_DT_B         "Source B alone"
+#define S_DT_NONE      "No source at all"
+#define S_DT_INTRO     "Needs two sources of similar strength, each giving at least 500 counts per second, and a tube that stays in place. Four counts of two minutes each: A, A+B, B, and none."
+#define S_DT_WARN      "Without two such sources the result is not trustworthy and the wizard says so."
+#define S_DT_PLACE     "Place the source or sources named above in front of the tube, then start. Do not move anything while it counts."
+#define S_DT_NORES     "No usable result."
+#define S_DT_NORES_D   "The sources were too weak, or one moved. The difference between the counts was not clearly larger than their noise."
+#define H_REASONS {"unknown", "power on", "reset pin", "watchdog", "window watchdog", "software", "low power", "crash"}
 #define S_AXIS_10MIN   "-10 min"
 #define S_AXIS_60S     "-60 s"
 #define S_T_LAST7      "Last 7 days"

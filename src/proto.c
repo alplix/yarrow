@@ -63,7 +63,7 @@ static void cmd_info(proto_t *p)
 {
     app_t *a = p->app;
     char b[160];
-    int n = put_s(b, 0, "OK yarrow=0.2.0 stage=");
+    int n = put_s(b, 0, "OK yarrow=0.2.1 stage=");
     n = put_u(b, n, a->stage);
     n = put_s(b, n, " verified=");
     n = put_u(b, n, a->verified);

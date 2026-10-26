@@ -222,7 +222,8 @@
     "Sayaç tüpünün durumu, ölü zaman, yüksek voltaj.", "Cihazın parçalarını sırayla kontrol eder.", \
     "USB ile bilgisayara bağlan, kayıtları aktar.", "Ekranın renk temasını seç.", \
     "Parlaklık, ses, titreşim ve saat.", "Ölçü hassasiyetini ve alan değerlerini elle ayarla.", \
-    "Bilinen bir kaynakla duyarlılığı ayarlar.", "Sürüm ve proje bağlantıları."}
+    "Bilinen bir kaynakla duyarlılığı ayarlar.", "Sürüm ve proje bağlantıları.", \
+    "Tüpün ölü zamanını iki kaynakla ölçer."}
 #define SETTINGS_DESC {"Ekranın renk temasını seç.", "Parlaklığı azaltmak pil ömrünü uzatır.", \
     "Alarm ve uyarılarda ses çalsın mı.", "Alarmda cihaz titresin mi.", \
     "Tüpten gelen her sayımda eski Geiger sayaçları gibi tık sesi çıkar.", "Her sayımda motor kısa bir titreşim verir.", \
@@ -334,6 +335,27 @@
 #define S_RETRY        "Tekrar"
 #define S_SAVER        "Ekran koruyucu"
 #define S_STATION      "İstasyon modu"
+#define S_H_TITLE       "Sağlık"
+#define S_H_STARTS     "Açılış"
+#define S_H_THIS       "Bu açılış"
+#define S_H_WDT        "Watchdog sıfırlama"
+#define S_H_CRASHES    "Çökme"
+#define S_H_USB        "USB yeniden başlatma"
+#define S_H_RUNNING    "Çalışma süresi"
+#define S_H_STARTUP    "Açılış aşaması"
+#define S_H_STAGE      "aşama"
+#define S_H_LASTCRASH  "Son çökme adresi"
+#define S_M_DEADTIME   "Ölü zaman sihirbazı"
+#define S_DT_A         "Yalnız kaynak A"
+#define S_DT_AB        "A ve B birlikte"
+#define S_DT_B         "Yalnız kaynak B"
+#define S_DT_NONE      "Hiç kaynak yok"
+#define S_DT_INTRO     "Benzer güçte iki kaynak gerekir; her biri tüpte saniyede en az 500 sayım vermeli, tüp yerinden oynamamalı. İkişer dakikalık dört sayım: A, A+B, B ve hiçbiri."
+#define S_DT_WARN      "Böyle iki kaynak yoksa sonuç güvenilmez olur ve sihirbaz bunu söyler."
+#define S_DT_PLACE     "Yukarıda yazan kaynağı tüpün önüne koyun, sonra başlatın. Sayım sürerken hiçbir şeyi oynatmayın."
+#define S_DT_NORES     "Kullanılabilir sonuç yok."
+#define S_DT_NORES_D   "Kaynaklar çok zayıftı ya da biri kıpırdadı. Sayımlar arasındaki fark gürültülerinden belirgin biçimde büyük değildi."
+#define H_REASONS {"bilinmiyor", "güç açıldı", "reset pini", "watchdog", "pencere watchdog", "yazılım", "düşük güç", "çökme"}
 #define S_AXIS_10MIN   "-10 dk"
 #define S_AXIS_60S     "-60 sn"
 #define S_T_LAST7      "Son 7 gün"

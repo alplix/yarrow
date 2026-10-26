@@ -65,7 +65,7 @@ void ui_boot_draw(const theme_t *t)
     flower(t, (DISPLAY_W - FLOWER_W * FLOWER_SCALE) / 2, 24);
 
     font_draw_centered(&font_28_medium, 170, "YARROW", t->ink, t->bg, 6);
-    font_draw_centered(&font_12_regular, 210, "GC-03 \xC2\xB7 v0.2.0", t->dim, t->bg, 0);
+    font_draw_centered(&font_12_regular, 210, "GC-03 \xC2\xB7 v0.2.1", t->dim, t->bg, 0);
 
     ui_boot_progress(t, 0);
 

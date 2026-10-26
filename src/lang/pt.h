@@ -220,7 +220,8 @@
     "Condição do tubo, tempo morto, alta tensão.", "Verifica as partes do dispositivo sequencialmente.", \
     "Conectar a um computador e transferir registros.", "Escolher o tema de cores da tela.", \
     "Brilho, som, vibração e relógio.", "Ajustar sensibilidade e fatores de campo manualmente.", \
-    "Define a sensibilidade com uma fonte conhecida.", "Versão e links do projeto."}
+    "Define a sensibilidade com uma fonte conhecida.", "Versão e links do projeto.", \
+    "Mede o tempo morto do tubo com duas fontes."}
 #define SETTINGS_DESC {"Escolher o tema de cores da tela.", "Uma tela com brilho reduzido prolonga a bateria.", \
     "Alarme e aviso devem emitir som.", "O dispositivo deve vibrar em alarme.", \
     "Um clique por contagem de tubo, como nos contadores Geiger clássicos.", "O motor emite um bipe curto a cada contagem.", \
@@ -331,6 +332,27 @@
 #define S_RETRY        "Repetir"
 #define S_SAVER        "Protetor de tela"
 #define S_STATION      "Modo estação"
+#define S_H_TITLE       "Saúde"
+#define S_H_STARTS     "Inícios"
+#define S_H_THIS       "Este início"
+#define S_H_WDT        "Reinicializações do Watchdog"
+#define S_H_CRASHES    "Falhas"
+#define S_H_USB        "Reinícios USB"
+#define S_H_RUNNING    "Em execução"
+#define S_H_STARTUP    "Inicialização"
+#define S_H_STAGE      "estágio"
+#define S_H_LASTCRASH  "Última falha em"
+#define S_M_DEADTIME   "Assistente de Tempo Morto"
+#define S_DT_A         "Fonte A sozinha"
+#define S_DT_AB        "Fontes A e B juntas"
+#define S_DT_B         "Fonte B sozinha"
+#define S_DT_NONE      "Nenhuma fonte"
+#define S_DT_INTRO     "Requer duas fontes de intensidade similar, cada uma fornecendo pelo menos 500 contagens por segundo, e um tubo fixo. Quatro contagens de dois minutos cada: A, A+B, B e nenhuma."
+#define S_DT_WARN      "Sem duas fontes assim, o resultado não é confiável e o assistente avisa."
+#define S_DT_PLACE     "Coloque a fonte ou fontes acima na frente do tubo e inicie. Não mova nada enquanto contar."
+#define S_DT_NORES     "Nenhum resultado utilizável."
+#define S_DT_NORES_D   "As fontes estavam fracas ou uma se moveu. A diferença entre as contagens não foi claramente maior que o ruído."
+#define H_REASONS {"desconhecido", "ligar", "pino reset", "watchdog", "watchdog janela", "software", "baixa energia", "falha"}
 #define S_AXIS_10MIN   "-10 min"
 #define S_AXIS_60S     "-60 s"
 #define S_T_LAST7      "Últimos 7 dias"

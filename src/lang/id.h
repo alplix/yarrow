@@ -220,7 +220,8 @@
     "Kondisi tabung, waktu mati, tegangan tinggi.", "Memeriksa bagian perangkat satu per satu.", \
     "Hubungkan ke komputer dan pindahkan data.", "Pilih tema warna layar.", \
     "Kecerahan, suara, getaran, dan jam.", "Atur sensitivitas dan faktor medan secara manual.", \
-    "Mengatur sensitivitas dengan sumber yang diketahui.", "Versi dan tautan proyek."}
+    "Mengatur sensitivitas dengan sumber yang diketahui.", "Versi dan tautan proyek.", \
+    "Mengukur waktu mati tabung dengan dua sumber."}
 #define SETTINGS_DESC {"Pilih tema warna layar.", "Layar yang lebih redup membuat baterai lebih awet.", \
     "Haruskah alarm dan peringatan mengeluarkan suara.", "Haruskah perangkat bergetar saat alarm.", \
     "Klik pada setiap hitungan tabung, seperti Geiger klasik.", "Motor mengeluarkan bunyi dengungan pendek pada setiap hitungan.", \
@@ -331,6 +332,27 @@
 #define S_RETRY        "Ulangi"
 #define S_SAVER        "Screensaver"
 #define S_STATION      "Mode stasiun"
+#define S_H_TITLE       "Kesehatan"
+#define S_H_STARTS     "Mulai"
+#define S_H_THIS       "Mulai ini"
+#define S_H_WDT        "Reset Watchdog"
+#define S_H_CRASHES    "Crash"
+#define S_H_USB        "Restart USB"
+#define S_H_RUNNING    "Berjalan"
+#define S_H_STARTUP    "Startup"
+#define S_H_STAGE      "tahap"
+#define S_H_LASTCRASH  "Crash terakhir pada"
+#define S_M_DEADTIME   "Wizard Waktu Mati"
+#define S_DT_A         "Sumber A saja"
+#define S_DT_AB        "Sumber A dan B bersama"
+#define S_DT_B         "Sumber B saja"
+#define S_DT_NONE      "Tidak ada sumber"
+#define S_DT_INTRO     "Membutuhkan dua sumber kekuatan serupa, masing-masing minimal 500 hit/detik, dan tabung tetap di tempat. Empat hit masing-masing dua menit: A, A+B, B, dan tidak ada."
+#define S_DT_WARN      "Tanpa dua sumber seperti itu, hasilnya tidak dapat dipercaya, dan wizard menyatakannya."
+#define S_DT_PLACE     "Letakkan sumber atau sumber yang disebutkan di atas di depan tabung, lalu mulai. Jangan memindahkan apa pun saat menghitung."
+#define S_DT_NORES     "Tidak ada hasil yang dapat digunakan."
+#define S_DT_NORES_D   "Sumber terlalu lemah, atau salah satu bergerak. Perbedaan hit tidak jelas lebih besar dari kebisingan mereka."
+#define H_REASONS {"tidak dikenal", "daya hidup", "pin reset", "watchdog", "watchdog jendela", "software", "daya rendah", "crash"}
 #define S_AXIS_10MIN   "-10 mnt"
 #define S_AXIS_60S     "-60 dtk"
 #define S_T_LAST7      "7 hari terakhir"

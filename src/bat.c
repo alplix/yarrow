@@ -10,6 +10,9 @@
  * level would jump by tens of percent the moment the cable goes in. The constant-current stage is read with that drop
  * taken off; at the charger's 4.2 V stage the current tapers over about an hour and the level climbs from 85 % to 99 %
  * in that time. The charger's own "done" signal is what shows 100 %. */
+#define SETTLE_S 60u               /* after the start or after the cable is pulled the level follows the cell freely for this long */
+#define UP_TICKS 20u
+#define UP_BAND 20u                /* the shown level rises only when the cell reads this much (2 %) above it: noise never moves it up */
 #define CHARGE_DROP_MV 120u
 #define CV_START_MV 4170u
 #define CV_LEVEL_X10 850u
@@ -96,7 +99,12 @@ void bat_tick(bat_t *b, uint32_t mv, bool usb_present, bool charging)
     /* smooth the voltage slowly: single readings are jumpy and the load makes brief dips (backlight, buzzer) */
     if (!b->primed) {
         b->mv_filtered_x64 = mv * 64u;
+        b->filter_n = 1;
         b->primed = true;
+    } else if (b->filter_n < 64u) {
+        /* the first minute: a plain running mean, so a reading or two taken under the start-up load do not weigh for minutes */
+        b->mv_filtered_x64 = (b->mv_filtered_x64 * b->filter_n + mv * 64u) / (b->filter_n + 1u);
+        b->filter_n++;
     } else {
         b->mv_filtered_x64 = b->mv_filtered_x64 - b->mv_filtered_x64 / 64u + mv;
     }
@@ -126,16 +134,25 @@ void bat_tick(bat_t *b, uint32_t mv, bool usb_present, bool charging)
         b->hist_n = 0;
         b->sample_timer = 0;
         b->up_ticks = 0;
+        b->on_battery_s = 0;
         return;
     }
 
     b->state = BAT_DISCHARGING;
     uint32_t before = b->level_x10;
+    if (b->on_battery_s < SETTLE_S) {
+        /* the first minute on the battery: the level is whatever the cell reads, up or down. The shown level used to start at
+         * 100 % and could only fall, so a first reading taken under the start-up load stayed too low for hours. */
+        b->on_battery_s++;
+        b->level_x10 = level;
+        b->up_ticks = 0;
+        return;
+    }
     if (level < b->level_x10) {
         b->level_x10 = level; /* down: follow at once */
         b->up_ticks = 0;
-    } else if (level > b->level_x10 && ++b->up_ticks >= 300u) {
-        b->level_x10++;       /* up: only a slow recovery after a dip, one tenth of a percent per 5 minutes */
+    } else if (level >= b->level_x10 + UP_BAND && ++b->up_ticks >= UP_TICKS) {
+        b->level_x10++;       /* up: a slow recovery after a dip, one tenth of a percent per 20 seconds */
         b->up_ticks = 0;
     }
     if (before > b->level_x10)

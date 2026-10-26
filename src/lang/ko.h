@@ -220,7 +220,8 @@
     "튜브 상태, 데드 타임, 고전압.", "장치 부품을 하나씩 점검합니다.", \
     "컴퓨터에 연결하여 기록을 이동합니다.", "화면 색상 테마를 선택합니다.", \
     "밝기, 소리, 진동 및 시계.", "민감도 및 필드 계수를 수동으로 설정합니다.", \
-    "알려진 소스를 사용하여 민감도를 설정합니다.", "버전 및 프로젝트 링크."}
+    "알려진 소스를 사용하여 민감도를 설정합니다.", "버전 및 프로젝트 링크.", \
+    "두 소스로 튜브 데드 타임 측정"}
 #define SETTINGS_DESC {"화면 색상 테마 선택.", "화면 밝기를 낮추면 배터리 수명이 길어집니다.", \
     "알람 및 경고음 발생 여부.", "알람 시 장치 진동 여부.", \
     "고전 가이거 계수기처럼 튜브 카운트마다 클릭.", "카운트마다 모터가 짧게 진동합니다.", \
@@ -331,6 +332,27 @@
 #define S_RETRY        "재시도"
 #define S_SAVER        "화면 보호기"
 #define S_STATION      "스테이션 모드"
+#define S_H_TITLE       "건강"
+#define S_H_STARTS     "시작"
+#define S_H_THIS       "이번 시작"
+#define S_H_WDT        "워치독 재설정"
+#define S_H_CRASHES    "충돌"
+#define S_H_USB        "USB 재시작"
+#define S_H_RUNNING    "작동 중"
+#define S_H_STARTUP    "시작 중"
+#define S_H_STAGE      "단계"
+#define S_H_LASTCRASH  "마지막 충돌 시"
+#define S_M_DEADTIME   "데드타임 마법사"
+#define S_DT_A         "A 단독"
+#define S_DT_AB        "A, B 합산"
+#define S_DT_B         "B 단독"
+#define S_DT_NONE      "소스 없음"
+#define S_DT_INTRO     "비슷한 강도의 소스 2개 필요 (각 500 cps 이상), 고정된 튜브 필요. 2분씩 4회 측정: A, A+B, B, 없음."
+#define S_DT_WARN      "두 소스가 없으면 결과는 신뢰할 수 없습니다."
+#define S_DT_PLACE     "위 소스를 튜브 앞에 놓고 시작하십시오. 측정 중에는 아무것도 움직이지 마십시오."
+#define S_DT_NORES     "사용 가능한 결과 없음."
+#define S_DT_NORES_D   "소스가 너무 약하거나 움직였습니다. 측정값 차이가 노이즈보다 명확히 크지 않습니다."
+#define H_REASONS {"알 수 없음", "전원 켜짐", "리셋 핀", "워치독", "윈도우 워치독", "소프트웨어", "저전력", "충돌"}
 #define S_AXIS_10MIN   "-10 분"
 #define S_AXIS_60S     "-60 초"
 #define S_T_LAST7      "최근 7일"

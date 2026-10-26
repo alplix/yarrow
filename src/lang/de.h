@@ -220,7 +220,8 @@
     "Röhrenzustand, Totzeit, Hochspannung.", "Überprüft die Gerätekomponenten einzeln.", \
     "Mit PC verbinden und Aufzeichnungen übertragen.", "Farbschema des Bildschirms wählen.", \
     "Helligkeit, Ton, Vibration und Uhr.", "Empfindlichkeits- und Feldkoeffizienten manuell einstellen.", \
-    "Empfindlichkeit mit bekannter Quelle einstellen.", "Version und Projektverknüpfungen."}
+    "Empfindlichkeit mit bekannter Quelle einstellen.", "Version und Projektverknüpfungen.", \
+    "Misst die Totzeit der Röhre mit zwei Quellen."}
 #define SETTINGS_DESC {"Farbschema des Bildschirms wählen.", "Ein gedimmter Bildschirm verlängert die Akkulaufzeit.", \
     "Soll Alarm und Warnung einen Ton erzeugen.", "Soll das Gerät bei Alarm vibrieren.", \
     "Ein Klick pro Zählrohr, wie bei klassischen Geigerzählern.", "Der Motor piept bei jeder Zählung kurz.", \
@@ -331,6 +332,27 @@
 #define S_RETRY        "Nochmal"
 #define S_SAVER        "Bildschirmschoner"
 #define S_STATION      "Stationsbetrieb"
+#define S_H_TITLE       "Zustand"
+#define S_H_STARTS     "Starts"
+#define S_H_THIS       "Dieser Start"
+#define S_H_WDT        "Watchdog-Resets"
+#define S_H_CRASHES    "Abstürze"
+#define S_H_USB        "USB-Neustarts"
+#define S_H_RUNNING    "Läuft"
+#define S_H_STARTUP    "Start-up"
+#define S_H_STAGE      "Stufe"
+#define S_H_LASTCRASH  "Letzter Absturz um"
+#define S_M_DEADTIME   "Dead-Time-Assistent"
+#define S_DT_A         "Quelle A allein"
+#define S_DT_AB        "Quellen A und B zusammen"
+#define S_DT_B         "Quelle B allein"
+#define S_DT_NONE      "Keine Quelle vorhanden"
+#define S_DT_INTRO     "Benötigt zwei Quellen gleicher Stärke, je mindestens 500 Zählung/Sekunde, und eine stationäre Röhre. Vier Messungen à 2 Minuten: A, A+B, B und keine Quelle."
+#define S_DT_WARN      "Ohne zwei solche Quellen ist das Ergebnis nicht zuverlässig. Der Assistent weist darauf hin."
+#define S_DT_PLACE     "Platzieren Sie die oben genannte Quelle/Quellen vor die Röhre und starten Sie. Bewegen Sie nichts während der Zählung."
+#define S_DT_NORES     "Kein nutzbarer Wert."
+#define S_DT_NORES_D   "Die Quellen waren zu schwach oder eine wurde bewegt. Der Zähldifferenz war nicht deutlich größer als das Rauschen."
+#define H_REASONS {"unbekannt", "einschalten", "reset-Pin", "watchdog", "fenster-watchdog", "software", "niedrige leistung", "absturz"}
 #define S_AXIS_10MIN   "-10 min"
 #define S_AXIS_60S     "-60 s"
 #define S_T_LAST7      "Letzte 7 Tage"

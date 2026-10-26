@@ -815,9 +815,9 @@ static void run_second(app_t *a, uint32_t now_ms)
     }
 
     /* battery */
-    uint32_t mv = feat_sensors(a) ? H(a)->battery_mv() : 4000;
     bool usb = feat_sensors(a) && H(a)->usb_present();
-    bat_tick(&a->bat, mv, usb, usb && H(a)->charging());
+    if (feat_sensors(a)) /* before the sensors are on there is no reading: a made-up one would set the level */
+        bat_tick(&a->bat, H(a)->battery_mv(), usb, usb && H(a)->charging());
     if (usb && !a->usb_was_present && cur(a) != SCR_ALARM && cur(a) != SCR_CHARGE) {
         push(a, SCR_CHARGE); /* cable plugged in: show the charging screen */
         a->last_input_ms = now_ms;

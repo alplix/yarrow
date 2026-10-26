@@ -1015,7 +1015,7 @@ static void test_protocol(void)
     proto_init(&proto, &app);
 
     CHECK(strcmp(ask("PING\n"), "OK pong\n") == 0, "ping: %s", ser_out);
-    CHECK(strncmp(ask("INFO\n"), "OK yarrow=0.2.0 stage=5", 23) == 0, "info: %s", ser_out);
+    CHECK(strncmp(ask("INFO\n"), "OK yarrow=0.2.1 stage=5", 23) == 0, "info: %s", ser_out);
     CHECK(strncmp(ask("INFO\r\n"), "OK yarrow", 9) == 0, "carriage return handling");
     CHECK(strcmp(ask("UID\n"), "OK 9367a9ef47f81d05\n") == 0, "uid hash: %s", ser_out);
     {

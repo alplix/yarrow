@@ -220,7 +220,8 @@
     "Tình trạng ống, thời gian chết, điện áp cao.", "Kiểm tra từng bộ phận của thiết bị.", \
     "Kết nối máy tính và chuyển dữ liệu.", "Chọn chủ đề màu màn hình.", \
     "Độ sáng, âm thanh, rung và đồng hồ.", "Thiết lập độ nhạy và hệ số trường thủ công.", \
-    "Thiết lập độ nhạy bằng nguồn chuẩn.", "Phiên bản và liên kết dự án."}
+    "Thiết lập độ nhạy bằng nguồn chuẩn.", "Phiên bản và liên kết dự án.", \
+    "Đo thời gian chết ống với hai nguồn."}
 #define SETTINGS_DESC {"Chọn chủ đề màu màn hình.", "Màn hình mờ giúp pin dùng lâu hơn.", \
     "Cảnh báo và báo động có phát âm thanh không.", "Thiết bị có rung khi báo động không.", \
     "Nhấp một lần cho mỗi lần đếm ống, như máy Geiger cổ điển.", "Động cơ kêu bíp ngắn cho mỗi lần đếm.", \
@@ -331,6 +332,27 @@
 #define S_RETRY        "Thử lại"
 #define S_SAVER        "Bảo vệ màn hình"
 #define S_STATION      "Chế độ trạm"
+#define S_H_TITLE       "Trạng thái"
+#define S_H_STARTS     "Khởi động"
+#define S_H_THIS       "Khởi động này"
+#define S_H_WDT        "Reset Watchdog"
+#define S_H_CRASHES    "Sự cố"
+#define S_H_USB        "Khởi động lại USB"
+#define S_H_RUNNING    "Đang chạy"
+#define S_H_STARTUP    "Khởi động"
+#define S_H_STAGE      "Giai đoạn"
+#define S_H_LASTCRASH  "Lần sập cuối lúc"
+#define S_M_DEADTIME   "Trình wizard thời gian chết"
+#define S_DT_A         "Chỉ nguồn A"
+#define S_DT_AB        "A và B chung"
+#define S_DT_B         "Chỉ nguồn B"
+#define S_DT_NONE      "Không có nguồn"
+#define S_DT_INTRO     "Cần 2 nguồn tương đương, mỗi nguồn ≥ 500 cps, và ống ổn định. Đo 4 lần, mỗi lần 2 phút: A, A+B, B, và không nguồn."
+#define S_DT_WARN      "Thiếu 2 nguồn này, kết quả không đáng tin cậy (như cảnh báo)."
+#define S_DT_PLACE     "Đặt nguồn (hoặc các nguồn) đã nêu trước ống, sau đó bắt đầu. Không di chuyển bất cứ thứ gì khi đang đếm."
+#define S_DT_NORES     "Không có kết quả hợp lệ."
+#define S_DT_NORES_D   "Nguồn quá yếu, hoặc có nguồn bị di chuyển. Sự khác biệt giữa các lần đếm không lớn hơn nhiễu rõ rệt."
+#define H_REASONS {"không rõ", "bật nguồn", "ghim reset", "giám sát", "giám sát cửa sổ", "phần mềm", "nguồn yếu", "sập"}
 #define S_AXIS_10MIN   "-10 phút"
 #define S_AXIS_60S     "-60 giây"
 #define S_T_LAST7      "7 ngày qua"

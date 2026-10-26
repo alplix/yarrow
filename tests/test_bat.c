@@ -133,6 +133,29 @@ static void test_monotonic_and_cycles(void)
     CHECK(bat_cycles(&b) >= 2 && bat_cycles(&b) <= 4, "cycles %u", (unsigned)bat_cycles(&b));
 }
 
+static void test_start_under_load(void)
+{
+    /* a start where the first readings are low (backlight, high voltage and buzzer all switching on): the level settles on what the cell
+     * really is, it does not stay at the dip */
+    bat_t b;
+    bat_init(&b, 0);
+    for (int i = 0; i < 5; i++)
+        bat_tick(&b, 3820, false, false);
+    for (int i = 0; i < 120; i++)
+        bat_tick(&b, 4100, false, false);
+    uint32_t p = bat_percent(&b);
+    CHECK(p >= 85 && p <= 92, "after a start with a dip the level follows the cell (4100 mV): %u%%", (unsigned)p);
+    /* and it does not wobble with noise afterwards */
+    uint32_t lo = 100, hi = 0;
+    for (int i = 0; i < 3600; i++) {
+        bat_tick(&b, 4100 + (uint32_t)noise(30), false, false);
+        uint32_t q = bat_percent(&b);
+        if (q < lo) lo = q;
+        if (q > hi) hi = q;
+    }
+    CHECK(hi - lo <= 2, "steady cell, noisy reading: the level moves %u..%u", (unsigned)lo, (unsigned)hi);
+}
+
 static void test_wear(void)
 {
     /* a cell that once lasted 40 h and now lasts 28 h should read about 70 percent */
@@ -153,6 +176,7 @@ int main(void)
     test_charging();
     test_discharge();
     test_monotonic_and_cycles();
+    test_start_under_load();
     test_wear();
     printf(failures ? "\n%d check(s) FAILED\n" : "\nall bat checks passed\n", failures);
     return failures ? 1 : 0;

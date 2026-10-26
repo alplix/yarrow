@@ -220,7 +220,8 @@
     "Stan rurki, czas martwy, napięcie wysokie.", "Sprawdza części urządzenia po kolei.", \
     "Połącz z komputerem i prześlij zapisy.", "Wybierz motyw kolorystyczny ekranu.", \
     "Jasność, dźwięk, wibracje i zegar.", "Ustaw czułość i współczynniki pola ręcznie.", \
-    "Ustawia czułość znanym źródłem.", "Wersja i linki do projektów."}
+    "Ustawia czułość znanym źródłem.", "Wersja i linki do projektów.", \
+    "Mierzy czas martwy rurki przy użyciu dwóch źródeł."}
 #define SETTINGS_DESC {"Wybierz motyw kolorystyczny ekranu.", "Przyciemniony ekran wydłuża czas pracy baterii.", \
     "Czy alarmy i ostrzeżenia mają wydawać dźwięk.", "Czy urządzenie ma wibrować podczas alarmu.", \
     "Klik przy każdym odliczeniu rurki, jak w klasycznych licznikach Geigera.", "Silnik wydaje krótki dźwięk przy każdym odliczeniu.", \
@@ -331,6 +332,27 @@
 #define S_RETRY        "Ponów"
 #define S_SAVER        "Wygaszacz ekranu"
 #define S_STATION      "Tryb stacji"
+#define S_H_TITLE       "Zdrowie"
+#define S_H_STARTS     "Starty"
+#define S_H_THIS       "Ten start"
+#define S_H_WDT        "Resety Watchdog'a"
+#define S_H_CRASHES    "Awarie"
+#define S_H_USB        "Uruchomienia USB"
+#define S_H_RUNNING    "Działanie"
+#define S_H_STARTUP    "Uruchamianie"
+#define S_H_STAGE      "etap"
+#define S_H_LASTCRASH  "Ostatnia awaria o"
+#define S_M_DEADTIME   "Wizjer czasu martwego"
+#define S_DT_A         "Tylko źródło A"
+#define S_DT_AB        "Źródła A i B razem"
+#define S_DT_B         "Tylko źródło B"
+#define S_DT_NONE      "Brak żadnego źródła"
+#define S_DT_INTRO     "Wymagane są dwa źródła o podobnej sile, każde dające min. 500 liczników/s, oraz rurka w miejscu. Cztery pomiary po 2 minuty: A, A+B, B i brak."
+#define S_DT_WARN      "Bez dwóch takich źródeł wynik nie jest wiarygodny, co sygnalizuje asystent."
+#define S_DT_PLACE     "Umieść źródło lub źródła wymienione powyżej przed rurką, a następnie uruchom. Nie ruszaj niczego podczas pomiaru."
+#define S_DT_NORES     "Brak użytecznego wyniku."
+#define S_DT_NORES_D   "Źródła były zbyt słabe lub jeden się poruszył. Różnica między licznikami nie była wyraźnie większa niż szum."
+#define H_REASONS {"nieznane", "włączanie", "pin resetu", "watchdog", "watchdog okna", "oprogramowanie", "niski prąd", "awaria"}
 #define S_AXIS_10MIN   "-10 min"
 #define S_AXIS_60S     "-60 s"
 #define S_T_LAST7      "Ostatnie 7 dni"
