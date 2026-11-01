@@ -10,7 +10,10 @@ typedef struct {
     void *ctx;
     /* Reads feature report 0 into buf (buf[0] is the report id, the data follows); returns the bytes read or -1. */
     int (*get_feature)(void *ctx, uint8_t *buf, size_t len);
+    /* Sends feature report buf[0] (the report id) with buf[1..len-1] as data; returns the bytes sent or -1. NULL when not supported. */
+    int (*set_feature)(void *ctx, const uint8_t *buf, size_t len);
     void (*close)(void *ctx);
+    uint16_t vid, pid;       /* USB ids of the opened device */
     char name[96];           /* USB product string, empty when unknown */
     char serial[64];         /* USB serial string, empty when it has none */
     uint16_t version;        /* USB device release number (bcdDevice, 0x0251 is 2.51), 0 when unknown */
