@@ -21,6 +21,8 @@ static double next_beat;
 static int beating;
 static int lose_at, beats_sent;      /* the heartbeat with this number is not sent (0: none) */
 static int bad_frame_at;
+static int le_mode;                  /* the device sends the heartbeat low byte first (seen on a GMC-300E+, firmware 4.54) */
+static int smooth_stream;            /* each heartbeat carries the pulses of the last 60 seconds */
 static uint8_t queue[600];
 static size_t qn, qpos;
 static int not_gmc;
@@ -77,6 +79,7 @@ static void reset_device(void)
     qn = qpos = 0;
     beating = 0;
     lose_at = bad_frame_at = beats_sent = 0;
+    smooth_stream = 0;
     not_gmc = 0;
     memset(cfg, 0, sizeof cfg);
     cfg_len = 256;
@@ -135,12 +138,17 @@ static int f_read(void *ctx, void *buf, size_t n, int ms)
         beats_sent++;
         if (beats_sent == lose_at)
             continue;
-        uint32_t c = pulses_until(t1) - pulses_until(t1 - 1.0);
+        uint32_t c = pulses_until(t1) - pulses_until(t1 - (smooth_stream ? 60.0 : 1.0));
         unsigned v = c & 0x3fffu;
         if (beats_sent == bad_frame_at)
             v |= 0x8000u;
-        o[got++] = (uint8_t)(v >> 8);
-        o[got++] = (uint8_t)v;
+        if (le_mode) {
+            o[got++] = (uint8_t)v;
+            o[got++] = (uint8_t)(v >> 8);
+        } else {
+            o[got++] = (uint8_t)(v >> 8);
+            o[got++] = (uint8_t)v;
+        }
         return (int)got;
     }
 }
@@ -187,6 +195,32 @@ static void start(double w0)
 {
     wall = w0;
     got_n = 0;
+}
+
+static void smoothed_counter_is_refused(void)
+{
+    make_pulses(3.6);
+    reset_device();
+    smooth_stream = 1;
+    start(BASE + 100);
+    ygmc_io_t i = io();
+    ygmc_env_t e = env("pc-smooth");
+    ydev_t dev;
+    ysrc_t *src = ygmc_make(&i, &e, &dev);
+    CHECK(src != NULL, "the smoothed fake is found");
+    if (src) {
+        run(src, BASE + 4000);
+        CHECK(got_n == 0, "no bin comes from a smoothed stream (%d)", got_n);
+        src->close(src);
+    }
+    reset_device();
+    start(BASE + 100);
+    src = ygmc_make(&i, &e, &dev);
+    if (src) {
+        run(src, BASE + 4000);
+        CHECK(got_n >= 5, "a true per-second stream still gives bins (%d)", got_n);
+        src->close(src);
+    }
 }
 
 static void calibration_and_identity(void)
@@ -314,10 +348,10 @@ static void broken_frame(void)
         CHECK(0, "counter found (frame)");
         return;
     }
-    bad_frame_at = 5;
+    bad_frame_at = 40;               /* after the byte order has been learned */
     ysample_t s;
     int rc = 0;
-    for (int k = 0; k < 6; k++)
+    for (int k = 0; k < 41; k++)
         if (src->poll(src, 600, &s) != 0)
             rc = 1;
     CHECK(rc != 0, "a frame with reserved bits set is an error");
@@ -327,8 +361,13 @@ static void broken_frame(void)
 int main(void)
 {
     calibration_and_identity();
+    smoothed_counter_is_refused();
     bins(0.37);
     bins(0.70);
+    le_mode = 1;
+    bins(0.37);
+    bins(0.70);
+    le_mode = 0;
     lost_second();
     broken_frame();
     if (fails) {

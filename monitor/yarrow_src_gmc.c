@@ -25,6 +25,8 @@
 
 #define GMC_DEAD_US 90               /* the M4011 tube of the GMC-280/300/320 */
 #define MAX_CFG 512
+#define SMOOTH_TEST_N 240            /* heartbeats looked at once, from the start of a stream */
+#define SMOOTH_R1_MAX 0.5            /* lag-1 autocorrelation of per-second Poisson counts is about 0 (spread 0.07 over 240 values) */
 
 typedef struct {
     ysrc_t base;
@@ -33,6 +35,11 @@ typedef struct {
     uint64_t pulses;                 /* cumulative, from the heartbeats */
     uint32_t seconds;                /* heartbeats received since the stream was last whole */
     double last_a;                   /* arrival of the previous heartbeat */
+    uint32_t chk_n;                  /* heartbeats seen by the smoothing test (it stops at SMOOTH_TEST_N) */
+    double chk_prev, chk_sx, chk_sxx, chk_sxy;
+    int smoothed;                    /* the stream is a moving rate, not the pulses of each second: no data is sent */
+    int order;                       /* byte order of the heartbeat word: 0 not learned yet, 1 high byte first, 2 low byte first */
+    unsigned hi0, hi1, learn_n;      /* words seen as (0, n) and as (n, 0) while the byte order is learned */
 } gmc_t;
 
 /* What went wrong with a serial port is written to stderr once per distinct message: the search repeats every 15 seconds, and
@@ -68,16 +75,62 @@ static int gmc_poll(ysrc_t *s, uint32_t interval, ysample_t *out)
         note("the counter sent %d bytes in 2.5 seconds after <HEARTBEAT1>> instead of a count every second", n);
         return -1;                                   /* the stream stopped */
     }
-    unsigned v = (unsigned)b[0] << 8 | b[1];
+    /* The documentation says high byte first, but a GMC-300E+ (firmware 4.54) was seen sending the low byte first: every count came out
+     * 256 times too large. The counts of one second are far below 256, so one byte of every word is zero, and which one it is gives the
+     * order. It is learned from the first words; until then no pulses are added and the stream count is reset, which drops the bin. */
+    if (g->order == 0) {
+        g->learn_n++;
+        if (b[0] == 0 && b[1]) g->hi0++;
+        else if (b[1] == 0 && b[0]) g->hi1++;
+        if (g->hi0 >= 4 && g->hi1 == 0) g->order = 1;
+        else if (g->hi1 >= 4 && g->hi0 == 0) g->order = 2;
+        else if (g->learn_n >= 120) {
+            g->order = g->hi0 >= g->hi1 ? 1 : 2;
+            note("heartbeat byte order unclear (%u words high-first, %u low-first), using %s", g->hi0, g->hi1, g->order == 1 ? "high byte first" : "low byte first");
+        }
+        if (g->order == 2)
+            note("the counter sends the heartbeat low byte first, reading it that way");
+        if (g->order == 0) {
+            g->seconds = 0;
+            g->last_a = g->env.now();
+            out->pulses = (uint32_t)g->pulses;
+            out->hv_s = 0;
+            out->host_s = g->last_a;
+            out->inexact = 1;
+            out->t = (uint32_t)floor(g->last_a);
+            return 0;
+        }
+    }
+    unsigned v = g->order == 2 ? ((unsigned)b[1] << 8 | b[0]) : ((unsigned)b[0] << 8 | b[1]);
     if (v & 0xc000u) {                               /* the reserved bits are never set: the framing is lost, or a stray byte came first */
         uint8_t extra;
         unsigned w = (unsigned)b[1] << 8;
-        if (g->io.read(g->io.ctx, &extra, 1, 1500) == 1 && !((w | extra) & 0xc000u)) {
+        if (g->order == 1 && g->io.read(g->io.ctx, &extra, 1, 1500) == 1 && !((w | extra) & 0xc000u)) {
             note("heartbeat framing was off by one byte (%02x %02x %02x), realigned", b[0], b[1], extra);
             v = w | extra;
         } else {
             note("heartbeat word %04x has reserved bits set", v);
             return -1;
+        }
+    }
+    if (g->smoothed)
+        return -1;
+    if (g->chk_n < SMOOTH_TEST_N) {
+        /* A device that answers <HEARTBEAT1>> with a running count per minute instead of the pulses of the last second sends
+         * values that follow one another closely. Summed as counts they are ~60 times too high, so such a stream is refused. */
+        double x = (double)(v & 0x3fffu);
+        if (g->chk_n > 0) g->chk_sxy += g->chk_prev * x;
+        g->chk_sx += x;
+        g->chk_sxx += x * x;
+        g->chk_prev = x;
+        if (++g->chk_n == SMOOTH_TEST_N) {
+            double n = SMOOTH_TEST_N, m = g->chk_sx / n, var = g->chk_sxx / n - m * m;
+            double r1 = var > 0 ? (g->chk_sxy / (n - 1) - m * m) / var : 0;
+            if (m >= 2 && r1 > SMOOTH_R1_MAX) {
+                note("the heartbeat values follow each other (correlation %.2f): this counter sends a smoothed rate, not the pulses of each second, so it cannot be used", r1);
+                g->smoothed = 1;
+                return -1;
+            }
         }
     }
     double a = g->env.now();
