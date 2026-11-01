@@ -40,6 +40,8 @@ typedef struct {
     int smoothed;                    /* the stream is a moving rate, not the pulses of each second: no data is sent */
     int order;                       /* byte order of the heartbeat word: 0 not learned yet, 1 high byte first, 2 low byte first */
     unsigned hi0, hi1, learn_n;      /* words seen as (0, n) and as (n, 0) while the byte order is learned */
+    unsigned diag_n, diag_hist[10];  /* diagnostics: the per-second counts of the first minutes, summarised once into stderr.txt */
+    double diag_sum, diag_sq, diag_sxy, diag_prev;
 } gmc_t;
 
 /* What went wrong with a serial port is written to stderr once per distinct message: the search repeats every 15 seconds, and
@@ -111,6 +113,27 @@ static int gmc_poll(ysrc_t *s, uint32_t interval, ysample_t *out)
         } else {
             note("heartbeat word %04x has reserved bits set", v);
             return -1;
+        }
+    }
+    /* Diagnostics for counters whose counts do not look like pulses: after 300 and after 1800 seconds the distribution of the per-second
+     * counts is written to stderr.txt (a real Geiger tube gives variance = mean, no correlation between neighbouring seconds). */
+    {
+        unsigned x = v & 0x3fffu;
+        g->diag_hist[x < 9 ? x : 9]++;
+        g->diag_sum += x;
+        g->diag_sq += (double)x * x;
+        if (g->diag_n > 0) g->diag_sxy += g->diag_prev * x;
+        g->diag_prev = x;
+        g->diag_n++;
+        if (g->diag_n == 300 || g->diag_n == 1800) {
+            double n = g->diag_n, m = g->diag_sum / n, var = g->diag_sq / n - m * m;
+            double r1 = var > 0 ? (g->diag_sxy / (n - 1) - m * m) / var : 0;
+            char h[160]; int k = 0;
+            for (int i = 0; i < 10; i++)
+                k += snprintf(h + k, sizeof h - (size_t)k, "%s%u", i ? " " : "", g->diag_hist[i]);
+            note("diagnostics after %u seconds: mean %.3f counts/s, variance %.3f (variance/mean %.2f, 1.00 for a Geiger tube), "
+                 "lag-1 correlation %.2f, byte order %s, histogram of counts 0,1,..,8,>=9: %s",
+                 g->diag_n, m, var, m > 0 ? var / m : 0.0, r1, g->order == 2 ? "low byte first" : "high byte first", h);
         }
     }
     if (g->smoothed)
