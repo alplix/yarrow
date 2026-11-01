@@ -22,6 +22,14 @@ static int win_get_feature(void *ctx, uint8_t *buf, size_t len)
     return (int)len;
 }
 
+static int win_set_feature(void *ctx, const uint8_t *buf, size_t len)
+{
+    win_hid_t *w = ctx;
+    if (!HidD_SetFeature(w->h, (PVOID)buf, (ULONG)len))
+        return -1;
+    return (int)len;
+}
+
 static void win_close(void *ctx)
 {
     win_hid_t *w = ctx;
@@ -75,6 +83,9 @@ int yhid_open(uint16_t vid, uint16_t pid, const char *name_part, yhid_t *out)
                             w->h = h;
                             out->ctx = w;
                             out->get_feature = win_get_feature;
+                            out->set_feature = win_set_feature;
+                            out->vid = vid;
+                            out->pid = pid;
                             out->close = win_close;
                             snprintf(out->name, sizeof out->name, "%s", name);
                             narrow(ws, out->serial, sizeof out->serial);
@@ -142,6 +153,7 @@ struct yhidraw_devinfo {
 #define HIDIOCGRAWNAME(len) _IOC(_IOC_READ, 'H', 0x04, len)
 #define HIDIOCGRAWUNIQ(len) _IOC(_IOC_READ, 'H', 0x08, len)
 #define HIDIOCGFEATURE(len) _IOC(_IOC_READ | _IOC_WRITE, 'H', 0x07, len)
+#define HIDIOCSFEATURE(len) _IOC(_IOC_READ | _IOC_WRITE, 'H', 0x06, len)
 #endif
 
 #ifdef __linux__
@@ -174,6 +186,12 @@ static int posix_get_feature(void *ctx, uint8_t *buf, size_t len)
         r = ioctl(p->fd, HIDIOCGFEATURE(len), buf);
     } while (r < 0 && errno == EINTR && ++tries < 5);          /* a signal can interrupt the request: ask again */
     return r;
+}
+
+static int posix_set_feature(void *ctx, const uint8_t *buf, size_t len)
+{
+    posix_hid_t *p = ctx;
+    return ioctl(p->fd, HIDIOCSFEATURE(len), buf);
 }
 
 static void posix_close(void *ctx)
@@ -278,6 +296,9 @@ int yhid_open(uint16_t vid, uint16_t pid, const char *name_part, yhid_t *out)
                     p->fd = fd;
                     out->ctx = p;
                     out->get_feature = posix_get_feature;
+                    out->set_feature = posix_set_feature;
+                    out->vid = vid;
+                    out->pid = pid;
                     out->close = posix_close;
                     snprintf(out->name, sizeof out->name, "%s", name);
                     out->serial[0] = 0;

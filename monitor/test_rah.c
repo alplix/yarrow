@@ -52,6 +52,26 @@ static int fake_get(void *ctx, uint8_t *buf, size_t len)
     return (int)len;
 }
 
+/* the PIC board 3.01 has a 9-byte feature report: a longer request is refused, as the Windows API does */
+static int fake_get_pic(void *ctx, uint8_t *buf, size_t len)
+{
+    if (len != 9)
+        return -1;
+    uint8_t tmp[129];
+    int n = fake_get(ctx, tmp, sizeof tmp);
+    memcpy(buf, tmp, len);
+    return n < 0 ? -1 : (int)len;
+}
+
+static int sent_ids[8], n_sent;
+static int fake_set(void *ctx, const uint8_t *buf, size_t len)
+{
+    (void)ctx;
+    if (len == 2 && n_sent < 8)
+        sent_ids[n_sent++] = buf[0];
+    return (int)len;
+}
+
 static void fake_close(void *ctx) { (void)ctx; }
 
 static uint32_t rs = 777;
@@ -110,6 +130,35 @@ static yrah_env_t env(const char *host)
 {
     yrah_env_t e = {fake_now, fake_sleep, host};
     return e;
+}
+
+static void pic_board(void)
+{
+    make_pulses(0.5);
+    wall = BASE + 123.37;
+    dev_start = wall;
+    fake_mode = 0;
+    got_n = 0;
+    n_sent = 0;
+    yhid_t h = hid();
+    h.get_feature = fake_get_pic;
+    h.set_feature = fake_set;
+    h.vid = 0x04d8;
+    h.pid = 0xf6fe;
+    yrah_env_t e = env("pc-pic");
+    ydev_t dev;
+    ysrc_t *src = yrah_make(&h, &e, &dev);
+    CHECK(src != NULL, "a PIC board with a 9-byte report is found");
+    if (!src)
+        return;
+    CHECK(n_sent == 2 && sent_ids[0] == 0x40 && sent_ids[1] == 0x10, "buzzer and backlight switched off (%d reports)", n_sent);
+    run(src, BASE + 1800.5);
+    CHECK(got_n == 2, "two bins from the PIC board (got %d)", got_n);
+    for (int i = 0; i < got_n; i++) {
+        uint32_t truth = pulses_until(got_start[i] + 600.0) - pulses_until((double)got_start[i]);
+        CHECK(got_count[i] + 1 >= truth && got_count[i] <= truth + 1, "PIC bin %u counted %u, true %u", got_start[i], got_count[i], truth);
+    }
+    src->close(src);
 }
 
 static void bins_match_truth(void)
@@ -227,6 +276,7 @@ static void identity(void)
 int main(void)
 {
     bins_match_truth();
+    pic_board();
     late_readings_make_no_bin();
     other_device_is_refused();
     wait_not_exact();
