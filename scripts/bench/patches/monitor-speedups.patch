@@ -1,0 +1,102 @@
+diff --git a/monitor/yarrow_monitor.c b/monitor/yarrow_monitor.c
+index 3c2f81c..07e4a0a 100644
+--- a/monitor/yarrow_monitor.c
++++ b/monitor/yarrow_monitor.c
+@@ -31,11 +31,20 @@ static struct {
+ 
+ static void save_state(void);
+ 
++/* Bins that fill_gap() added since its last save. While a gap is filled from the detector's log, on_bin() does not save
++ * the state file after every bin (a 13-day gap is about 1870 bins, each a full rewrite of the file): fill_gap() saves
++ * once at the end. A crash in between loses nothing, because the next start fills the same gap again from the same log
++ * (the last-seen time is not moved by a gap fill). 2026-11-04, docs/BENCHMARK.md "Results". */
++static int filling_gap, gap_bins;
++
+ static void on_bin(void *ctx, uint32_t start, uint32_t count)
+ {
+     (void)ctx;
+     ypending_add(&pending, start, count);
+-    save_state();                  /* a finished bin survives a crash or a closed window */
++    if (filling_gap)
++        gap_bins++;
++    else
++        save_state();              /* a finished bin survives a crash or a closed window */
+ }
+ 
+ static void save_state(void)
+@@ -85,7 +94,12 @@ static void fill_gap(ysrc_t *src, uint32_t interval)
+         from = (now - BACKFILL_MAX_AGE_S + interval - 1) / interval * interval;
+     if (from + interval > until)
+         return;
++    filling_gap = 1;
++    gap_bins = 0;
+     int n = src->backfill(src, interval, from, until, on_bin, 0);
++    filling_gap = 0;
++    if (gap_bins > 0)
++        save_state();
+     char line[120];
+     if (n > 0) {
+         snprintf(line, sizeof line, "the detector's log filled %d bins that were missed while this program was not running", n);
+diff --git a/monitor/yarrow_serial.c b/monitor/yarrow_serial.c
+index 634f1e1..f60947c 100644
+--- a/monitor/yarrow_serial.c
++++ b/monitor/yarrow_serial.c
+@@ -88,7 +88,10 @@ static int port_name(int i, char *out, size_t cap)
+ #include <unistd.h>
+ #include <poll.h>
+ 
+-struct yser { int fd; };
++/* buf holds bytes read from the port but not handed out yet: rd() reads what is there in one read() instead of one
++ * byte per poll() and read() (2026-11-04, docs/BENCHMARK.md "Results"). Bytes after the end of a reply (a live-stream
++ * line, the next reply) stay here for the next call, as they stayed in the driver's buffer before. */
++struct yser { int fd; size_t pos, len; unsigned char buf[256]; };
+ 
+ yser_t *yser_open(const char *path)
+ {
+@@ -108,6 +111,7 @@ yser_t *yser_open(const char *path)
+         return NULL;
+     }
+     s->fd = fd;
++    s->pos = s->len = 0;
+     return s;
+ }
+ 
+@@ -121,8 +125,20 @@ void yser_close(yser_t *s)
+ 
+ static int rd(yser_t *s, char *c)
+ {
++    if (s->pos < s->len) {
++        *c = (char)s->buf[s->pos++];
++        return 1;
++    }
+     struct pollfd p = {s->fd, POLLIN, 0};
+-    return poll(&p, 1, 20) > 0 && read(s->fd, c, 1) == 1;      /* a signal only shortens the 20 ms: the caller asks again */
++    if (poll(&p, 1, 20) <= 0)                                    /* a signal only shortens the 20 ms: the caller asks again */
++        return 0;
++    ssize_t r = read(s->fd, s->buf, sizeof s->buf);
++    if (r <= 0)
++        return 0;
++    s->len = (size_t)r;
++    s->pos = 1;
++    *c = (char)s->buf[0];
++    return 1;
+ }
+ 
+ static int wr(yser_t *s, const char *p, size_t n) { return write(s->fd, p, n) == (ssize_t)n; }
+@@ -345,6 +361,8 @@ int yser_write(yser_t *s, const void *p, size_t n) { return write(s->fd, p, n) =
+ int yser_read(yser_t *s, void *buf, size_t n, int timeout_ms)
+ {
+     size_t got = 0;
++    while (got < n && s->pos < s->len)                 /* what rd() has already read from the port comes first */
++        ((unsigned char *)buf)[got++] = s->buf[s->pos++];
+     double end = yser_now() + timeout_ms / 1000.0;
+     while (got < n) {
+         double left = end - yser_now();
+@@ -368,6 +386,7 @@ int yser_read(yser_t *s, void *buf, size_t n, int timeout_ms)
+ 
+ void yser_drain(yser_t *s)
+ {
++    s->pos = s->len = 0;
+     char junk[256];
+     while (yser_read(s, junk, sizeof junk, 30) > 0)
+         ;
