@@ -44,3 +44,4 @@ When code that a row describes changes a lot, check the pattern again and update
 | PAT-031 | n/a | 2026-11-04 | ea3ab38 |  | no thread_local or __thread in monitor/ or src/ (git grep) |
 | PAT-032 | not-affected | 2026-11-04 | ea3ab38 |  | the monitor has no hot loop: it sleeps between polls (docs/BENCHMARK.md measures wake-ups and system calls) |
 | PAT-033 | n/a | 2026-11-04 | ea3ab38 |  | no GPU code |
+| PAT-034 | n/a | 2026-11-10 | ebf1430 |  | the monitor is a non-CPU-intensive app (AGENTS.md:10), which the client exempts from the elapsed time limit (boinc-api.md, Resource limits and aborts) |
