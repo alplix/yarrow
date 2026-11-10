@@ -1,6 +1,6 @@
 # yarrow: knowledge base index
 
-35 issues: 16 open (13 fix, 3 decide), 13 note(s), 6 closed. Shared patterns here: 7 affected, 1 fixed, 25 clear, 0 unchecked.
+35 issues: 16 open (13 fix, 3 decide), 13 note(s), 6 closed. Shared patterns here: 7 affected, 1 fixed, 26 clear, 0 unchecked.
 
 Work from the top: pick an issue, read its file, and its pattern's "How to fix" if it has one. Coding
 agents: `python3 docs/kb/shared/kb.py list --open --action fix` prints the same, one line per issue, and
@@ -73,7 +73,7 @@ Bug classes found in any bitboinc application ([shared/patterns](shared/patterns
 - Affected: [PAT-003], [PAT-004], [PAT-005], [PAT-008], [PAT-009], [PAT-029], [PAT-030]
 - Fixed here: [PAT-010]
 - Unchecked: none
-- Checked and clear (not affected, or not applicable): PAT-001, PAT-002, PAT-006, PAT-007, PAT-011, PAT-012, PAT-013, PAT-014, PAT-015, PAT-016, PAT-017, PAT-018, PAT-019, PAT-020, PAT-021, PAT-022, PAT-023, PAT-024, PAT-025, PAT-026, PAT-027, PAT-028, PAT-031, PAT-032, PAT-033
+- Checked and clear (not affected, or not applicable): PAT-001, PAT-002, PAT-006, PAT-007, PAT-011, PAT-012, PAT-013, PAT-014, PAT-015, PAT-016, PAT-017, PAT-018, PAT-019, PAT-020, PAT-021, PAT-022, PAT-023, PAT-024, PAT-025, PAT-026, PAT-027, PAT-028, PAT-031, PAT-032, PAT-033, PAT-034
 
 ## Open issues by platform
 
