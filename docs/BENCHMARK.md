@@ -159,7 +159,7 @@ label        wake-ups  vs 1st   syscalls  vs 1st  state w  state KB  trkl  B/trk
 * **Output-changing.** Anything that changes which bins are accepted, what a trickle holds, when and how often trickles are
   sent, what the state file holds, or when a counter is found: poll cadence, send cadence, state refresh cadence, search
   back-off, bin rules. Measure it the same way, say exactly how the output differs, and treat it as a design decision for the
-  maintainers and the server (AGENTS.md: do not change the trickle format, the units, the identity recipes or the bin rules
+  maintainers and the server (do not change the trickle format, the units, the identity recipes or the bin rules
   without a matching server change; the validator's Poisson, copy, replay and region checks and the new-device credit ramp
   all read the stream). Until then keep it behind a switch that is off by default.
 
@@ -171,8 +171,7 @@ label        wake-ups  vs 1st   syscalls  vs 1st  state w  state KB  trkl  B/trk
    the harness of the working tree for both.
 2. **Find out where the cost goes first.** Read the counts of the profile closest to production (`yarrow-600-boinc`) and the
    share of the thing you change in them. A change to 10 % of the system calls cannot lower them by more than 10 %. Under
-   BOINC the client's timer alone makes the 36,000 wake-ups an hour that the monitor cannot remove (expected, from
-   `docs/kb/shared/boinc-api.md`; not measured). On hardware, count the real ones (see "Hardware check").
+   BOINC the client's timer alone makes the 36,000 wake-ups an hour that the monitor cannot remove (expected; not measured). On hardware, count the real ones (see "Hardware check").
 3. **Use a profile that exercises the change.** A change to the poll cadence does nothing on `gap-fill`, and a change to the
    gap fill does nothing on `yarrow-600`:
 
@@ -215,7 +214,7 @@ label        wake-ups  vs 1st   syscalls  vs 1st  state w  state KB  trkl  B/trk
    output-changing change, put it behind a `-D` switch that is off by default and build both (`EXTRA="-DSWITCH=1"`).
 4. Run one round (`run_bench.sh <profile> 1 ...`) to see that the output stays the same (or differs the way you expect).
 5. Run 5 or more rounds on each profile the change touches (rule 3).
-6. Run the correctness checks that AGENTS.md routes the touched files to: `make monitor-check` and `make monitor` for
+6. Run the correctness checks for the touched files: `make monitor-check` and `make monitor` for
    `monitor/` (on macOS `make monitor` stops at YAR-026), `bash tools/sanitize.sh` on Linux for C changes, a MinGW compile
    for `yarrow_serial.c`, `yarrow_hid.c` and `yarrow_lock.c`, and a run by hand with a counter attached for at least one bin
    (`build/monitor/yarrow_monitor --country TR --city Denizli`; usage line in `monitor/yarrow_standalone.c`).
@@ -228,7 +227,7 @@ label        wake-ups  vs 1st   syscalls  vs 1st  state w  state KB  trkl  B/trk
   CPU slot can miss the edge second of a bin, and the bin is then dropped (`ybin_feed`, "both edge readings in the edge
   second"). The fake never waits for a CPU: bin yield under load is a hardware measurement, and a change that makes the monitor
   poll less around the edges must be checked there. The client can also suspend the task (the worker then sits in the signal
-  handler, `docs/kb/shared/boinc-api.md`), which the simulation does not do. On Apple Silicon a background-priority process
+  handler), which the simulation does not do. On Apple Silicon a background-priority process
   runs on the efficiency cores: compare `RUN_PREFIX="taskpolicy -b"` and `RUN_PREFIX="nice -n 19"` before trusting a CPU
   figure, as the client's way of lowering the priority decides what a volunteer's Mac does.
 * **Trickle cadence is the product, not overhead.** At most one trickle every 10 minutes (`SEND_EVERY_S`) and 144 slots each
@@ -318,7 +317,7 @@ Not a candidate: lowering the BOINC library's own timer wake-ups. They are not t
 
 ## What the suite does not cover
 
-* `monitor/yarrow_boinc.cpp` and the BOINC library: there is no BOINC stub in this repository (AGENTS.md), so
+* `monitor/yarrow_boinc.cpp` and the BOINC library: there is no BOINC stub in this repository, so
   `boinc_checkpoint_completed()`, trickle pick-up by the client, `boinc_temporary_exit()` as a real process exit and restart,
   suspend and resume, CPU throttling and the client's priority and scheduling of the NCI task are not run. Only the timer
   signal is imitated, and only for sleeps and polls.
